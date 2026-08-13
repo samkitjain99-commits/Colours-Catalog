@@ -1,0 +1,3518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="theme-color" content="#F4ECDC">
+<title>Color Catalog</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F4ECDC;
+    --card: #FDFCFB;
+    --builder-card: #FDFBF7;
+    --brown-900: #4A3222;
+    --brown-700: #6B4530;
+    --brown-600: #8B5E3C;
+    --tan-200: #EFE1C8;
+    --border: #E9DCC7;
+    --muted: #9C8C76;
+    --danger: #B7412E;
+  }
+
+  html {
+    color-scheme: light only;
+    background: #F4ECDC;
+  }
+
+  body {
+    background: var(--cream);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    padding: 0 0 60px;
+  }
+
+  .topbar { background: var(--brown-700); height: 6px; width: 100%; }
+
+  .tabbar {
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+    padding: 10px 12px 0;
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabbar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 8px 12px 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--brown-700); }
+  .tab-btn.active { color: var(--brown-700); border-bottom-color: var(--brown-700); }
+
+  @media print {
+    .tabbar { display: none !important; }
+  }
+
+  .wrap { max-width: 700px; margin: 0 auto; padding: 0 14px; background: var(--cream); }
+
+  .screen-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 0 4px;
+  }
+  .back-btn {
+    background: none; border: none; font-size: 22px; color: var(--brown-700);
+    cursor: pointer; padding: 2px 4px 2px 0; line-height: 1; flex-shrink: 0;
+  }
+  .header-icon { font-size: 20px; color: var(--brown-700); transform: rotate(90deg); display: inline-block; flex-shrink: 0; }
+  .screen-header h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(20px, 6vw, 27px);
+    color: var(--brown-900);
+  }
+  .page-sub { font-size: 12.5px; color: var(--muted); margin: 6px 0 18px; }
+
+  .view { display: none; }
+  .view.active {
+    display: block;
+    background: var(--cream);
+    min-height: 100vh;
+  }
+
+  /* ---------- Home ---------- */
+  .add-primary-btn {
+    width: 100%;
+    font-weight: 700; font-size: 14.5px; color: #fff;
+    background: var(--brown-700); border: none; border-radius: 10px;
+    padding: 14px; cursor: pointer; margin-bottom: 16px;
+    transition: background 0.15s ease;
+  }
+  .add-primary-btn:hover { background: #543522; }
+
+  .filter-row {
+    display: flex; gap: 8px; margin-bottom: 18px;
+  }
+  .group-select {
+    flex: 1; font-family: 'Inter', sans-serif; font-size: 13.5px;
+    border: 1px solid var(--border); border-radius: 9px; padding: 9px 10px;
+    background: #fff; color: var(--brown-900);
+  }
+  .groups-link-btn {
+    font-weight: 600; font-size: 13px; color: var(--brown-700);
+    background: var(--tan-200); border: none; border-radius: 9px;
+    padding: 9px 14px; cursor: pointer; white-space: nowrap;
+  }
+  .add-multiple-btn {
+    font-weight: 600; font-size: 13px; color: var(--brown-700);
+    background: var(--tan-200); border: none; border-radius: 9px;
+    padding: 9px 14px; cursor: pointer; white-space: nowrap;
+  }
+  .add-colour-btn {
+    width: 100%; font-weight: 700; font-size: 13.5px; color: #fff;
+    background: var(--brown-600); border: none; border-radius: 9px;
+    padding: 11px 14px; cursor: pointer;
+  }
+  .add-colour-btn:hover { background: var(--brown-700); }
+
+  /* ---------- Builder card ---------- */
+  .builder {
+    background: var(--builder-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; margin-bottom: 26px;
+  }
+  .section-label {
+    font-weight: 700; font-size: 11px; letter-spacing: 1.5px;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  .primary-row { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
+  .swatch-input { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
+  .swatch-input input[type="color"] {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    border: none; border-radius: 10px; padding: 0; cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+  }
+  .swatch-input input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: 10px; }
+  .swatch-input input[type="color"]::-webkit-color-swatch { border: none; border-radius: 10px; }
+
+  .photo-pick-btn {
+    width: 36px; height: 36px; flex-shrink: 0;
+    background: var(--tan-200); border: none; border-radius: 9px;
+    font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--brown-700);
+  }
+  .photo-pick-btn:hover { background: #e6d5b8; }
+  .photo-pick-btn.small { width: 32px; height: 32px; font-size: 14px; }
+  .photo-pick-btn.wide {
+    width: auto; height: auto; padding: 8px 14px; font-size: 12.5px; font-weight: 600;
+    white-space: nowrap; gap: 6px; flex-shrink: 0;
+  }
+
+  .img-picker-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(30,20,12,0.72);
+    z-index: 100; align-items: center; justify-content: center; padding: 16px;
+  }
+  .img-picker-overlay.active { display: flex; }
+  .img-picker-card {
+    background: var(--builder-card); border-radius: 16px;
+    max-width: 420px; width: 100%; max-height: 90vh;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .img-picker-scroll { overflow-y: auto; padding: 18px 18px 4px; }
+  .img-picker-title { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 17px; color: var(--brown-900); margin-bottom: 4px; }
+  .img-picker-hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .img-picker-canvas-wrap { position: relative; border-radius: 10px; overflow: hidden; margin-bottom: 14px; background: #000; max-height: 320px; display: flex; align-items: center; justify-content: center; }
+  .img-picker-canvas-wrap canvas { display: block; max-width: 100%; max-height: 320px; width: auto; height: auto; cursor: crosshair; touch-action: none; }
+  .img-picker-marker {
+    position: absolute; width: 22px; height: 22px; border-radius: 50%;
+    border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.4);
+    transform: translate(-50%, -50%); pointer-events: none; display: none;
+  }
+  .img-picker-palette-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  .img-picker-palette { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; -webkit-overflow-scrolling: touch; }
+  .img-picker-palette-swatch {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+    border: 3px solid transparent;
+    position: relative;
+  }
+  .img-picker-palette-swatch.selected { border-color: var(--brown-700); }
+  .img-picker-palette-swatch.bulk:not(.selected) {
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15), 0 0 0 2px #fff, 0 0 0 3px var(--border);
+  }
+  .img-picker-palette-swatch.bulk .palette-check {
+    display: none; position: absolute; bottom: -3px; right: -3px; width: 18px; height: 18px;
+    background: var(--brown-700); border-radius: 50%; border: 2px solid #fff;
+    align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 900;
+  }
+  .img-picker-palette-swatch.bulk.selected .palette-check { display: flex; }
+  .img-picker-addall-btn {
+    width: 100%; margin-top: 10px; font-weight: 600; font-size: 13px; color: var(--brown-700);
+    background: var(--tan-200); border: none; border-radius: 9px; padding: 11px; cursor: pointer;
+  }
+  .img-picker-addall-btn:hover { background: #e6d5b8; }
+
+  .img-picker-footer {
+    flex-shrink: 0; padding: 14px 18px 18px; border-top: 1px solid var(--border);
+    background: var(--builder-card);
+  }
+  .img-picker-preview { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .img-picker-swatch { width: 40px; height: 40px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); flex-shrink: 0; }
+  .img-picker-hex { font-weight: 700; font-size: 14px; color: var(--brown-900); }
+  .img-picker-hex-sub { font-size: 11.5px; color: var(--muted); }
+  .img-picker-actions { display: flex; gap: 10px; }
+  .img-picker-actions button {
+    flex: 1; font-weight: 600; font-size: 13.5px; border-radius: 9px; padding: 11px; cursor: pointer; border: 1px solid var(--border);
+  }
+  .img-picker-use-btn { background: var(--brown-700); color: #fff; border-color: var(--brown-700); }
+  .img-picker-use-btn:hover { background: #543522; }
+  .img-picker-use-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .img-picker-cancel-btn { background: #fff; color: var(--brown-900); }
+
+  .text-input {
+    font-family: 'Inter', sans-serif; font-size: 16px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+    outline: none; background: #fff; color: #3a2c1f;
+  }
+  .text-input:focus { border-color: var(--brown-700); }
+  .hex-field { width: 130px; font-weight: 600; }
+  .name-field { flex: 1; min-width: 140px; }
+
+  select.text-input, select.group-select {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    background-image: none;
+    padding-right: 32px;
+  }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '\25BE';
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    pointer-events: none; color: var(--brown-700); font-size: 14px;
+  }
+
+  .frozen-bar {
+    position: sticky; top: 0; z-index: 15;
+    background: var(--cream);
+    padding: 12px 0 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .secondary-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+  .secondary-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .row-srno {
+    font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 13px;
+    color: var(--brown-700); flex-shrink: 0; width: 28px;
+  }
+  .row-role-wrap { width: 108px; flex-shrink: 0; }
+  .row-role-wrap select { width: 100%; font-size: 13px; padding: 8px 26px 8px 10px; }
+  .remove-btn {
+    background: none; border: none; color: #c9baa4; font-size: 18px;
+    cursor: pointer; line-height: 1; padding: 4px 6px; margin-left: auto;
+  }
+  .remove-btn:hover { color: var(--danger); }
+
+  .add-secondary-btn {
+    font-size: 12.5px; font-weight: 600; color: var(--brown-700);
+    background: var(--tan-200); border: none; border-radius: 8px;
+    padding: 8px 14px; cursor: pointer; margin-bottom: 18px;
+  }
+  .add-secondary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .save-btn {
+    width: 100%; font-weight: 700; font-size: 14px; letter-spacing: 0.3px;
+    color: #fff; background: var(--brown-700); border: none;
+    border-radius: 10px; padding: 13px; cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .save-btn:hover { background: #543522; }
+  .form-msg { font-size: 12px; color: var(--danger); margin-top: 8px; min-height: 14px; }
+
+  /* ---------- Catalog list ---------- */
+  .catalog-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; padding: 0 2px; flex-wrap: wrap; gap: 8px;
+  }
+  .catalog-toolbar h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 17px; color: var(--brown-900); }
+  .catalog-toolbar h2 span { color: var(--muted); font-family: 'Inter', sans-serif; font-weight: 500; font-size: 13px; }
+  .toolbar-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .text-btn { background: none; border: none; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
+  .clear-all-btn { color: var(--muted); }
+  .clear-all-btn:hover { color: var(--danger); }
+  .delete-selected-btn { color: var(--danger); }
+  .preview-btn { color: var(--brown-700); }
+  .preview-btn:hover { color: #543522; }
+  .addgroup-btn { color: var(--brown-700); }
+  .addgroup-btn:hover { color: #543522; }
+  .printcolours-btn { color: var(--brown-600); }
+  .printcolours-btn:hover { color: var(--brown-700); }
+
+  .board { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+
+  .list-header {
+    display: flex; align-items: center; gap: 8px; background: var(--tan-200);
+    padding: 12px 14px; font-weight: 700; font-size: 11.5px;
+    letter-spacing: 1px; color: var(--brown-700); text-transform: uppercase;
+  }
+  .list-header .lh-srno { width: 48px; }
+  .list-header .lh-details { flex: 1; }
+  .lh-delete-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 12.5px; font-weight: 700; color: var(--danger);
+    text-transform: none; letter-spacing: normal;
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  }
+  .lh-delete-btn:hover { opacity: 0.75; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: #a8987f; font-size: 13px; line-height: 1.6; }
+
+  input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--brown-700); flex-shrink: 0; cursor: pointer; }
+
+  .list-row { border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; padding: 13px 14px; }
+  .list-row:last-child { border-bottom: none; }
+  .list-row:hover { background: #FBF6EC; }
+
+  .row-open { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; }
+
+  .srno { width: 44px; flex-shrink: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 16px; color: var(--brown-700); }
+  .thumb { width: 46px; height: 46px; border-radius: 9px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); }
+
+  .details { flex: 1; min-width: 0; line-height: 1.45; }
+  .details .dname { font-weight: 700; font-size: 14px; color: var(--brown-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .details .dmeta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .home-dots { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; max-width: 144px; }
+  .home-dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); flex-shrink: 0; }
+
+  .type-badge {
+    display: flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+    font-size: 10.5px; font-weight: 800; color: #fff;
+  }
+  .type-badge-p { background: var(--brown-700); }
+  .type-badge-s { background: var(--brown-600); }
+
+  .reorder-col { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+  .chev-btn { background: none; border: none; color: var(--brown-600); font-size: 12px; cursor: pointer; padding: 2px 3px; line-height: 1; }
+  .chev-btn:disabled { color: #ddd2c0; cursor: default; }
+
+  .quicktag-btn {
+    background: var(--tan-200); border: none; color: var(--brown-700);
+    font-size: 10.5px; font-weight: 700; border-radius: 6px;
+    padding: 4px 6px; cursor: pointer; line-height: 1; white-space: nowrap; flex-shrink: 0;
+  }
+  .quicktag-btn:hover { background: #e6d5b8; }
+  .quicktag-btn.active { background: var(--brown-700); color: #fff; }
+
+  .cp-row { border-bottom: 1px solid var(--border); padding: 13px 14px; }
+  .cp-row:last-child { border-bottom: none; }
+  .cp-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cp-swatch { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12); }
+  .cp-fields { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
+  .cp-fields input { font-size: 13px; padding: 7px 9px; }
+  .cp-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .cp-add-btn {
+    flex: 1; min-width: 110px; font-weight: 700; font-size: 12px; border-radius: 8px;
+    padding: 9px 10px; cursor: pointer; border: none; color: #fff;
+  }
+  .cp-add-primary { background: var(--brown-700); }
+  .cp-add-primary:hover { background: #543522; }
+  .cp-add-secondary { background: var(--brown-600); }
+  .cp-add-secondary:hover { background: var(--brown-700); }
+  .cp-remove-btn {
+    background: none; border: none; color: #c9baa4; font-size: 18px;
+    cursor: pointer; line-height: 1; padding: 4px 6px; flex-shrink: 0;
+  }
+  .cp-remove-btn:hover { color: var(--danger); }
+  .cp-added-tag {
+    display: inline-block; font-size: 11px; font-weight: 700; color: #fff;
+    background: var(--brown-700); border-radius: 6px; padding: 4px 8px; margin-top: 8px;
+  }
+
+  .contrast-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .contrast-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .contrast-dot { width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12); flex-shrink: 0; margin-bottom: 8px; }
+  .contrast-hex { font-weight: 700; font-size: 12.5px; color: var(--brown-900); }
+  .contrast-label { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+  .contrast-ratio-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .contrast-ratio { font-weight: 700; font-size: 12px; color: var(--brown-900); }
+  .contrast-badge { font-size: 9.5px; font-weight: 800; color: #fff; border-radius: 5px; padding: 2px 6px; letter-spacing: 0.3px; }
+  .contrast-tag-btn {
+    width: 100%; margin-top: 10px; font-weight: 700; font-size: 12px; color: #fff;
+    background: var(--brown-700); border: none; border-radius: 8px; padding: 8px; cursor: pointer;
+  }
+  .contrast-tag-btn:hover { background: #543522; }
+  .contrast-tag-btn:disabled { background: #cbb99d; cursor: default; }
+
+  @media (min-width: 460px) {
+    .contrast-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .quicktag-panel {
+    padding: 10px 14px 14px; border-top: 1px dashed var(--border); background: #FBF6EC;
+  }
+  .quicktag-panel input.text-input { width: 100%; margin-bottom: 8px; }
+  .quicktag-options { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+
+  .trash-btn { background: none; border: none; font-size: 16px; color: #c9baa4; cursor: pointer; line-height: 1; padding: 2px; flex-shrink: 0; }
+  .trash-btn:hover { color: var(--danger); }
+
+  /* ---------- Detail view ---------- */
+  .detail-hero {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 26px 22px; text-align: center; margin-bottom: 18px;
+  }
+  .detail-swatch { width: 88px; height: 88px; border-radius: 20px; margin: 0 auto 14px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); }
+  .detail-name { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 22px; color: var(--brown-900); }
+  .detail-hex { font-size: 13px; color: var(--muted); margin-top: 3px; letter-spacing: 0.5px; }
+
+  .detail-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .detail-actions button {
+    flex: 1; font-weight: 600; font-size: 13.5px;
+    border-radius: 9px; padding: 11px; cursor: pointer; border: 1px solid var(--border);
+  }
+  .edit-btn { background: var(--brown-700); color: #fff; border-color: var(--brown-700); }
+  .edit-btn:hover { background: #543522; }
+  .delete-btn { background: #fff; color: var(--danger); }
+  .delete-btn:hover { background: #fdf0ee; }
+
+  .detail-section-label { font-weight: 700; font-size: 11px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin: 0 2px 12px; }
+
+  .detail-secondary-grid {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; display: flex; flex-wrap: wrap; gap: 18px 12px;
+  }
+  .detail-combo { display: flex; flex-direction: column; align-items: center; width: 84px; }
+  .detail-dual { position: relative; width: 84px; height: 54px; }
+  .detail-dual .c1, .detail-dual .c2 { position: absolute; top: 0; width: 54px; height: 54px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+  .detail-dual .c1 { left: 0; z-index: 1; }
+  .detail-dual .c2 { left: 30px; z-index: 2; }
+  .detail-combo .hex { margin-top: 7px; font-size: 10.5px; font-weight: 600; color: #5c4a38; }
+  .detail-combo .cname { font-size: 9.5px; color: var(--muted); text-align: center; margin-top: 1px; line-height: 1.2; }
+
+  @media (max-width: 480px) {
+    .srno { width: 40px; font-size: 15px; }
+    .thumb { width: 42px; height: 42px; }
+    .details .dname { font-size: 13.5px; }
+    .detail-secondary-grid { flex-wrap: nowrap; justify-content: space-between; padding: 16px 12px; gap: 0; }
+    .detail-combo { width: 64px; }
+    .detail-dual { width: 62px; height: 40px; }
+    .detail-dual .c1, .detail-dual .c2 { width: 40px; height: 40px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+    .detail-dual .c2 { left: 22px; }
+    .detail-combo .hex { font-size: 8.5px; margin-top: 5px; }
+    .detail-combo .cname { font-size: 8px; max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+
+  /* ---------- Groups ---------- */
+  .group-create-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .group-create-btn {
+    font-weight: 600; font-size: 13px; color: #fff; background: var(--brown-700);
+    border: none; border-radius: 9px; padding: 0 16px; cursor: pointer; white-space: nowrap;
+  }
+  .group-create-btn:hover { background: #543522; }
+
+  .group-row {
+    display: flex; align-items: center; gap: 10px; padding: 13px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .group-row:last-child { border-bottom: none; }
+  .group-open-btn {
+    flex: 1; background: none; border: none; text-align: left; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; min-width: 0;
+  }
+  .group-open-btn .gname { font-weight: 700; font-size: 14px; color: var(--brown-900); }
+  .group-open-btn .gcount { font-size: 12px; color: var(--muted); }
+  .group-icon-btn { background: none; border: none; font-size: 15px; color: var(--muted); cursor: pointer; padding: 4px; flex-shrink: 0; }
+  .group-icon-btn:hover { color: var(--brown-700); }
+  .group-icon-btn.danger:hover { color: var(--danger); }
+  .group-rename-input {
+    flex: 1; font-size: 13.5px; border: 1px solid var(--brown-700); border-radius: 7px; padding: 6px 8px;
+  }
+
+  /* ---------- Add to group ---------- */
+  .atg-section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .atg-existing-row { display: flex; gap: 8px; }
+  .atg-select { flex: 1; }
+  .atg-add-btn {
+    font-weight: 600; font-size: 13px; color: #fff; background: var(--brown-700);
+    border: none; border-radius: 9px; padding: 0 16px; cursor: pointer;
+  }
+  .atg-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .combo-wrap { position: relative; flex: 1; min-width: 0; }
+  .combo-wrap .text-input { width: 100%; }
+
+  @media (max-width: 480px) {
+    .secondary-row .combo-wrap { flex: 1 1 100%; order: 5; }
+  }
+  .combo-dropdown {
+    display: none;
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    max-height: 260px; overflow-y: auto; z-index: 20;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  }
+  .combo-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border);
+  }
+  .combo-item:last-child { border-bottom: none; }
+  .combo-item:hover { background: #FBF6EC; }
+  .combo-item-dot { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+  .combo-item-text { font-size: 13px; color: var(--brown-900); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .combo-item-text span { color: var(--muted); font-size: 11.5px; margin-left: 4px; }
+  .combo-empty { padding: 14px 12px; font-size: 13px; color: var(--muted); text-align: center; }
+
+  /* ---------- Prepare Catalog (print) ---------- */
+  .pc-toolbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .pc-count { font-size: 12.5px; color: var(--muted); }
+  .pc-print-btn {
+    font-weight: 700; font-size: 13.5px; color: #fff; background: var(--brown-700);
+    border: none; border-radius: 9px; padding: 10px 18px; cursor: pointer;
+  }
+  .pc-print-btn:hover { background: #543522; }
+
+  .pc-board {
+    background: #fdfcfb; border: 1px solid var(--border); border-radius: 18px;
+    padding: 26px 22px 18px;
+  }
+  .pc-page { margin-bottom: 20px; }
+  .pc-page:last-child { margin-bottom: 0; }
+  .pc-page-num {
+    text-align: center; font-size: 11px; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.5px; margin-top: 20px;
+  }
+  .pc-title { text-align: center; margin-bottom: 14px; padding: 0 4px; }
+  .pc-title .eyebrow {
+    font-weight: 700; letter-spacing: 9px; font-size: clamp(9px, 2.2vw, 12px); color: var(--brown-900);
+  }
+  .pc-title h1 {
+    font-family: 'Playfair Display', Georgia, serif; font-weight: 800;
+    font-size: clamp(24px, 8vw, 38px); color: var(--brown-900); line-height: 1.1; word-break: break-word;
+  }
+  .pc-title h1 span { color: var(--danger); }
+  .pc-sub { text-align: center; font-size: 12px; letter-spacing: 1px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .pc-meta-line { text-align: center; font-size: 11.5px; color: var(--muted); margin-bottom: 16px; }
+
+  .pc-row {
+    display: flex; flex-wrap: wrap; align-items: center;
+    column-gap: 24px; row-gap: 6px;
+    padding: 12px 4px; border-bottom: 1px solid var(--border);
+  }
+  .pc-row:last-child { border-bottom: none; }
+  .pc-num {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pc-pname { display: flex; flex-direction: column; line-height: 1.25; flex: 0 1 auto; min-width: 0; }
+  .pc-pname .name { font-weight: 700; font-size: 13px; color: var(--brown-900); }
+  .pc-pname .hex { font-size: 10.5px; color: var(--muted); font-weight: 500; }
+  .pc-primary-swatch { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06); }
+
+  .pc-combos { flex: 1 0 100%; display: flex; flex-wrap: nowrap; justify-content: space-between; gap: 3px; padding-left: 34px; }
+  .pc-combo { display: flex; flex-direction: column; align-items: center; width: 54px; flex: 0 1 54px; min-width: 0; }
+  .pc-dual { position: relative; width: 50px; height: 32px; flex-shrink: 0; }
+  .pc-dual .c1, .pc-dual .c2 { position: absolute; top: 0; width: 32px; height: 32px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
+  .pc-dual .c1 { left: 0; z-index: 1; }
+  .pc-dual .c2 { left: 18px; z-index: 2; }
+  .pc-combo .hex { margin-top: 4px; font-size: 8px; font-weight: 600; color: #5c4a38; white-space: nowrap; }
+  .pc-combo .cname { font-size: 7.5px; color: var(--muted); text-align: center; line-height: 1.1; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 54px; }
+
+  @media (min-width: 560px) {
+    .pc-row { flex-wrap: nowrap; column-gap: 8px; }
+    .pc-pname { width: 150px; }
+    .pc-combos { flex: 1 1 auto; padding-left: 8px; }
+    .pc-combo { width: 60px; flex: 0 1 60px; }
+    .pc-dual { width: 59px; height: 38px; }
+    .pc-dual .c1, .pc-dual .c2 { width: 38px; height: 38px; }
+    .pc-dual .c2 { left: 21px; }
+  }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff; padding: 0; }
+    .wrap { max-width: none; padding: 0; background: #fff; }
+    .pc-board { border: none; border-radius: 0; padding: 0; }
+    .pc-page { margin-bottom: 0; break-after: page; }
+    .pc-page:last-child { break-after: auto; }
+    @page { size: A4; margin: 12mm; }
+  }
+
+  /* ---------- Print Colours (flat swatch sheet) ---------- */
+  .sw-board {
+    background: #fdfcfb; border: 1px solid var(--border); border-radius: 18px;
+    padding: 26px 22px 18px;
+  }
+  .sw-page { margin-bottom: 20px; }
+  .sw-page:last-child { margin-bottom: 0; }
+  .sw-page-num {
+    text-align: center; font-size: 11px; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.5px; margin-top: 20px;
+  }
+  .sw-title { text-align: center; margin-bottom: 14px; padding: 0 4px; }
+  .sw-title .eyebrow {
+    font-weight: 700; letter-spacing: 9px; font-size: clamp(9px, 2.2vw, 12px); color: var(--brown-900);
+  }
+  .sw-title h1 {
+    font-family: 'Playfair Display', Georgia, serif; font-weight: 800;
+    font-size: clamp(22px, 7vw, 32px); color: var(--brown-900); line-height: 1.1; word-break: break-word;
+  }
+  .sw-title h1 span { color: var(--danger); }
+  .sw-sub { text-align: center; font-size: 12px; letter-spacing: 1px; font-weight: 600; color: var(--muted); margin-bottom: 18px; }
+
+  .sw-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px 6px;
+  }
+  .sw-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .sw-srno { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 10px; color: var(--brown-700); margin-bottom: 4px; }
+  .sw-dot { width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); flex-shrink: 0; }
+  .sw-hex { margin-top: 7px; font-weight: 700; font-size: 9.5px; color: var(--brown-900); white-space: nowrap; }
+  .sw-name { font-size: 8.5px; color: var(--muted); margin-top: 1px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+  @media (min-width: 460px) {
+    .sw-grid { gap: 20px 12px; }
+    .sw-srno { font-size: 12px; margin-bottom: 5px; }
+    .sw-dot { width: 56px; height: 56px; }
+    .sw-hex { font-size: 11.5px; margin-top: 8px; }
+    .sw-name { font-size: 10.5px; }
+  }
+
+  @media print {
+    .sw-board { border: none; border-radius: 0; padding: 0; }
+    .sw-page { margin-bottom: 0; break-after: page; }
+    .sw-page:last-child { break-after: auto; }
+    .sw-grid { grid-template-columns: repeat(4, 1fr); gap: 20px 12px; }
+    .sw-srno { font-size: 12px; margin-bottom: 5px; }
+    .sw-dot { width: 56px; height: 56px; }
+    .sw-hex { font-size: 11.5px; margin-top: 8px; }
+    .sw-name { font-size: 10.5px; }
+  }
+</style>
+
+</head>
+
+<body style="background:#F4ECDC;">
+<div class="topbar"></div>
+<div class="tabbar no-print" id="tabbar">
+  <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">Home</button>
+  <button class="tab-btn" data-tab="colourpicker" onclick="switchTab('colourpicker')">Colour Picker</button>
+  <button class="tab-btn" data-tab="primary" onclick="switchTab('primary')">Primary Colours</button>
+  <button class="tab-btn" data-tab="secondary" onclick="switchTab('secondary')">Secondary Colours</button>
+  <button class="tab-btn" data-tab="groups" onclick="switchTab('groups')">Groups</button>
+  <button class="tab-btn" data-tab="backup" onclick="switchTab('backup')">Backup &amp; Restore</button>
+</div>
+<div class="wrap">
+
+  <!-- ============ HOME: UNIFIED ALL-COLOURS VIEW ============ -->
+  <div class="view active" id="view-home">
+    <div class="screen-header no-print">
+      <span class="header-icon">&#9986;</span>
+      <h1>Color Catalog</h1>
+    </div>
+    <div class="page-sub no-print">Every color you've saved — primary and secondary — in one place.</div>
+
+    <div class="filter-row no-print">
+      <button class="add-colour-btn" onclick="openAddNeutralColours()">+ Add Colour(s)</button>
+    </div>
+
+    <div class="catalog-toolbar">
+      <h2>All Colours <span id="homeAllCount"></span></h2>
+      <div class="toolbar-actions" id="homeToolbarActions"></div>
+    </div>
+
+    <div class="board">
+      <div class="list-header">
+        <input type="checkbox" id="homeSelectAllChk" onchange="toggleHomeSelectAll(this.checked)">
+        <div class="lh-srno" style="cursor:pointer; display:flex; align-items:center; gap:3px;" onclick="toggleHomeSort()" title="Click to change sort order">SR NO. <span id="homeSortArrow">&#9660;</span></div>
+        <div class="lh-details">Colour</div>
+        <button class="lh-delete-btn" id="homeBulkDeleteBtn" onclick="deleteSelectedHomeItems()" title="Delete selected" style="display:none;">
+          &#128465; <span id="homeBulkDeleteCount"></span>
+        </button>
+      </div>
+      <div id="homeAllBoard">
+        <div class="empty-state">No colors yet.<br>Tap "+ Add Colour(s)" to get started.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PRIMARY COLOURS / LIST VIEW ============ -->
+  <div class="view" id="view-list">
+    <div class="screen-header no-print">
+      <span class="header-icon">&#9986;</span>
+      <h1>Color Catalog</h1>
+    </div>
+    <div class="page-sub no-print">Your saved color combinations. Tap any row to see its full palette.</div>
+
+    <div class="filter-row no-print">
+      <button class="add-primary-btn" onclick="openAddPrimaryColours()">+ Add Primary Color</button>
+    </div>
+
+    <div class="filter-row no-print">
+      <div class="select-wrap" style="flex:1;">
+        <select class="group-select" id="groupFilterSelect" onchange="setGroupFilter(this.value)" style="width:100%;">
+          <option value="">All Groups</option>
+        </select>
+      </div>
+      <button class="groups-link-btn" onclick="openGroups()">Groups</button>
+    </div>
+
+    <div class="catalog-toolbar no-print">
+      <h2>Your Catalog <span id="catalogCount"></span></h2>
+      <div class="toolbar-actions" id="toolbarActions"></div>
+    </div>
+
+    <div class="board">
+      <div class="list-header no-print">
+        <input type="checkbox" id="selectAllChk" onchange="toggleSelectAll(this.checked)">
+        <div class="lh-srno" style="cursor:pointer; display:flex; align-items:center; gap:3px;" onclick="togglePrimarySort()" title="Click to change sort order">Sr No. <span id="primarySortArrow">&#9660;</span></div>
+        <div class="lh-details">Details</div>
+        <button class="lh-delete-btn" id="bulkDeleteBtn" onclick="deleteSelected()" title="Delete selected" style="display:none;">
+          &#128465; <span id="bulkDeleteCount"></span>
+        </button>
+      </div>
+      <div id="catalogBoard">
+        <div class="empty-state">Your catalog is empty.<br>Tap "+ Add Primary Color" to get started.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BUILDER (ADD / EDIT) VIEW ============ -->
+  <div class="view" id="view-builder">
+    <div class="screen-header">
+      <button class="back-btn" onclick="closeBuilder()">&#10005;</button>
+      <h1 id="builderTitle">Add Design</h1>
+    </div>
+
+    <div class="builder">
+      <div class="section-label">Primary Color</div>
+      <div class="primary-row">
+        <div class="swatch-input"><input type="color" id="primaryColor" value="#DBA7B1"></div>
+        <button type="button" class="photo-pick-btn" onclick="openImagePicker('primary')" title="Pick color from a photo">&#128247;</button>
+        <input type="text" class="text-input hex-field" id="primaryHex" value="#DBA7B1" maxlength="7">
+        <input type="text" class="text-input name-field" id="primaryName" placeholder="Color name (e.g. Dusty Pink)">
+      </div>
+
+      <div class="section-label">Secondary Colors (optional, up to 5)</div>
+      <div class="frozen-bar" style="margin-bottom:14px; padding-top:0;">
+        <div style="display:flex; gap:8px;">
+          <button class="add-secondary-btn" id="addSecondaryBtn" onclick="addSecondarySlot()" style="margin-bottom:0;">+ New color</button>
+          <button class="add-secondary-btn" onclick="openPickExistingForDraft()" style="margin-bottom:0;">Pick existing</button>
+        </div>
+      </div>
+      <div class="secondary-list" id="secondaryList"></div>
+
+      <button class="save-btn" id="saveBtn" onclick="saveEntry()">Add to Catalog</button>
+      <div class="form-msg" id="formMsg"></div>
+    </div>
+  </div>
+
+  <!-- ============ ADD MULTIPLE PRIMARY COLOURS VIEW ============ -->
+  <div class="view" id="view-addMultiplePrimaries">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <h1>Add Multiple Colours</h1>
+    </div>
+    <div class="page-sub">Quickly add several primary colors at once. You can tag secondary colors to each one afterward.</div>
+
+    <div class="builder">
+      <div class="section-label">New Primary Colours</div>
+      <div class="secondary-list" id="multiPrimaryList"></div>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button class="add-secondary-btn" style="margin-bottom:0;" onclick="addMultiPrimarySlot()">+ Add another color</button>
+        <button class="photo-pick-btn wide" onclick="openImagePickerBulk('multiPrimaryDraft')" title="Add colours from a photo">&#128247; From Photo</button>
+      </div>
+      <button class="save-btn" onclick="saveMultiplePrimaries()">Add All to Catalog</button>
+      <div class="form-msg" id="multiPrimaryMsg"></div>
+    </div>
+  </div>
+
+  <!-- ============ DETAIL VIEW ============ -->
+  <div class="view" id="view-detail">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <h1>Design Details</h1>
+    </div>
+
+    <div class="detail-hero">
+      <div class="detail-swatch" id="detailSwatch"></div>
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-hex" id="detailHex"></div>
+      <div class="detail-actions">
+        <button class="edit-btn" id="detailEditBtn">Edit</button>
+        <button class="delete-btn" id="detailDeleteBtn">Delete</button>
+      </div>
+    </div>
+
+    <div class="detail-section-label">Secondary Colors</div>
+    <div class="detail-secondary-grid" id="detailSecondaryGrid"></div>
+
+    <div class="combo-wrap" style="margin-top:14px;">
+      <input type="text" class="text-input" id="detailTagSearchInput" placeholder="Search to tag a secondary colour…" autocomplete="off">
+      <div class="combo-dropdown" id="detailTagDropdown"></div>
+    </div>
+    <button class="add-secondary-btn" id="detailTagBtn" style="margin-top:10px;">Browse All / Tag Multiple</button>
+
+    <div class="detail-section-label" style="margin-top:24px;">&#128300; Scientific Contrast Suggestions</div>
+    <div class="page-sub" style="margin-top:-8px; margin-bottom:12px;">Generated using WCAG contrast ratio math and colour-wheel theory (complementary, triadic, analogous), based on this primary's hue.</div>
+    <div class="contrast-grid" id="detailContrastGrid"></div>
+  </div>
+
+  <!-- ============ GROUPS LIST VIEW ============ -->
+  <div class="view" id="view-groups">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <h1>Groups</h1>
+    </div>
+    <div class="page-sub">Organize your colors into named groups.</div>
+
+    <div class="group-create-row">
+      <input type="text" class="text-input" id="newGroupName" placeholder="New group name" style="flex:1;">
+      <button class="group-create-btn" onclick="createGroupFromGroupsView()">+ Create</button>
+    </div>
+
+    <div class="board" id="groupsBoard">
+      <div class="empty-state">No groups yet.<br>Create one above to organize your colors.</div>
+    </div>
+  </div>
+
+  <!-- ============ GROUP DETAIL VIEW ============ -->
+  <div class="view" id="view-groupDetail">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('groups')">&#10005;</button>
+      <h1 id="groupDetailTitle">Group</h1>
+    </div>
+    <div class="toolbar-actions" id="groupDetailToolbarActions" style="margin-bottom:14px;"></div>
+    <div class="board">
+      <div class="list-header">
+        <input type="checkbox" id="groupDetailSelectAllChk" onchange="toggleGroupDetailSelectAll(this.checked)">
+        <div class="lh-details">Colour</div>
+        <button class="lh-delete-btn" id="groupDetailBulkRemoveBtn" onclick="removeSelectedFromGroup()" title="Remove selected from group" style="display:none;">
+          &#10005; <span id="groupDetailBulkRemoveCount"></span>
+        </button>
+      </div>
+      <div id="groupDetailBoard">
+        <div class="empty-state">No colors in this group yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ADD TO GROUP VIEW ============ -->
+  <div class="view" id="view-addToGroup">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView(addToGroupReturnView)">&#10005;</button>
+      <h1>Add to Group</h1>
+    </div>
+    <div class="page-sub" id="atgSubHeader"></div>
+
+    <div class="atg-section" id="atgExistingSection">
+      <div class="section-label">Existing Groups</div>
+      <div class="atg-existing-row">
+        <select class="text-input atg-select" id="atgGroupSelect">
+          <option value="">Select a group…</option>
+        </select>
+        <button class="atg-add-btn" id="atgAddBtn" onclick="addSelectedToExistingGroup()" disabled>Add</button>
+      </div>
+    </div>
+
+    <div class="atg-section">
+      <div class="section-label">New Group</div>
+      <div class="atg-existing-row">
+        <input type="text" class="text-input atg-select" id="atgNewGroupName" placeholder="e.g. Warm Neutrals">
+        <button class="atg-add-btn" onclick="createGroupFromSelection()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PREPARE CATALOG (PRINT) VIEW ============ -->
+  <div class="view" id="view-preview">
+    <div class="screen-header no-print">
+      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <h1>Prepare Catalog</h1>
+    </div>
+    <div class="pc-toolbar no-print">
+      <div class="pc-count" id="pcCount"></div>
+      <button class="pc-print-btn" onclick="doPrint()">&#128424; Print / Save PDF</button>
+    </div>
+
+    <div id="pcPages"></div>
+  </div>
+
+  <!-- ============ ALL COLOURS SELECTOR VIEW ============ -->
+  <div class="view" id="view-allcolours">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <h1>Select Colours</h1>
+    </div>
+    <div class="page-sub" id="acSubHeader"></div>
+
+    <div class="catalog-toolbar">
+      <h2>Choose colours to print</h2>
+      <button class="pc-print-btn" id="acPrintBtn" onclick="confirmPrintSelectedColours()" style="padding:9px 16px; font-size:12.5px;">Print Selected</button>
+    </div>
+
+    <div class="board">
+      <div class="list-header">
+        <input type="checkbox" id="acSelectAllChk" onchange="toggleAllColoursSelectAll(this.checked)">
+        <div class="lh-details">Colour</div>
+      </div>
+      <div id="allColoursBoard"></div>
+    </div>
+  </div>
+
+  <!-- ============ PRINT COLOURS (FLAT SWATCH SHEET) VIEW ============ -->
+  <div class="view" id="view-printcolours">
+    <div class="screen-header no-print">
+      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <h1>Print Colours</h1>
+    </div>
+    <div class="pc-toolbar no-print">
+      <div class="pc-count" id="swCount"></div>
+      <button class="pc-print-btn" onclick="doPrint()">&#128424; Print / Save PDF</button>
+    </div>
+
+    <div id="swPages"></div>
+  </div>
+
+  <!-- ============ SECONDARY COLOURS BROWSE VIEW ============ -->
+  <div class="view" id="view-secondarycolours">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <h1>Secondary Colours</h1>
+    </div>
+    <div class="page-sub" id="scSubHeader"></div>
+
+    <button class="add-primary-btn" onclick="openAddSecondaryColours()">+ Add Secondary Colours</button>
+
+    <div class="catalog-toolbar">
+      <h2>Colour Pool</h2>
+      <div class="toolbar-actions" id="scToolbarActions"></div>
+    </div>
+
+    <div class="board">
+      <div class="list-header">
+        <input type="checkbox" id="scSelectAllChk" onchange="toggleScSelectAll(this.checked)">
+        <div class="lh-srno" style="cursor:pointer; display:flex; align-items:center; gap:3px;" onclick="toggleSecondarySort()" title="Click to change sort order">Sr No. <span id="secondarySortArrow">&#9660;</span></div>
+        <div class="lh-details">Details</div>
+        <button class="lh-delete-btn" id="scBulkDeleteBtn" onclick="deleteSelectedSecondaryColours()" title="Delete selected" style="display:none;">
+          &#128465; <span id="scBulkDeleteCount"></span>
+        </button>
+      </div>
+      <div id="secondaryColoursBoard"></div>
+    </div>
+  </div>
+
+  <!-- ============ ADD SECONDARY COLOURS (MULTI) VIEW ============ -->
+  <div class="view" id="view-addSecondaryColours">
+    <div class="screen-header">
+      <button class="back-btn" onclick="backFromAddColours()">&#10005;</button>
+      <h1 id="addColoursTitle">Add Secondary Colours</h1>
+    </div>
+    <div class="page-sub" id="addColoursSubHeader">Add one or more secondary colors to your pool. Tag them to a primary color now or later.</div>
+
+    <div class="frozen-bar">
+      <div class="section-label" style="margin-bottom:6px;">Default Type For Colours Below</div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <div class="select-wrap" style="flex:1;">
+          <select class="text-input" id="bulkRoleSelect" onchange="onBulkRoleChange()" style="width:100%;">
+            <option value="secondary" selected>Secondary Colours</option>
+            <option value="primary">Primary Colours</option>
+          </select>
+        </div>
+        <button class="photo-pick-btn" onclick="openImagePickerBulk('newSecondaryDraft')" title="Add colours from a photo">&#128247;</button>
+      </div>
+    </div>
+
+    <div class="builder">
+      <div class="section-label">New Colours</div>
+      <div class="secondary-list" id="newSecondaryList"></div>
+      <button class="add-secondary-btn" onclick="addNewSecondarySlot()">+ Add another color</button>
+
+      <button class="save-btn" id="bulkSaveBtn" onclick="saveNewSecondaryColours()">Save</button>
+      <div class="form-msg" id="addScMsg"></div>
+    </div>
+  </div>
+
+  <!-- ============ SECONDARY COLOR DETAIL VIEW ============ -->
+  <div class="view" id="view-secondaryDetail">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('secondarycolours')">&#10005;</button>
+      <h1>Colour Details</h1>
+    </div>
+
+    <div class="detail-hero">
+      <div class="detail-swatch" id="secDetailSwatch"></div>
+      <div class="detail-name" id="secDetailName"></div>
+      <div class="detail-hex" id="secDetailHex"></div>
+      <div class="detail-actions">
+        <button class="edit-btn" id="secDetailEditBtn">Edit</button>
+        <button class="delete-btn" id="secDetailDeleteBtn">Delete</button>
+      </div>
+      <button class="save-btn" id="secDetailMakePrimaryBtn" style="margin-top:10px;">&#9733; Make This a Primary Colour</button>
+      <div class="form-msg" id="secDetailPromoteMsg"></div>
+    </div>
+
+    <div class="detail-section-label">Tagged Primary Colours</div>
+    <div class="board" id="secDetailPrimaryList"></div>
+
+    <div class="combo-wrap" style="margin-top:14px;">
+      <input type="text" class="text-input" id="secDetailTagSearchInput" placeholder="Search primary colours to tag this to…" autocomplete="off">
+      <div class="combo-dropdown" id="secDetailTagDropdown"></div>
+    </div>
+  </div>
+
+  <!-- ============ EDIT SECONDARY COLOR VIEW ============ -->
+  <div class="view" id="view-editSecondaryColor">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('secondaryDetail')">&#10005;</button>
+      <h1>Edit Colour</h1>
+    </div>
+
+    <div class="builder">
+      <div class="section-label">Colour</div>
+      <div class="primary-row">
+        <div class="swatch-input"><input type="color" id="editSecColorInput" value="#000000"></div>
+        <button type="button" class="photo-pick-btn" onclick="openImagePicker('editsec')" title="Pick color from a photo">&#128247;</button>
+        <input type="text" class="text-input hex-field" id="editSecHexInput" maxlength="7">
+        <input type="text" class="text-input name-field" id="editSecNameInput" placeholder="Color name">
+      </div>
+      <button class="save-btn" onclick="saveEditedSecondaryColor()">Save Changes</button>
+      <div class="form-msg" id="editSecMsg"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAG SECONDARIES TO PRIMARY VIEW ============ -->
+  <div class="view" id="view-tagprimary">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('secondarycolours')">&#10005;</button>
+      <h1>Tag to Primary</h1>
+    </div>
+    <div class="page-sub" id="tagPrimarySubHeader"></div>
+
+    <div class="atg-section">
+      <div class="section-label">Choose Primary Colour</div>
+      <div class="atg-existing-row">
+        <div class="combo-wrap">
+          <input type="text" class="text-input atg-select" id="tagPrimarySearchInput" placeholder="Search primary colors…" autocomplete="off">
+          <div class="combo-dropdown" id="tagPrimaryDropdown"></div>
+        </div>
+        <button class="atg-add-btn" id="tagPrimaryBtn" onclick="confirmTagSecondariesToPrimary()" disabled>Tag</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PICK SECONDARIES FOR A PRIMARY (FROM DETAIL VIEW) ============ -->
+  <div class="view" id="view-pickSecForEntry">
+    <div class="screen-header">
+      <button class="back-btn" onclick="backFromPickSec()">&#10005;</button>
+      <h1>Tag Secondary Colours</h1>
+    </div>
+    <div class="page-sub" id="pickSecSubHeader"></div>
+
+    <div class="catalog-toolbar">
+      <h2>Colour Pool</h2>
+      <button class="pc-print-btn" id="pickSecConfirmBtn" onclick="confirmPickSecForEntry()" style="padding:9px 16px; font-size:12.5px;">Save Tags</button>
+    </div>
+
+    <div class="board">
+      <div class="list-header">
+        <input type="checkbox" id="pickSecSelectAllChk" onchange="togglePickSecForEntrySelectAll(this.checked)">
+        <div class="lh-details">Colour</div>
+      </div>
+      <div id="pickSecForEntryBoard"></div>
+    </div>
+  </div>
+
+  <!-- ============ BACKUP & RESTORE VIEW ============ -->
+  <!-- ============ COLOUR PICKER (FROM PHOTOS) VIEW ============ -->
+  <div class="view" id="view-colourpicker">
+    <div class="screen-header no-print">
+      <span class="header-icon">&#127912;</span>
+      <h1>Colour Picker</h1>
+    </div>
+    <div class="page-sub no-print">Upload a photo, pick out colours you like, then decide whether each becomes a Primary or Secondary colour.</div>
+
+    <button class="add-colour-btn" onclick="openImagePickerBulk('colourPickerStaged')">&#128247; Upload Image &amp; Pick Colours</button>
+
+    <div class="catalog-toolbar">
+      <h2>Picked Colours <span id="cpStagedCount"></span></h2>
+      <button class="text-btn clear-all-btn" id="cpClearBtn" onclick="clearColourPickerStaged()" style="display:none;">Clear all</button>
+    </div>
+
+    <div class="board">
+      <div id="cpStagedBoard">
+        <div class="empty-state">No colours picked yet.<br>Upload a photo to get started.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-backup">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <h1>Backup &amp; Restore</h1>
+    </div>
+    <div class="page-sub">Your colors live only in this browser tab. Download a backup to keep them safe, or restore from a previous one.</div>
+
+    <div class="builder">
+      <div class="section-label">Export</div>
+      <p style="font-size:13px; color:var(--brown-900); margin-bottom:14px; line-height:1.5;">
+        Download everything in your catalog — colors and groups — as a single backup file.
+      </p>
+      <button class="save-btn" onclick="exportBackup()">Download Backup (.json)</button>
+    </div>
+
+    <div class="builder">
+      <div class="section-label">Restore</div>
+      <p style="font-size:13px; color:var(--brown-900); margin-bottom:14px; line-height:1.5;">
+        Restoring replaces your current catalog and groups with the contents of the backup file.
+      </p>
+      <input type="file" id="restoreFileInput" accept="application/json,.json" style="display:none">
+      <button class="add-secondary-btn" onclick="document.getElementById('restoreFileInput').click()" style="margin-bottom:12px;">Choose Backup File</button>
+      <div id="restoreFileName" style="font-size:12.5px; color:var(--muted); margin-bottom:12px;"></div>
+      <button class="save-btn" id="restoreBtn" onclick="performRestore()" disabled>Restore from Backup</button>
+      <div class="form-msg" id="restoreMsg"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Hidden file input for camera / photo library -->
+<input type="file" id="imagePickerInput" accept="image/*" style="display:none">
+
+<!-- Image color picker overlay -->
+<div class="img-picker-overlay" id="imgPickerOverlay">
+  <div class="img-picker-card">
+    <div class="img-picker-scroll">
+      <div class="img-picker-title">Pick colors from your photo</div>
+      <div class="img-picker-hint" id="imgPickerHint">Tap anywhere on the image, or tap a color below, to sample it.</div>
+      <div class="img-picker-canvas-wrap" id="imgPickerCanvasWrap">
+        <canvas id="imgPickerCanvas"></canvas>
+        <div class="img-picker-marker" id="imgPickerMarker"></div>
+      </div>
+
+      <div class="img-picker-palette-label">Colors found in this photo</div>
+      <div class="img-picker-palette" id="imgPickerPalette"></div>
+    </div>
+
+    <div class="img-picker-footer">
+      <div class="img-picker-preview" id="imgPickerSinglePreview">
+        <div class="img-picker-swatch" id="imgPickerSwatch" style="background:#eee;"></div>
+        <div>
+          <div class="img-picker-hex" id="imgPickerHex">No color selected</div>
+          <div class="img-picker-hex-sub">Tap the image or a swatch above to sample a color</div>
+        </div>
+      </div>
+      <div class="img-picker-actions" id="imgPickerBulkActions" style="display:none;">
+        <button class="img-picker-cancel-btn" onclick="closeImagePicker()" style="flex:0 0 auto; padding:11px 16px;">Cancel</button>
+        <button class="img-picker-use-btn" id="imgPickerAddSelectedBtn" onclick="confirmBulkPaletteSelection()">Add Selected (0) to List</button>
+      </div>
+      <div class="img-picker-actions" id="imgPickerSingleActions">
+        <button class="img-picker-cancel-btn" onclick="closeImagePicker()">Cancel</button>
+        <button class="img-picker-use-btn" id="imgPickerUseBtn" onclick="confirmImagePickerColor()" disabled>Use This Color</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+/* ---------------- Image color picker (camera / photo library) ---------------- */
+
+let imgPickerTarget = null; // 'primary' | numeric secondary index | 'editsec' (single-select mode)
+let imgPickerCtx = null;
+let imgPickerSelectedHex = null;
+let imgPickerPalette = []; // extracted hex list from the current photo
+let imgPickerMode = 'single'; // 'single' or 'bulk'
+let imgPickerBulkTargetList = null; // 'newSecondaryDraft' or 'multiPrimaryDraft'
+let imgPickerSelectedPalette = new Set(); // hexes checked, bulk mode only
+
+function openImagePicker(target) {
+  imgPickerMode = 'single';
+  imgPickerTarget = target;
+  document.getElementById('imagePickerInput').value = '';
+  document.getElementById('imagePickerInput').click();
+}
+
+function openImagePickerBulk(targetListName) {
+  imgPickerMode = 'bulk';
+  imgPickerBulkTargetList = targetListName;
+  document.getElementById('imagePickerInput').value = '';
+  document.getElementById('imagePickerInput').click();
+}
+
+function extractPalette(ctx, w, h, maxColors) {
+  maxColors = maxColors || 12;
+  const buckets = new Map();
+  const stepX = Math.max(1, Math.floor(w / 60));
+  const stepY = Math.max(1, Math.floor(h / 60));
+  for (let y = 0; y < h; y += stepY) {
+    for (let x = 0; x < w; x += stepX) {
+      const d = ctx.getImageData(x, y, 1, 1).data;
+      if (d[3] < 200) continue;
+      const qr = Math.round(d[0] / 24) * 24, qg = Math.round(d[1] / 24) * 24, qb = Math.round(d[2] / 24) * 24;
+      const key = qr + ',' + qg + ',' + qb;
+      if (!buckets.has(key)) buckets.set(key, { r: 0, g: 0, b: 0, count: 0 });
+      const b = buckets.get(key);
+      b.r += d[0]; b.g += d[1]; b.b += d[2]; b.count++;
+    }
+  }
+  const arr = Array.from(buckets.values()).sort((a, b) => b.count - a.count).slice(0, maxColors);
+  return arr.map(b => {
+    const r = Math.round(b.r / b.count), g = Math.round(b.g / b.count), bl = Math.round(b.b / b.count);
+    return '#' + [r, g, bl].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+  });
+}
+
+function renderImgPickerPalette() {
+  const el = document.getElementById('imgPickerPalette');
+  if (imgPickerMode === 'bulk') {
+    el.innerHTML = imgPickerPalette.map((hex) => `
+      <div class="img-picker-palette-swatch bulk ${imgPickerSelectedPalette.has(hex) ? 'selected' : ''}" style="background:${hex}" data-hex="${hex}" onclick="togglePaletteSelection('${hex}')" title="${hex}">
+        <span class="palette-check">&#10003;</span>
+      </div>
+    `).join('');
+  } else {
+    el.innerHTML = imgPickerPalette.map((hex) => `
+      <div class="img-picker-palette-swatch" style="background:${hex}" data-hex="${hex}" onclick="selectPaletteColor('${hex}')" title="${hex}"></div>
+    `).join('');
+  }
+  updateImgPickerFooterMode();
+}
+
+function updateImgPickerFooterMode() {
+  const singlePreview = document.getElementById('imgPickerSinglePreview');
+  const singleActions = document.getElementById('imgPickerSingleActions');
+  const bulkActions = document.getElementById('imgPickerBulkActions');
+  if (imgPickerMode === 'bulk') {
+    singlePreview.style.display = 'none';
+    singleActions.style.display = 'none';
+    bulkActions.style.display = 'flex';
+    const n = imgPickerSelectedPalette.size;
+    document.getElementById('imgPickerAddSelectedBtn').textContent = `Add Selected (${n}) to List`;
+    document.getElementById('imgPickerAddSelectedBtn').disabled = n === 0;
+  } else {
+    singlePreview.style.display = 'flex';
+    singleActions.style.display = 'flex';
+    bulkActions.style.display = 'none';
+  }
+}
+
+function togglePaletteSelection(hex) {
+  if (imgPickerSelectedPalette.has(hex)) imgPickerSelectedPalette.delete(hex);
+  else imgPickerSelectedPalette.add(hex);
+  renderImgPickerPalette();
+}
+
+function selectPaletteColor(hex) {
+  imgPickerSelectedHex = hex;
+  document.getElementById('imgPickerSwatch').style.background = hex;
+  document.getElementById('imgPickerHex').textContent = hex;
+  document.getElementById('imgPickerUseBtn').disabled = false;
+  document.getElementById('imgPickerMarker').style.display = 'none';
+  document.querySelectorAll('.img-picker-palette-swatch').forEach(s => {
+    s.classList.toggle('selected', s.dataset.hex === hex);
+  });
+}
+
+document.getElementById('imagePickerInput').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('imgPickerCanvas');
+      const maxW = 380;
+      const maxH = 500;
+      const scale = Math.min(1, maxW / img.width, maxH / img.height);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      imgPickerCtx = canvas.getContext('2d', { willReadFrequently: true });
+      imgPickerCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      imgPickerSelectedHex = null;
+      document.getElementById('imgPickerHex').textContent = 'No color selected';
+      document.getElementById('imgPickerSwatch').style.background = '#eee';
+      document.getElementById('imgPickerUseBtn').disabled = true;
+      document.getElementById('imgPickerMarker').style.display = 'none';
+
+      imgPickerPalette = extractPalette(imgPickerCtx, canvas.width, canvas.height, 12);
+      imgPickerSelectedPalette = new Set();
+      renderImgPickerPalette();
+
+      document.getElementById('imgPickerHint').textContent = imgPickerMode === 'bulk'
+        ? 'Uncheck any colors you do not want, then add the rest to your list.'
+        : 'Tap anywhere on the image, or tap a color below, to sample it.';
+
+      document.getElementById('imgPickerOverlay').classList.add('active');
+    };
+    img.onerror = () => { alert('Could not load that image. Please try another.'); };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function samplePickerColorAt(clientX, clientY) {
+  const canvas = document.getElementById('imgPickerCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.max(0, Math.min(canvas.width - 1, Math.round((clientX - rect.left) * (canvas.width / rect.width))));
+  const y = Math.max(0, Math.min(canvas.height - 1, Math.round((clientY - rect.top) * (canvas.height / rect.height))));
+  const data = imgPickerCtx.getImageData(x, y, 1, 1).data;
+  const hex = '#' + [data[0], data[1], data[2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+  const marker = document.getElementById('imgPickerMarker');
+  const wrap = document.getElementById('imgPickerCanvasWrap');
+  const wrapRect = wrap.getBoundingClientRect();
+  marker.style.left = (clientX - wrapRect.left) + 'px';
+  marker.style.top = (clientY - wrapRect.top) + 'px';
+  marker.style.display = 'block';
+
+  if (imgPickerMode === 'bulk') {
+    if (!imgPickerPalette.includes(hex)) imgPickerPalette.unshift(hex);
+    imgPickerSelectedPalette.add(hex);
+    renderImgPickerPalette();
+    return;
+  }
+
+  imgPickerSelectedHex = hex;
+  document.getElementById('imgPickerSwatch').style.background = hex;
+  document.getElementById('imgPickerHex').textContent = hex;
+  document.getElementById('imgPickerUseBtn').disabled = false;
+  document.querySelectorAll('.img-picker-palette-swatch').forEach(s => s.classList.remove('selected'));
+}
+
+(function setupPickerCanvasEvents() {
+  const canvas = document.getElementById('imgPickerCanvas');
+  canvas.addEventListener('click', (e) => samplePickerColorAt(e.clientX, e.clientY));
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches[0]) {
+      e.preventDefault();
+      samplePickerColorAt(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: false });
+})();
+
+function closeImagePicker() {
+  document.getElementById('imgPickerOverlay').classList.remove('active');
+  imgPickerTarget = null;
+  imgPickerBulkTargetList = null;
+  imgPickerMode = 'single';
+}
+
+function applyHexToTarget(target, hex) {
+  if (target === 'primary') {
+    primaryHexInput.value = hex;
+    primaryColorInput.value = hex;
+  } else if (typeof target === 'number') {
+    secondaryDraft[target].hex = hex;
+    renderSecondaryList();
+  } else if (target === 'editsec') {
+    editSecHexInput.value = hex;
+    editSecColorInput.value = hex;
+  }
+}
+
+function confirmImagePickerColor() {
+  if (!imgPickerSelectedHex) return;
+  applyHexToTarget(imgPickerTarget, imgPickerSelectedHex);
+  closeImagePicker();
+}
+
+function confirmBulkPaletteSelection() {
+  const chosen = imgPickerPalette.filter(hex => imgPickerSelectedPalette.has(hex));
+  if (chosen.length === 0) return;
+  if (imgPickerBulkTargetList === 'newSecondaryDraft') {
+    chosen.forEach(hex => newSecondaryDraft.push({ hex, name: '', role: bulkRoleMode }));
+    renderNewSecondaryList();
+  } else if (imgPickerBulkTargetList === 'multiPrimaryDraft') {
+    chosen.forEach(hex => multiPrimaryDraft.push({ hex, name: '' }));
+    renderMultiPrimaryList();
+  } else if (imgPickerBulkTargetList === 'colourPickerStaged') {
+    chosen.forEach(hex => colourPickerStaged.push({ hex, name: '' }));
+    renderColourPickerStaged();
+  }
+  closeImagePicker();
+}
+
+let secondaryDraft = [];
+let secondaryColors = []; // [{id, hex, name}] - standalone pool, independent of any primary
+let catalog = [
+  mk("#DBA7B1","Dusty Pink",[["#0D2340","Midnight Navy"],["#FFF1E8","Ivory Blush"],["#6B7280","Slate Gray"],["#E7D6C1","Sand Beige"],["#FFFFFF","White"]]),
+  mk("#6B7043","Olive Green",[["#DAA520","Goldenrod"],["#F7F3E6","Warm Cream"],["#7A5230","Chestnut Brown"],["#2E3D2F","Deep Forest"],["#D9C4A5","Warm Sand"]]),
+  mk("#4B1F3D","Plum",[["#F2EDE3","Ivory"],["#DBC0C8","Dusty Rose"],["#8E817A","Taupe"],["#D4AF37","Antique Gold"],["#F7F7F0","Off White"]]),
+  mk("#CC5500","Burnt Orange",[["#0E6E6F","Deep Teal"],["#F8F4E9","Warm Cream"],["#8B5E34","Umber Brown"],["#CBBBA0","Warm Taupe"],["#A3B18A","Sage Green"]]),
+  mk("#E0AC1C","Mustard",[["#333333","Charcoal"],["#F2F2F2","Light Gray"],["#1B1F3B","Midnight Blue"],["#FFFFFF","White"],["#C9C9C9","Silver Gray"]]),
+  mk("#3B0F2F","Black Cherry",[["#F2D6D9","Blush Pink"],["#FBF6F0","Ivory"],["#8F807A","Warm Gray"],["#D18C94","Dusty Rose"],["#BDBDBD","Ash Gray"]]),
+  mk("#1E3D2F","Forest Green",[["#DCCDB4","Sand"],["#FAF6F0","Ivory"],["#8A5E3C","Chestnut"],["#A3B18A","Sage Green"],["#F5F1E6","Cream"]]),
+  mk("#B7412E","Rust",[["#F7F4EE","Ivory"],["#D9C8B0","Wheat"],["#7B4F3A","Cocoa Brown"],["#C8986D","Camel"],["#A6816A","Tan Brown"]]),
+  mk("#3D6A97","Denim Blue",[["#A69687","Taupe"],["#F5F5F5","White Smoke"],["#7A7A7A","Gray"],["#4B3832","Dark Cocoa"],["#D6C8B0","Wheat"]]),
+  mk("#3E2723","Chocolate",[["#FFCD82","Golden Apricot"],["#FFF6E9","Ivory"],["#C49A78","Caramel"],["#7E6A64","Taupe Brown"],["#E7D6C1","Sand Beige"]]),
+  mk("#008080","Teal",[["#FF6F61","Coral"],["#FFFAE6","Warm Cream"],["#A9A9A9","Dark Gray"],["#D9C4A5","Sand"],["#FFFFFF","White"]]),
+  mk("#B39DDB","Lavender",[["#E6E6EE","Pale Lilac"],["#F7F3F7","Off White"],["#7C7C7C","Gray"],["#C0C0C0","Silver"],["#FFFFFF","White"]]),
+  mk("#B7D4E7","Powder Blue",[["#EADBC8","Sand"],["#FFF6F2","Ivory"],["#A1907C","Taupe"],["#D4BFA6","Warm Beige"],["#FFFFFF","White"]]),
+  mk("#A8BFA3","Sage Green",[["#F6F4ED","Ivory"],["#CFCFC4","Ash Gray"],["#8DB07A","Olive Green"],["#DED2B2","Wheat"],["#FFFFFF","White"]]),
+  mk("#0B1D3A","Navy Blue",[["#F0B400","Amber"],["#F7F5EE","Ivory"],["#7D7D7D","Gray"],["#D2BA7E","Wheat Gold"],["#FFFFFF","White"]]),
+  mk("#E49BAA","Rose Pink",[["#A7B598","Sage Green"],["#F7F3EF","Ivory"],["#8E8E7E","Warm Gray"],["#DCC9B4","Sand"],["#FFFFFF","White"]]),
+  mk("#E2725B","Terracotta",[["#FFF5EB","Ivory"],["#E6D6C3","Sand"],["#977A64","Taupe Brown"],["#C6B198","Warm Beige"],["#FFFFFF","White"]]),
+  mk("#2F2F2F","Charcoal",[["#B7E1CD","Mint Green"],["#F6F6F6","White Smoke"],["#8CC8C8","Soft Teal"],["#D8E8E0","Pale Mint"],["#FFFFFF","White"]]),
+  mk("#FFDAB9","Peach",[["#A67C68","Terracotta Brown"],["#F7F1EC","Ivory"],["#8E8E8E","Gray"],["#D1B9A3","Warm Beige"],["#FFFFFF","White"]]),
+  mk("#4B2E83","Deep Purple",[["#D6B3E6","Lilac"],["#F6F2FA","Pale Lavender"],["#9A9A9A","Gray"],["#E6D5EA","Pale Orchid"],["#FFFFFF","White"]])
+];
+function mk(hex, name, secs) {
+  const secondaryIds = secs.map(s => getOrCreateSecondaryColor(s[0], s[1]));
+  return { id: uid(), primaryHex: hex, primaryName: name, secondaryIds };
+}
+
+function getOrCreateSecondaryColor(hex, name) {
+  hex = hex.toUpperCase();
+  const existing = secondaryColors.find(s => s.hex === hex);
+  if (existing) return existing.id;
+  const sc = { id: uid(), hex, name: name || hex };
+  secondaryColors.push(sc);
+  return sc.id;
+}
+
+function resolveSecondaries(entry) {
+  return (entry.secondaryIds || [])
+    .map(id => secondaryColors.find(s => s.id === id))
+    .filter(Boolean);
+}
+
+function secondaryById(id) { return secondaryColors.find(s => s.id === id); }
+
+let groups = []; // [{id, name, colorIds:[]}]
+let groupFilter = ""; // group id or "" for all
+let selectedSet = new Set(); // set of catalog entry ids
+let editId = null;      // null = adding new; id = editing that entry
+let detailId = null;
+let addToGroupIds = []; // ids used when opening Add-to-Group view
+let currentGroupDetailId = null;
+let previewSource = null; // {ids, groupName} for the Prepare Catalog view
+
+function isValidHex(h) { return /^#([0-9A-Fa-f]{6})$/.test(h); }
+function luminance(hex) {
+  const r = parseInt(hex.substr(1,2),16)/255;
+  const g = parseInt(hex.substr(3,2),16)/255;
+  const b = parseInt(hex.substr(5,2),16)/255;
+  const a = [r,g,b].map(v => v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4));
+  return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+}
+function contrastText(hex) { return luminance(hex) > 0.55 ? "#1b2540" : "#ffffff"; }
+function entryById(id) { return catalog.find(e => e.id === id); }
+function indexById(id) { return catalog.findIndex(e => e.id === id); }
+
+/* ---------------- Colour science: WCAG contrast ratio + colour-wheel math ---------------- */
+
+function hexToRgb(hex) {
+  hex = hex.replace('#', '');
+  return { r: parseInt(hex.slice(0, 2), 16), g: parseInt(hex.slice(2, 4), 16), b: parseInt(hex.slice(4, 6), 16) };
+}
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      default: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+function hslToRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360 / 360; s /= 100; l /= 100;
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+  return { r: r * 255, g: g * 255, b: b * 255 };
+}
+function contrastRatio(hex1, hex2) {
+  const l1 = luminance(hex1), l2 = luminance(hex2);
+  const lighter = Math.max(l1, l2), darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+function wcagLevel(ratio) {
+  if (ratio >= 7) return { label: 'AAA', color: '#1c7a3f' };
+  if (ratio >= 4.5) return { label: 'AA', color: '#2c6e8f' };
+  if (ratio >= 3) return { label: 'AA Large', color: '#a6740a' };
+  return { label: 'Low', color: '#a3382e' };
+}
+
+function generateContrastSuggestions(baseHex) {
+  const base = hexToRgb(baseHex);
+  const hsl = rgbToHsl(base.r, base.g, base.b);
+  const candidates = [];
+  const addCandidate = (h, s, l, label) => {
+    const rgb = hslToRgb(h, Math.max(0, Math.min(100, s)), Math.max(0, Math.min(100, l)));
+    const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+    candidates.push({ hex, label, ratio: contrastRatio(baseHex, hex) });
+  };
+  addCandidate(hsl.h + 180, hsl.s, hsl.l, 'Complementary');
+  addCandidate(hsl.h + 150, hsl.s, hsl.l, 'Split-Complementary');
+  addCandidate(hsl.h + 210, hsl.s, hsl.l, 'Split-Complementary');
+  addCandidate(hsl.h + 120, hsl.s, hsl.l, 'Triadic');
+  addCandidate(hsl.h + 240, hsl.s, hsl.l, 'Triadic');
+  addCandidate(hsl.h + 30, hsl.s, hsl.l, 'Analogous');
+  addCandidate(hsl.h - 30, hsl.s, hsl.l, 'Analogous');
+  addCandidate(hsl.h + 180, hsl.s, hsl.l > 50 ? 12 : 92, 'High-Contrast Complementary');
+  addCandidate(hsl.h, 0, hsl.l > 50 ? 8 : 96, 'Max-Contrast Neutral');
+  addCandidate(hsl.h, Math.max(0, hsl.s - 60), 50, 'Neutral Gray');
+  candidates.push({ hex: '#000000', label: 'Black', ratio: contrastRatio(baseHex, '#000000') });
+  candidates.push({ hex: '#FFFFFF', label: 'White', ratio: contrastRatio(baseHex, '#FFFFFF') });
+
+  const seen = new Set();
+  const unique = candidates.filter(c => {
+    if (seen.has(c.hex) || c.hex === baseHex.toUpperCase()) return false;
+    seen.add(c.hex);
+    return true;
+  });
+  unique.sort((a, b) => b.ratio - a.ratio);
+  return unique;
+}
+
+const VIEW_TO_TAB = {
+  home: 'home',
+  list: 'primary', builder: 'primary', detail: 'primary', addToGroup: 'primary',
+  preview: 'primary', printcolours: 'primary', allcolours: 'primary', pickSecForEntry: 'primary',
+  addMultiplePrimaries: 'primary',
+  groups: 'groups', groupDetail: 'groups',
+  secondarycolours: 'secondary', addSecondaryColours: 'secondary', tagprimary: 'secondary',
+  secondaryDetail: 'secondary', editSecondaryColor: 'secondary',
+  colourpicker: 'colourpicker',
+  backup: 'backup'
+};
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  const tab = VIEW_TO_TAB[name];
+  if (tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  }
+}
+
+function switchTab(tab) {
+  if (tab === 'home') {
+    showView('home');
+    renderHomeAll();
+  } else if (tab === 'primary') {
+    showView('list');
+  } else if (tab === 'groups') {
+    openGroups();
+  } else if (tab === 'secondary') {
+    openSecondaryColoursBrowse();
+  } else if (tab === 'colourpicker') {
+    showView('colourpicker');
+    renderColourPickerStaged();
+  } else if (tab === 'backup') {
+    showView('backup');
+  }
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+}
+
+/* ---------------- Builder (Add / Edit) ---------------- */
+
+function resetBuilderForm() {
+  document.getElementById('primaryHex').value = '#DBA7B1';
+  document.getElementById('primaryColor').value = '#DBA7B1';
+  document.getElementById('primaryName').value = '';
+  secondaryDraft = [{ hex: "#0D2340", name: "" }, { hex: "#FFF1E8", name: "" }];
+  document.getElementById('formMsg').textContent = '';
+  renderSecondaryList();
+}
+
+function openBuilder(id) {
+  editId = id;
+  if (id === null) {
+    resetBuilderForm();
+    document.getElementById('builderTitle').textContent = 'Add Design';
+    document.getElementById('saveBtn').textContent = 'Add to Catalog';
+  } else {
+    const entry = entryById(id);
+    document.getElementById('primaryHex').value = entry.primaryHex;
+    document.getElementById('primaryColor').value = entry.primaryHex;
+    document.getElementById('primaryName').value = entry.primaryName;
+    secondaryDraft = resolveSecondaries(entry).map(s => ({ hex: s.hex, name: s.name }));
+    document.getElementById('formMsg').textContent = '';
+    renderSecondaryList();
+    document.getElementById('builderTitle').textContent = 'Edit Design';
+    document.getElementById('saveBtn').textContent = 'Save Changes';
+  }
+  showView('builder');
+}
+function closeBuilder() { showView(editId !== null ? 'detail' : 'list'); }
+
+function renderSecondaryList() {
+  const list = document.getElementById('secondaryList');
+  list.innerHTML = '';
+  secondaryDraft.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'secondary-row';
+    row.innerHTML = `
+      <div class="swatch-input" style="width:36px;height:36px;">
+        <input type="color" value="${isValidHex(s.hex) ? s.hex : '#cccccc'}" data-idx="${i}" class="sec-color">
+      </div>
+      <button type="button" class="photo-pick-btn small" onclick="openImagePicker(${i})" title="Pick color from a photo">&#128247;</button>
+      <input type="text" class="text-input hex-field sec-hex" style="width:120px;" value="${s.hex}" data-idx="${i}" maxlength="7">
+      <div class="combo-wrap">
+        <input type="text" class="text-input name-field sec-name" placeholder="Name — search or type new" value="${s.name}" data-idx="${i}" autocomplete="off">
+        <div class="combo-dropdown" id="secNameDropdown-${i}"></div>
+      </div>
+      <button class="remove-btn" onclick="removeSecondarySlot(${i})" title="Remove">&times;</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.sec-color').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = +e.target.dataset.idx;
+      secondaryDraft[idx].hex = e.target.value.toUpperCase();
+      list.querySelectorAll('.sec-hex')[idx].value = secondaryDraft[idx].hex;
+    });
+  });
+  list.querySelectorAll('.sec-hex').forEach((el, idx) => {
+    el.addEventListener('input', e => {
+      let v = e.target.value.trim();
+      if (v && v[0] !== '#') v = '#' + v;
+      secondaryDraft[idx].hex = v.toUpperCase();
+      if (isValidHex(secondaryDraft[idx].hex)) list.querySelectorAll('.sec-color')[idx].value = secondaryDraft[idx].hex;
+    });
+  });
+  list.querySelectorAll('.sec-name').forEach((el, idx) => {
+    el.addEventListener('input', e => {
+      secondaryDraft[idx].name = e.target.value;
+      renderSecNameDropdown(idx, e.target.value);
+    });
+    el.addEventListener('focus', e => { renderSecNameDropdown(idx, e.target.value); });
+  });
+  document.getElementById('addSecondaryBtn').disabled = secondaryDraft.length >= 5;
+}
+function renderSecNameDropdown(idx, query) {
+  const dd = document.getElementById(`secNameDropdown-${idx}`);
+  if (!dd) return;
+  const q = (query || '').trim().toLowerCase();
+  const matches = secondaryColors.filter(s =>
+    s.name.toLowerCase().includes(q) || s.hex.toLowerCase().includes(q)
+  ).slice(0, 30);
+  dd.innerHTML = matches.length === 0
+    ? `<div class="combo-empty">No matches — keep typing to create a new color</div>`
+    : matches.map(s => `
+      <div class="combo-item" onclick="selectSecNameSuggestion(${idx}, '${s.id}')">
+        <div class="combo-item-dot" style="background:${s.hex}"></div>
+        <div class="combo-item-text"><strong>${s.name}</strong><span>${s.hex}</span></div>
+      </div>
+    `).join('');
+  dd.style.display = 'block';
+}
+
+function selectSecNameSuggestion(idx, poolId) {
+  const s = secondaryById(poolId);
+  if (!s || !secondaryDraft[idx]) return;
+  secondaryDraft[idx].hex = s.hex;
+  secondaryDraft[idx].name = s.name;
+  renderSecondaryList();
+}
+
+function addSecondarySlot() { if (secondaryDraft.length >= 5) return; secondaryDraft.push({ hex: "#FFFFFF", name: "" }); renderSecondaryList(); }
+function removeSecondarySlot(i) { secondaryDraft.splice(i, 1); renderSecondaryList(); }
+
+const primaryColorInput = document.getElementById('primaryColor');
+const primaryHexInput = document.getElementById('primaryHex');
+primaryColorInput.addEventListener('input', e => { primaryHexInput.value = e.target.value.toUpperCase(); });
+primaryHexInput.addEventListener('input', e => {
+  let v = e.target.value.trim();
+  if (v && v[0] !== '#') v = '#' + v;
+  e.target.value = v;
+  if (isValidHex(v)) primaryColorInput.value = v;
+});
+
+const editSecColorInput = document.getElementById('editSecColorInput');
+const editSecHexInput = document.getElementById('editSecHexInput');
+editSecColorInput.addEventListener('input', e => { editSecHexInput.value = e.target.value.toUpperCase(); });
+editSecHexInput.addEventListener('input', e => {
+  let v = e.target.value.trim();
+  if (v && v[0] !== '#') v = '#' + v;
+  e.target.value = v;
+  if (isValidHex(v)) editSecColorInput.value = v;
+});
+
+function saveEntry() {
+  const msg = document.getElementById('formMsg');
+  const primaryHex = primaryHexInput.value.trim().toUpperCase();
+  const primaryName = document.getElementById('primaryName').value.trim() || primaryHex;
+  if (!isValidHex(primaryHex)) { msg.textContent = "Enter a valid primary hex code, like #DBA7B1."; return; }
+  const validSecondaries = secondaryDraft.filter(s => isValidHex(s.hex));
+  msg.textContent = "";
+
+  const secondaryIds = validSecondaries.map(s => getOrCreateSecondaryColor(s.hex, s.name.trim()));
+
+  if (editId === null) {
+    catalog.push({ id: uid(), primaryHex, primaryName, secondaryIds });
+  } else {
+    const entry = entryById(editId);
+    entry.primaryHex = primaryHex;
+    entry.primaryName = primaryName;
+    entry.secondaryIds = secondaryIds;
+  }
+  renderCatalog();
+  showView('list');
+}
+
+/* ---------------- Add Multiple Primary Colours ---------------- */
+
+let multiPrimaryDraft = [];
+
+function openAddMultiplePrimaries() {
+  multiPrimaryDraft = [{ hex: '#DBA7B1', name: '' }, { hex: '#6B7043', name: '' }];
+  renderMultiPrimaryList();
+  document.getElementById('multiPrimaryMsg').textContent = '';
+  showView('addMultiplePrimaries');
+}
+
+function renderMultiPrimaryList() {
+  const list = document.getElementById('multiPrimaryList');
+  list.innerHTML = '';
+  multiPrimaryDraft.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'secondary-row';
+    row.innerHTML = `
+      <div class="swatch-input" style="width:36px;height:36px;">
+        <input type="color" value="${isValidHex(p.hex) ? p.hex : '#cccccc'}" data-idx="${i}" class="mp-color">
+      </div>
+      <input type="text" class="text-input hex-field mp-hex" style="width:110px;" value="${p.hex}" data-idx="${i}" maxlength="7">
+      <input type="text" class="text-input name-field mp-name" placeholder="Name (optional)" value="${p.name}" data-idx="${i}">
+      <button class="remove-btn" onclick="removeMultiPrimarySlot(${i})" title="Remove">&times;</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.mp-color').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = +e.target.dataset.idx;
+      multiPrimaryDraft[idx].hex = e.target.value.toUpperCase();
+      list.querySelectorAll('.mp-hex')[idx].value = multiPrimaryDraft[idx].hex;
+    });
+  });
+  list.querySelectorAll('.mp-hex').forEach((el, idx) => {
+    el.addEventListener('input', e => {
+      let v = e.target.value.trim();
+      if (v && v[0] !== '#') v = '#' + v;
+      multiPrimaryDraft[idx].hex = v.toUpperCase();
+      if (isValidHex(multiPrimaryDraft[idx].hex)) list.querySelectorAll('.mp-color')[idx].value = multiPrimaryDraft[idx].hex;
+    });
+  });
+  list.querySelectorAll('.mp-name').forEach((el, idx) => {
+    el.addEventListener('input', e => { multiPrimaryDraft[idx].name = e.target.value; });
+  });
+}
+
+function addMultiPrimarySlot() { multiPrimaryDraft.push({ hex: '#FFFFFF', name: '' }); renderMultiPrimaryList(); }
+function removeMultiPrimarySlot(i) { multiPrimaryDraft.splice(i, 1); renderMultiPrimaryList(); }
+
+function saveMultiplePrimaries() {
+  const msg = document.getElementById('multiPrimaryMsg');
+  const valid = multiPrimaryDraft.filter(p => isValidHex(p.hex));
+  if (valid.length === 0) { msg.textContent = 'Add at least one valid color.'; return; }
+  valid.forEach(p => {
+    catalog.push({ id: uid(), primaryHex: p.hex, primaryName: p.name.trim() || p.hex, secondaryIds: [] });
+  });
+  msg.textContent = '';
+  renderCatalog();
+  showView('list');
+}
+
+/* ---------------- Pick existing secondary colors into the current draft ---------------- */
+
+function openPickExistingForDraft() {
+  pickSecMode = 'draft';
+  pickSecSelectedSet = new Set(
+    secondaryDraft
+      .map(s => secondaryColors.find(sc => sc.hex === s.hex))
+      .filter(Boolean)
+      .map(sc => sc.id)
+  );
+  document.getElementById('pickSecSubHeader').textContent =
+    'Choose secondary colors from your pool to add to this design.';
+  renderPickSecForEntry();
+  showView('pickSecForEntry');
+}
+
+/* ---------------- List view ---------------- */
+
+function groupMemberKey(type, id) { return (type === 'primary' ? 'p:' : 's:') + id; }
+
+function resolveGroupMember(key) {
+  if (typeof key !== 'string') return null;
+  if (key.indexOf('p:') === 0) {
+    const entry = entryById(key.slice(2));
+    return entry ? { type: 'primary', item: entry } : null;
+  }
+  if (key.indexOf('s:') === 0) {
+    const s = secondaryById(key.slice(2));
+    return s ? { type: 'secondary', item: s } : null;
+  }
+  // legacy bare id fallback: treat unprefixed keys as primary ids
+  const entry = entryById(key);
+  return entry ? { type: 'primary', item: entry } : null;
+}
+
+function currentFilteredCatalog() {
+  if (!groupFilter) return catalog;
+  const g = groups.find(g => g.id === groupFilter);
+  if (!g) return catalog;
+  return catalog.filter(e => g.colorIds.includes(groupMemberKey('primary', e.id)));
+}
+
+function setGroupFilter(id) { groupFilter = id; renderCatalog(); }
+
+function removeCatalogEntry(id) {
+  catalog = catalog.filter(e => e.id !== id);
+  const key = groupMemberKey('primary', id);
+  groups.forEach(g => { g.colorIds = g.colorIds.filter(x => x !== key); });
+  selectedSet.delete(id);
+  renderCatalog();
+}
+function deleteSelected() {
+  if (selectedSet.size === 0) return;
+  catalog = catalog.filter(e => !selectedSet.has(e.id));
+  groups.forEach(g => { g.colorIds = g.colorIds.filter(x => !(x.indexOf('p:') === 0 && selectedSet.has(x.slice(2)))); });
+  selectedSet = new Set();
+  renderCatalog();
+}
+function clearCatalog() { catalog = []; selectedSet = new Set(); renderCatalog(); }
+
+function toggleSelect(id) { if (selectedSet.has(id)) selectedSet.delete(id); else selectedSet.add(id); renderToolbarActions(); syncSelectAllCheckbox(); }
+function toggleSelectAll(checked) {
+  const list = currentFilteredCatalog();
+  if (checked) list.forEach(e => selectedSet.add(e.id));
+  else list.forEach(e => selectedSet.delete(e.id));
+  renderCatalog();
+}
+function syncSelectAllCheckbox() {
+  const list = currentFilteredCatalog();
+  const chk = document.getElementById('selectAllChk');
+  const selectedInList = list.filter(e => selectedSet.has(e.id)).length;
+  chk.checked = list.length > 0 && selectedInList === list.length;
+  chk.indeterminate = selectedInList > 0 && selectedInList < list.length;
+}
+
+function moveEntry(id, dir) {
+  const list = currentFilteredCatalog();
+  const posInList = list.findIndex(e => e.id === id);
+  const swapWithId = list[posInList + dir] ? list[posInList + dir].id : null;
+  if (!swapWithId) return;
+  const i = indexById(id), j = indexById(swapWithId);
+  [catalog[i], catalog[j]] = [catalog[j], catalog[i]];
+  renderCatalog();
+}
+
+function updateBulkDeleteBtn() {
+  const btn = document.getElementById('bulkDeleteBtn');
+  if (!btn) return;
+  if (selectedSet.size > 0) {
+    btn.style.display = 'flex';
+    document.getElementById('bulkDeleteCount').textContent = `(${selectedSet.size})`;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function renderToolbarActions() {
+  const el = document.getElementById('toolbarActions');
+  if (selectedSet.size > 0) {
+    el.innerHTML = `
+      <button class="text-btn addgroup-btn" onclick="openAddToGroup()">Add to group (${selectedSet.size})</button>
+      <button class="text-btn preview-btn" onclick="openPreviewForSelection()">Prepare catalog (${selectedSet.size})</button>
+      <button class="text-btn printcolours-btn" onclick="openPrintColoursForSelection()">Print colours (${selectedSet.size})</button>
+    `;
+  } else {
+    el.innerHTML = `
+      <button class="text-btn preview-btn" onclick="openPreviewForSelection()">Prepare catalog</button>
+      <button class="text-btn printcolours-btn" onclick="openPrintColoursForSelection()">Print colours</button>
+      <button class="text-btn clear-all-btn" onclick="clearCatalog()">Clear all</button>
+    `;
+  }
+  updateBulkDeleteBtn();
+}
+
+function renderGroupFilterOptions() {
+  const sel = document.getElementById('groupFilterSelect');
+  const current = groupFilter;
+  sel.innerHTML = '<option value="">All Groups</option>' +
+    groups.map(g => `<option value="${g.id}">${escapeHtml(g.name)} (${g.colorIds.length})</option>`).join('');
+  sel.value = current;
+}
+
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ---------------- Home: unified flat list of ALL colors (primary + secondary) ---------------- */
+
+let homeSelectedSet = new Set(); // keys like "p:<id>" or "s:<id>"
+
+function combinedColorList() {
+  const primaries = catalog.map(e => ({ type: 'primary', id: e.id, hex: e.primaryHex, name: e.primaryName }));
+  const secondaries = secondaryColors.map(s => ({ type: 'secondary', id: s.id, hex: s.hex, name: s.name }));
+  return [...primaries, ...secondaries];
+}
+
+function homeKey(item) { return `${item.type === 'primary' ? 'p' : 's'}:${item.id}`; }
+
+let homeSortDesc = true; // true = most recently added first
+
+function toggleHomeSort() {
+  homeSortDesc = !homeSortDesc;
+  const arrow = document.getElementById('homeSortArrow');
+  if (arrow) arrow.innerHTML = homeSortDesc ? '&#9660;' : '&#9650;';
+  renderHomeAll();
+}
+
+function renderHomeAll() {
+  const naturalList = combinedColorList(); // primaries then secondaries, stable insertion order
+  naturalList.forEach((item, i) => { item.naturalSrNo = i + 1; });
+
+  const list = homeSortDesc ? naturalList.slice().reverse() : naturalList;
+
+  const countEl = document.getElementById('homeAllCount');
+  if (countEl) countEl.textContent = list.length ? `(${list.length})` : '';
+
+  const board = document.getElementById('homeAllBoard');
+  if (!board) return;
+
+  if (list.length === 0) {
+    board.innerHTML = `<div class="empty-state">No colors yet.<br>Tap "+ Add Colour(s)" to get started.</div>`;
+    updateHomeToolbar();
+    return;
+  }
+
+  board.innerHTML = list.map((item, i) => {
+    const key = homeKey(item);
+    const isSelected = homeSelectedSet.has(key);
+    const srNo = String(item.naturalSrNo).padStart(3, '0');
+    const isPrimary = item.type === 'primary';
+    const badgeLetter = isPrimary ? 'P' : 'S';
+    const badgeClass = isPrimary ? 'type-badge-p' : 'type-badge-s';
+    const openCall = isPrimary ? `openDetail('${item.id}')` : `openSecondaryDetail('${item.id}')`;
+    const deleteCall = isPrimary ? `removeCatalogEntry('${item.id}')` : `deleteSecondaryColor('${item.id}')`;
+    return `
+      <div class="list-row">
+        <input type="checkbox" onchange="toggleHomeSelect('${key}')" ${isSelected ? 'checked' : ''}>
+        <div class="row-open" onclick="${openCall}">
+          <div class="srno">#${srNo}</div>
+          <div class="thumb" style="background:${item.hex}; border-radius:50%;"></div>
+          <div class="details">
+            <div class="dname" style="color:${item.hex}">${item.name}</div>
+            <div class="dmeta">${item.hex}</div>
+          </div>
+          <span class="type-badge ${badgeClass}" title="${isPrimary ? 'Primary' : 'Secondary'} colour">${badgeLetter}</span>
+        </div>
+        <button class="quicktag-btn" onclick="event.stopPropagation(); openAddToGroupForKeys(['${key}'], 'home', null)" title="Add to a group">+G</button>
+        <button class="trash-btn" onclick="event.stopPropagation(); ${deleteCall}" title="Delete">&#128465;</button>
+      </div>
+    `;
+  }).join('');
+
+  updateHomeToolbar();
+}
+
+function toggleHomeSelect(key) {
+  if (homeSelectedSet.has(key)) homeSelectedSet.delete(key); else homeSelectedSet.add(key);
+  updateHomeToolbar();
+}
+
+function toggleHomeSelectAll(checked) {
+  const list = combinedColorList();
+  homeSelectedSet = new Set(checked ? list.map(homeKey) : []);
+  renderHomeAll();
+}
+
+function updateHomeToolbar() {
+  const list = combinedColorList();
+  const n = homeSelectedSet.size;
+  const actionsEl = document.getElementById('homeToolbarActions');
+  if (actionsEl) {
+    const addGroupBtn = n > 0 ? `<button class="text-btn addgroup-btn" onclick="openAddToGroupFromHome()">Add to group (${n})</button>` : '';
+    actionsEl.innerHTML = addGroupBtn + `<button class="text-btn printcolours-btn" onclick="openPrintColoursForHomeSelection()">Print colours${n > 0 ? ` (${n})` : ''}</button>`;
+  }
+  const chk = document.getElementById('homeSelectAllChk');
+  if (chk) {
+    chk.checked = list.length > 0 && n === list.length;
+    chk.indeterminate = n > 0 && n < list.length;
+  }
+  const delBtn = document.getElementById('homeBulkDeleteBtn');
+  if (delBtn) {
+    if (n > 0) {
+      delBtn.style.display = 'flex';
+      document.getElementById('homeBulkDeleteCount').textContent = `(${n})`;
+    } else {
+      delBtn.style.display = 'none';
+    }
+  }
+}
+
+function deleteSelectedHomeItems() {
+  if (homeSelectedSet.size === 0) return;
+  const keys = [...homeSelectedSet];
+  keys.forEach(key => {
+    const [typeChar, id] = [key[0], key.slice(2)];
+    if (typeChar === 'p') removeCatalogEntry(id);
+    else removeSecondaryColorEverywhere(id);
+  });
+  homeSelectedSet = new Set();
+  renderCatalog();
+  renderHomeAll();
+}
+
+function openAddToGroupFromHome() {
+  if (homeSelectedSet.size === 0) return;
+  openAddToGroupForKeys([...homeSelectedSet], 'home', () => { homeSelectedSet = new Set(); });
+}
+
+function openPrintColoursForHomeSelection() {
+  const all = combinedColorList();
+  const items = homeSelectedSet.size > 0 ? all.filter(it => homeSelectedSet.has(homeKey(it))) : all;
+  const label = homeSelectedSet.size > 0
+    ? `${items.length} selected color${items.length !== 1 ? 's' : ''}`
+    : `all ${items.length} color${items.length !== 1 ? 's' : ''}`;
+  renderPrintColoursFromSwatches(items.map(it => ({ hex: it.hex, name: it.name })), label);
+  showView('printcolours');
+}
+
+/* ---------------- Quick-tag (+S) from Primary Colours rows ---------------- */
+
+let qtPrimaryOpenId = null;
+
+function toggleQtPrimary(id) {
+  qtPrimaryOpenId = qtPrimaryOpenId === id ? null : id;
+  renderCatalog();
+}
+
+function qtSecondaryOptionsHtml(primaryId, query) {
+  const entry = entryById(primaryId);
+  if (!entry) return '';
+  const existingIds = new Set(entry.secondaryIds || []);
+  const q = (query || '').trim().toLowerCase();
+  const matches = secondaryColors.filter(s =>
+    !existingIds.has(s.id) && (s.name.toLowerCase().includes(q) || s.hex.toLowerCase().includes(q))
+  ).slice(0, 30);
+  return matches.length === 0
+    ? `<div class="combo-empty">No matches</div>`
+    : matches.map(s => `
+      <div class="combo-item" onclick="quickTagSecondaryToPrimary('${primaryId}','${s.id}')">
+        <div class="combo-item-dot" style="background:${s.hex}"></div>
+        <div class="combo-item-text"><strong>${s.name}</strong><span>${s.hex}</span></div>
+      </div>
+    `).join('');
+}
+
+function renderQtPrimaryOptions(primaryId, query) {
+  const el = document.getElementById(`qtSecOptions-${primaryId}`);
+  if (el) el.innerHTML = qtSecondaryOptionsHtml(primaryId, query);
+}
+
+function quickTagSecondaryToPrimary(primaryId, secId) {
+  const entry = entryById(primaryId);
+  if (!entry) return;
+  entry.secondaryIds = [...new Set([...(entry.secondaryIds || []), secId])];
+  qtPrimaryOpenId = null;
+  renderCatalog();
+}
+
+let primarySortDesc = true; // true = most recently added first
+
+function togglePrimarySort() {
+  primarySortDesc = !primarySortDesc;
+  const arrow = document.getElementById('primarySortArrow');
+  if (arrow) arrow.innerHTML = primarySortDesc ? '&#9660;' : '&#9650;';
+  renderCatalog();
+}
+
+function renderCatalog() {
+  renderGroupFilterOptions();
+  const board = document.getElementById('catalogBoard');
+  const countEl = document.getElementById('catalogCount');
+  const naturalList = currentFilteredCatalog();
+  naturalList.forEach((e, i) => { e.naturalSrNo = i + 1; });
+  const list = primarySortDesc ? naturalList.slice().reverse() : naturalList;
+  countEl.textContent = list.length ? `(${list.length})` : '';
+
+  if (list.length === 0) {
+    board.innerHTML = `<div class="empty-state">${groupFilter ? 'No colors in this group yet.' : 'Your catalog is empty.<br>Tap "+ Add Primary Color" to get started.'}</div>`;
+    renderToolbarActions();
+    renderHomeAll();
+    return;
+  }
+
+  board.innerHTML = list.map((entry, i) => {
+    const isSelected = selectedSet.has(entry.id);
+    const srNo = String(entry.naturalSrNo).padStart(3, '0');
+    const secs = resolveSecondaries(entry);
+    const shadeCount = secs.length;
+    const panelOpen = qtPrimaryOpenId === entry.id;
+    const reorderHtml = primarySortDesc
+      ? `<div class="reorder-col" title="Switch to oldest-first (▲ in header) to manually reorder">
+           <button class="chev-btn" disabled>&#9650;</button>
+           <button class="chev-btn" disabled>&#9660;</button>
+         </div>`
+      : `<div class="reorder-col">
+           <button class="chev-btn" onclick="moveEntry('${entry.id}',-1)" ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+           <button class="chev-btn" onclick="moveEntry('${entry.id}',1)" ${i === list.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+         </div>`;
+    return `
+      <div class="list-row">
+        <input type="checkbox" onchange="toggleSelect('${entry.id}')" ${isSelected ? 'checked' : ''}>
+        <div class="row-open" onclick="openDetail('${entry.id}')">
+          <div class="srno">#${srNo}</div>
+          <div class="thumb" style="background:${entry.primaryHex}"></div>
+          <div class="details">
+            <div class="dname" style="color:${entry.primaryHex}">${entry.primaryName}</div>
+            <div class="dmeta">${entry.primaryHex}</div>
+            <div class="dmeta">${shadeCount} shade${shadeCount !== 1 ? 's' : ''}</div>
+            <div class="home-dots">${secs.map(s => `<div class="home-dot" style="background:${s.hex}" title="${s.hex}${s.name ? ' - ' + s.name : ''}"></div>`).join('')}</div>
+          </div>
+        </div>
+        <button class="quicktag-btn ${panelOpen ? 'active' : ''}" onclick="toggleQtPrimary('${entry.id}')" title="Quick-add a secondary colour">+S</button>
+        <button class="quicktag-btn" onclick="openAddToGroupForKeys(['${groupMemberKey('primary', entry.id)}'], 'list', null)" title="Add to a group">+G</button>
+        ${reorderHtml}
+        <button class="trash-btn" onclick="removeCatalogEntry('${entry.id}')" title="Delete">&#128465;</button>
+      </div>
+      ${panelOpen ? `
+        <div class="quicktag-panel">
+          <input type="text" class="text-input" placeholder="Search secondary colours to tag…" oninput="renderQtPrimaryOptions('${entry.id}', this.value)" autofocus>
+          <div class="quicktag-options" id="qtSecOptions-${entry.id}">${qtSecondaryOptionsHtml(entry.id, '')}</div>
+        </div>
+      ` : ''}
+    `;
+  }).join('');
+
+  renderToolbarActions();
+  syncSelectAllCheckbox();
+  renderHomeAll();
+}
+
+/* ---------------- Detail view ---------------- */
+
+function openDetail(id) {
+  detailId = id;
+  const entry = entryById(id);
+  document.getElementById('detailSwatch').style.background = entry.primaryHex;
+  document.getElementById('detailName').textContent = entry.primaryName;
+  document.getElementById('detailName').style.color = entry.primaryHex;
+  document.getElementById('detailHex').textContent = entry.primaryHex;
+
+  const grid = document.getElementById('detailSecondaryGrid');
+  const secs = resolveSecondaries(entry);
+  grid.innerHTML = secs.length === 0
+    ? `<div class="empty-state">No secondary colors tagged yet.</div>`
+    : secs.map(s => `
+    <div class="detail-combo">
+      <div class="detail-dual">
+        <div class="c1" style="background:${entry.primaryHex}"></div>
+        <div class="c2" style="background:${s.hex}"></div>
+      </div>
+      <div class="hex">${s.hex}</div>
+      ${s.name ? `<div class="cname">${s.name}</div>` : ''}
+    </div>
+  `).join('');
+
+  document.getElementById('detailTagBtn').onclick = () => openTagSecondariesToDetail();
+  document.getElementById('detailTagSearchInput').value = '';
+  document.getElementById('detailTagDropdown').style.display = 'none';
+  renderDetailContrastSuggestions(entry.primaryHex);
+
+  document.getElementById('detailEditBtn').onclick = () => openBuilder(detailId);
+  document.getElementById('detailDeleteBtn').onclick = () => { removeCatalogEntry(detailId); showView('list'); };
+  showView('detail');
+}
+
+/* ---------------- Groups ---------------- */
+
+function openGroups() { renderGroupsList(); document.getElementById('newGroupName').value = ''; showView('groups'); }
+
+function createGroupFromGroupsView() {
+  const name = document.getElementById('newGroupName').value.trim();
+  if (!name) return;
+  groups.push({ id: uid(), name, colorIds: [] });
+  document.getElementById('newGroupName').value = '';
+  renderGroupsList();
+  renderGroupFilterOptions();
+}
+function deleteGroup(id) {
+  groups = groups.filter(g => g.id !== id);
+  if (groupFilter === id) groupFilter = '';
+  renderGroupsList();
+  renderCatalog();
+}
+function startRenameGroup(id) { renderGroupsList(id); }
+function commitRenameGroup(id, value) {
+  const g = groups.find(g => g.id === id);
+  if (g && value.trim()) g.name = value.trim();
+  renderGroupsList();
+  renderGroupFilterOptions();
+}
+
+function renderGroupsList(renamingId) {
+  const board = document.getElementById('groupsBoard');
+  if (groups.length === 0) {
+    board.innerHTML = `<div class="empty-state">No groups yet.<br>Create one above to organize your colors.</div>`;
+    return;
+  }
+  board.innerHTML = groups.map(g => {
+    if (renamingId === g.id) {
+      return `
+        <div class="group-row">
+          <input type="text" class="group-rename-input" id="renameInput-${g.id}" value="${escapeHtml(g.name)}" autofocus>
+          <button class="group-icon-btn" onclick="commitRenameGroup('${g.id}', document.getElementById('renameInput-${g.id}').value)" title="Save">&#10003;</button>
+          <button class="group-icon-btn" onclick="renderGroupsList()" title="Cancel">&#10005;</button>
+        </div>
+      `;
+    }
+    return `
+      <div class="group-row">
+        <button class="group-open-btn" onclick="openGroupDetail('${g.id}')">
+          <span class="gname">${escapeHtml(g.name)}</span>
+          <span class="gcount">(${g.colorIds.length})</span>
+        </button>
+        <button class="group-icon-btn" onclick="startRenameGroup('${g.id}')" title="Rename">&#9998;</button>
+        <button class="group-icon-btn danger" onclick="deleteGroup('${g.id}')" title="Delete">&#128465;</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function openGroupDetail(id) {
+  currentGroupDetailId = id;
+  groupDetailSelectedSet = new Set();
+  const g = groups.find(g => g.id === id);
+  document.getElementById('groupDetailTitle').textContent = g ? g.name : 'Group';
+  renderGroupDetail();
+  showView('groupDetail');
+}
+
+function removeFromGroup(colorId) {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g) return;
+  g.colorIds = g.colorIds.filter(x => x !== colorId);
+  groupDetailSelectedSet.delete(colorId);
+  renderGroupDetail();
+  renderGroupFilterOptions();
+}
+
+let groupDetailSelectedSet = new Set();
+
+function renderGroupDetail() {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  const board = document.getElementById('groupDetailBoard');
+  if (!g || g.colorIds.length === 0) {
+    board.innerHTML = `<div class="empty-state">No colors in this group yet.<br>Select colors from your catalog and use "Add to Group".</div>`;
+    updateGroupDetailToolbar();
+    return;
+  }
+  const members = g.colorIds.map(key => {
+    const resolved = resolveGroupMember(key);
+    return resolved ? { key, ...resolved } : null;
+  }).filter(Boolean);
+
+  board.innerHTML = members.map((m, i) => {
+    const srNo = String(i + 1).padStart(3, '0');
+    const isSelected = groupDetailSelectedSet.has(m.key);
+    if (m.type === 'primary') {
+      const entry = m.item;
+      const secs = resolveSecondaries(entry);
+      const shadeCount = secs.length;
+      return `
+        <div class="list-row">
+          <input type="checkbox" onchange="toggleGroupDetailSelect('${m.key}')" ${isSelected ? 'checked' : ''}>
+          <div class="row-open" onclick="openDetail('${entry.id}')">
+            <div class="srno">#${srNo}</div>
+            <div class="thumb" style="background:${entry.primaryHex}"></div>
+            <div class="details">
+              <div class="dname" style="color:${entry.primaryHex}">${entry.primaryName}</div>
+              <div class="dmeta">${entry.primaryHex}</div>
+              <div class="dmeta">${shadeCount} shade${shadeCount !== 1 ? 's' : ''} &middot; PRIMARY</div>
+              <div class="home-dots">${secs.map(s => `<div class="home-dot" style="background:${s.hex}" title="${s.hex}${s.name ? ' - ' + s.name : ''}"></div>`).join('')}</div>
+            </div>
+          </div>
+          <button class="trash-btn" onclick="removeFromGroup('${m.key}')" title="Remove from group">&#10005;</button>
+        </div>
+      `;
+    }
+    const s = m.item;
+    return `
+      <div class="list-row">
+        <input type="checkbox" onchange="toggleGroupDetailSelect('${m.key}')" ${isSelected ? 'checked' : ''}>
+        <div class="row-open" onclick="openSecondaryDetail('${s.id}')">
+          <div class="srno">#${srNo}</div>
+          <div class="thumb" style="background:${s.hex}; border-radius:50%; width:46px; height:46px;"></div>
+          <div class="details">
+            <div class="dname" style="color:${s.hex}">${s.name}</div>
+            <div class="dmeta">${s.hex}</div>
+            <div class="dmeta">SECONDARY</div>
+          </div>
+        </div>
+        <button class="trash-btn" onclick="removeFromGroup('${m.key}')" title="Remove from group">&#10005;</button>
+      </div>
+    `;
+  }).join('');
+  updateGroupDetailToolbar();
+}
+
+function toggleGroupDetailSelect(key) {
+  if (groupDetailSelectedSet.has(key)) groupDetailSelectedSet.delete(key); else groupDetailSelectedSet.add(key);
+  updateGroupDetailToolbar();
+}
+
+function toggleGroupDetailSelectAll(checked) {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  groupDetailSelectedSet = new Set(checked && g ? g.colorIds : []);
+  renderGroupDetail();
+}
+
+function updateGroupDetailToolbar() {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  const total = g ? g.colorIds.length : 0;
+  const n = groupDetailSelectedSet.size;
+  const actionsEl = document.getElementById('groupDetailToolbarActions');
+  if (n > 0) {
+    actionsEl.innerHTML = `
+      <button class="text-btn preview-btn" onclick="openPreviewForGroup()">Prepare catalog (${n})</button>
+      <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print colours (${n})</button>
+    `;
+  } else {
+    actionsEl.innerHTML = `
+      <button class="text-btn preview-btn" onclick="openPreviewForGroup()">Prepare catalog</button>
+      <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print colours</button>
+    `;
+  }
+  const bulkBtn = document.getElementById('groupDetailBulkRemoveBtn');
+  if (n > 0) {
+    bulkBtn.style.display = 'flex';
+    document.getElementById('groupDetailBulkRemoveCount').textContent = `(${n})`;
+  } else {
+    bulkBtn.style.display = 'none';
+  }
+  const chk = document.getElementById('groupDetailSelectAllChk');
+  if (chk) {
+    chk.checked = total > 0 && n === total;
+    chk.indeterminate = n > 0 && n < total;
+  }
+}
+
+function removeSelectedFromGroup() {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g || groupDetailSelectedSet.size === 0) return;
+  g.colorIds = g.colorIds.filter(x => !groupDetailSelectedSet.has(x));
+  groupDetailSelectedSet = new Set();
+  renderGroupDetail();
+  renderGroupFilterOptions();
+}
+
+/* ---------------- Add to group ---------------- */
+
+let addToGroupReturnView = 'list';
+let addToGroupOnDone = null; // optional extra callback after adding
+
+function openAddToGroup() {
+  if (selectedSet.size === 0) return;
+  openAddToGroupForKeys([...selectedSet].map(id => groupMemberKey('primary', id)), 'list', () => { selectedSet = new Set(); renderCatalog(); });
+}
+
+function openAddToGroupForKeys(keys, returnView, onDone) {
+  if (!keys || keys.length === 0) return;
+  addToGroupIds = keys;
+  addToGroupReturnView = returnView || 'list';
+  addToGroupOnDone = onDone || null;
+  document.getElementById('atgSubHeader').textContent =
+    `Add ${addToGroupIds.length} color${addToGroupIds.length > 1 ? 's' : ''} to a group.`;
+
+  const existingSection = document.getElementById('atgExistingSection');
+  const select = document.getElementById('atgGroupSelect');
+  const addBtn = document.getElementById('atgAddBtn');
+  if (groups.length === 0) {
+    existingSection.style.display = 'none';
+  } else {
+    existingSection.style.display = '';
+    select.innerHTML = '<option value="">Select a group…</option>' +
+      groups.map(g => `<option value="${g.id}">${escapeHtml(g.name)} (${g.colorIds.length})</option>`).join('');
+    select.value = '';
+    addBtn.disabled = true;
+    select.onchange = () => { addBtn.disabled = !select.value; };
+  }
+  document.getElementById('atgNewGroupName').value = '';
+  showView('addToGroup');
+}
+
+function finishAddToGroup() {
+  if (addToGroupOnDone) addToGroupOnDone();
+  renderHomeAll();
+  renderGroupFilterOptions();
+  showView(addToGroupReturnView);
+  addToGroupOnDone = null;
+}
+
+function addSelectedToExistingGroup() {
+  const select = document.getElementById('atgGroupSelect');
+  const g = groups.find(g => g.id === select.value);
+  if (!g) return;
+  g.colorIds = [...new Set([...g.colorIds, ...addToGroupIds])];
+  finishAddToGroup();
+}
+
+function createGroupFromSelection() {
+  const name = document.getElementById('atgNewGroupName').value.trim();
+  if (!name) return;
+  groups.push({ id: uid(), name, colorIds: [...addToGroupIds] });
+  finishAddToGroup();
+}
+
+/* ---------------- Prepare Catalog (print) ---------------- */
+
+function doPrint() {
+  try { window.focus(); window.print(); } catch (e) {}
+}
+
+function openPreviewForSelection() {
+  const ids = selectedSet.size > 0 ? [...selectedSet] : currentFilteredCatalog().map(e => e.id);
+  const label = selectedSet.size > 0 ? `${ids.length} selected color${ids.length !== 1 ? 's' : ''}` :
+    (groupFilter ? `${ids.length} color${ids.length !== 1 ? 's' : ''} in this group` : `all ${ids.length} color${ids.length !== 1 ? 's' : ''}`);
+  renderPrepareCatalog(ids, label);
+  showView('preview');
+}
+
+function openPreviewForGroup() {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g) return;
+  const keys = groupDetailSelectedSet.size > 0 ? [...groupDetailSelectedSet] : g.colorIds;
+  const ids = keys.filter(k => k.indexOf('p:') === 0 || (k.indexOf('s:') !== 0 && entryById(k))).map(k => k.indexOf('p:') === 0 ? k.slice(2) : k);
+  const label = groupDetailSelectedSet.size > 0
+    ? `${ids.length} selected color${ids.length !== 1 ? 's' : ''} in "${g.name}"`
+    : `${ids.length} color${ids.length !== 1 ? 's' : ''} in "${g.name}"`;
+  renderPrepareCatalog(ids, label);
+  showView('preview');
+}
+
+function openPrintColoursForSelection() {
+  const ids = selectedSet.size > 0 ? [...selectedSet] : currentFilteredCatalog().map(e => e.id);
+  const label = selectedSet.size > 0 ? `${ids.length} selected color${ids.length !== 1 ? 's' : ''}` :
+    (groupFilter ? `${ids.length} color${ids.length !== 1 ? 's' : ''} in this group` : `all ${ids.length} color${ids.length !== 1 ? 's' : ''}`);
+  const items = ids.map(id => entryById(id)).filter(Boolean);
+  openAllColoursSelector(items, label);
+}
+
+function openPrintColoursForGroup() {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g) return;
+  const keys = groupDetailSelectedSet.size > 0 ? [...groupDetailSelectedSet] : g.colorIds;
+  const primaryEntries = [];
+  keys.forEach(key => {
+    const resolved = resolveGroupMember(key);
+    if (resolved && resolved.type === 'primary') primaryEntries.push(resolved.item);
+  });
+  const items = primaryEntries;
+  const swatches = collectAllSwatches(items);
+  keys.forEach(key => {
+    const resolved = resolveGroupMember(key);
+    if (resolved && resolved.type === 'secondary' && !swatches.some(sw => sw.hex === resolved.item.hex)) {
+      swatches.push({ hex: resolved.item.hex, name: resolved.item.name });
+    }
+  });
+  const label = groupDetailSelectedSet.size > 0
+    ? `${keys.length} selected color${keys.length !== 1 ? 's' : ''} in "${g.name}"`
+    : `${keys.length} color${keys.length !== 1 ? 's' : ''} in "${g.name}"`;
+  openAllColoursSelectorFromSwatches(swatches, label);
+}
+
+function collectAllSwatches(items) {
+  const map = new Map(); // hex -> name
+  items.forEach(entry => {
+    if (!map.has(entry.primaryHex)) map.set(entry.primaryHex, entry.primaryName);
+    resolveSecondaries(entry).forEach(s => {
+      if (!map.has(s.hex)) map.set(s.hex, s.name || s.hex);
+    });
+  });
+  return Array.from(map.entries()).map(([hex, name]) => ({ hex, name }));
+}
+
+/* ---------------- All Colours selector (pick specific swatches to print) ---------------- */
+
+let allColoursPool = [];   // [{hex, name}]
+let allColoursLabel = '';
+let allColoursSelected = new Set(); // hex values
+
+function openAllColoursSelector(items, label) {
+  openAllColoursSelectorFromSwatches(collectAllSwatches(items), label);
+}
+
+function openAllColoursSelectorFromSwatches(swatches, label) {
+  allColoursPool = swatches;
+  allColoursLabel = label;
+  allColoursSelected = new Set(allColoursPool.map(s => s.hex)); // start with everything selected
+  renderAllColoursSelector();
+  showView('allcolours');
+}
+
+function toggleAllColourSelect(hex) {
+  if (allColoursSelected.has(hex)) allColoursSelected.delete(hex);
+  else allColoursSelected.add(hex);
+  updateAllColoursToolbar();
+}
+
+function toggleAllColoursSelectAll(checked) {
+  allColoursSelected = new Set(checked ? allColoursPool.map(s => s.hex) : []);
+  renderAllColoursSelector();
+}
+
+function updateAllColoursToolbar() {
+  const n = allColoursSelected.size;
+  document.getElementById('acPrintBtn').textContent = n > 0 ? `Print Selected (${n})` : 'Print Selected';
+  document.getElementById('acPrintBtn').disabled = n === 0;
+  const chk = document.getElementById('acSelectAllChk');
+  chk.checked = allColoursPool.length > 0 && n === allColoursPool.length;
+  chk.indeterminate = n > 0 && n < allColoursPool.length;
+}
+
+function renderAllColoursSelector() {
+  document.getElementById('acSubHeader').textContent = `${allColoursPool.length} unique colors from ${allColoursLabel}`;
+  const board = document.getElementById('allColoursBoard');
+  if (allColoursPool.length === 0) {
+    board.innerHTML = `<div class="empty-state">No colors to show.</div>`;
+  } else {
+    board.innerHTML = allColoursPool.map(s => `
+      <div class="list-row">
+        <input type="checkbox" onchange="toggleAllColourSelect('${s.hex}')" ${allColoursSelected.has(s.hex) ? 'checked' : ''}>
+        <div class="thumb" style="background:${s.hex}; border-radius:50%; width:40px; height:40px;"></div>
+        <div class="details">
+          <div class="dname" style="color:${s.hex}">${s.name}</div>
+          <div class="dmeta">${s.hex}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  updateAllColoursToolbar();
+}
+
+function confirmPrintSelectedColours() {
+  const chosen = allColoursPool.filter(s => allColoursSelected.has(s.hex));
+  if (chosen.length === 0) return;
+  renderPrintColoursFromSwatches(chosen, `${chosen.length} selected color${chosen.length !== 1 ? 's' : ''}`);
+  showView('printcolours');
+}
+
+function renderPrintColours(ids, label) {
+  const items = ids.map(id => entryById(id)).filter(Boolean);
+  const swatches = collectAllSwatches(items);
+  renderPrintColoursFromSwatches(swatches, label);
+}
+
+function renderPrintColoursFromSwatches(swatches, label) {
+  const PER_PAGE = 16;
+  const pages = [];
+  for (let i = 0; i < swatches.length; i += PER_PAGE) pages.push(swatches.slice(i, i + PER_PAGE));
+  if (pages.length === 0) pages.push([]);
+  const totalPages = pages.length;
+
+  document.getElementById('swCount').textContent =
+    `Showing ${swatches.length} color${swatches.length !== 1 ? 's' : ''} from ${label} \u00B7 ${totalPages} page${totalPages !== 1 ? 's' : ''}`;
+
+  const pagesEl = document.getElementById('swPages');
+  pagesEl.innerHTML = pages.map((pageSwatches, pi) => {
+    const cardsHtml = pageSwatches.map((s, ci) => {
+      const globalIdx = pi * PER_PAGE + ci + 1;
+      return `
+      <div class="sw-card">
+        <div class="sw-srno">#${String(globalIdx).padStart(2, '0')}</div>
+        <div class="sw-dot" style="background:${s.hex}"></div>
+        <div class="sw-hex">${s.hex}</div>
+        ${s.name ? `<div class="sw-name">${s.name}</div>` : ''}
+      </div>
+    `;
+    }).join('');
+
+    return `
+      <div class="sw-board sw-page">
+        <div class="sw-title">
+          <div class="eyebrow">THE BEST</div>
+          <h1>COLOR <span>SWATCHES</span></h1>
+        </div>
+        <div class="sw-grid">${cardsHtml || '<div class="empty-state">No colors to show.</div>'}</div>
+        <div class="sw-page-num no-print">Page ${pi + 1} of ${totalPages}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPrepareCatalog(ids, label) {
+  const items = ids.map(id => entryById(id)).filter(Boolean);
+  const PER_PAGE = 10;
+  const pages = [];
+  for (let i = 0; i < items.length; i += PER_PAGE) pages.push(items.slice(i, i + PER_PAGE));
+  if (pages.length === 0) pages.push([]);
+  const totalPages = pages.length;
+
+  document.getElementById('pcCount').textContent =
+    `Showing ${label} \u00B7 ${totalPages} page${totalPages !== 1 ? 's' : ''}`;
+
+  const pagesEl = document.getElementById('pcPages');
+  pagesEl.innerHTML = pages.map((pageItems, pi) => {
+    const rowsHtml = pageItems.map((entry, i) => {
+      const globalIdx = pi * PER_PAGE + i + 1;
+      const badgeText = contrastText(entry.primaryHex);
+      const combosHtml = resolveSecondaries(entry).map(s => `
+        <div class="pc-combo">
+          <div class="pc-dual">
+            <div class="c1" style="background:${entry.primaryHex}"></div>
+            <div class="c2" style="background:${s.hex}"></div>
+          </div>
+          <div class="hex">${s.hex}</div>
+          ${s.name ? `<div class="cname">${s.name}</div>` : ''}
+        </div>
+      `).join('');
+
+      return `
+        <div class="pc-row">
+          <div class="pc-num" style="background:${entry.primaryHex}; color:${badgeText};">${globalIdx}</div>
+          <div class="pc-pname">
+            <div class="name" style="color:${entry.primaryHex}">${entry.primaryName}</div>
+            <div class="hex">${entry.primaryHex}</div>
+          </div>
+          <div class="pc-primary-swatch" style="background:${entry.primaryHex}"></div>
+          <div class="pc-combos">${combosHtml}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="pc-board pc-page">
+        <div class="pc-title">
+          <div class="eyebrow">THE BEST</div>
+          <h1>COLOR <span>COMBINATIONS</span></h1>
+        </div>
+        ${rowsHtml || '<div class="empty-state">No colors to show.</div>'}
+        <div class="pc-page-num no-print">Page ${pi + 1} of ${totalPages}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------------- Secondary Colours browse (standalone pool) ---------------- */
+
+let scSelectedSet = new Set();
+
+function openPrintColoursForSecondaryPool() {
+  const items = scSelectedSet.size > 0
+    ? secondaryColors.filter(s => scSelectedSet.has(s.id))
+    : secondaryColors;
+  const label = scSelectedSet.size > 0
+    ? `${items.length} selected secondary color${items.length !== 1 ? 's' : ''}`
+    : `all ${items.length} secondary color${items.length !== 1 ? 's' : ''} in your pool`;
+  renderPrintColoursFromSwatches(items.map(s => ({ hex: s.hex, name: s.name })), label);
+  showView('printcolours');
+}
+
+function openSecondaryColoursBrowse() {
+  scSelectedSet = new Set();
+  renderSecondaryColoursBoard();
+  showView('secondarycolours');
+}
+
+function taggedPrimariesFor(secId) {
+  return catalog.filter(e => (e.secondaryIds || []).includes(secId));
+}
+
+/* ---------------- Quick-tag (+P) from Secondary Colours rows ---------------- */
+
+let qtSecondaryOpenId = null;
+
+function toggleQtSecondary(id) {
+  qtSecondaryOpenId = qtSecondaryOpenId === id ? null : id;
+  renderSecondaryColoursBoard();
+}
+
+function qtPrimaryOptionsHtml(secId, query) {
+  const existingPrimaryIds = new Set(taggedPrimariesFor(secId).map(p => p.id));
+  const q = (query || '').trim().toLowerCase();
+  const matches = catalog.filter(e =>
+    !existingPrimaryIds.has(e.id) && (e.primaryName.toLowerCase().includes(q) || e.primaryHex.toLowerCase().includes(q))
+  ).slice(0, 30);
+  return matches.length === 0
+    ? `<div class="combo-empty">No matches</div>`
+    : matches.map(e => `
+      <div class="combo-item" onclick="quickTagPrimaryToSecondary('${secId}','${e.id}')">
+        <div class="combo-item-dot" style="background:${e.primaryHex}"></div>
+        <div class="combo-item-text"><strong>${e.primaryName}</strong><span>${e.primaryHex}</span></div>
+      </div>
+    `).join('');
+}
+
+function renderQtSecondaryOptions(secId, query) {
+  const el = document.getElementById(`qtPrimOptions-${secId}`);
+  if (el) el.innerHTML = qtPrimaryOptionsHtml(secId, query);
+}
+
+function quickTagPrimaryToSecondary(secId, primaryId) {
+  const entry = entryById(primaryId);
+  if (!entry) return;
+  entry.secondaryIds = [...new Set([...(entry.secondaryIds || []), secId])];
+  qtSecondaryOpenId = null;
+  renderCatalog();
+  renderSecondaryColoursBoard();
+}
+
+let secondarySortDesc = true; // true = most recently added first
+
+function toggleSecondarySort() {
+  secondarySortDesc = !secondarySortDesc;
+  const arrow = document.getElementById('secondarySortArrow');
+  if (arrow) arrow.innerHTML = secondarySortDesc ? '&#9660;' : '&#9650;';
+  renderSecondaryColoursBoard();
+}
+
+function renderSecondaryColoursBoard() {
+  document.getElementById('scSubHeader').textContent =
+    `${secondaryColors.length} secondary color${secondaryColors.length !== 1 ? 's' : ''} in your pool. These don't need to belong to any primary color.`;
+
+  secondaryColors.forEach((s, i) => { s.naturalSrNo = i + 1; });
+  const displayList = secondarySortDesc ? secondaryColors.slice().reverse() : secondaryColors;
+
+  const board = document.getElementById('secondaryColoursBoard');
+  if (secondaryColors.length === 0) {
+    board.innerHTML = `<div class="empty-state">No secondary colors yet.<br>Tap "+ Add Secondary Colours" to create some.</div>`;
+  } else {
+    board.innerHTML = displayList.map((s, i) => {
+      const srNo = String(s.naturalSrNo).padStart(2, '0');
+      const isSelected = scSelectedSet.has(s.id);
+      const taggedPrimaries = taggedPrimariesFor(s.id);
+      const dotsHtml = taggedPrimaries.length > 0
+        ? `<div class="home-dots">${taggedPrimaries.map(p => `<div class="home-dot" style="background:${p.primaryHex}" title="${p.primaryName}"></div>`).join('')}</div>`
+        : `<div class="dmeta" style="font-style:italic;">Not tagged to any primary</div>`;
+      const panelOpen = qtSecondaryOpenId === s.id;
+      const reorderHtml = secondarySortDesc
+        ? `<div class="reorder-col" title="Switch to oldest-first (▲ in header) to manually reorder">
+             <button class="chev-btn" disabled>&#9650;</button>
+             <button class="chev-btn" disabled>&#9660;</button>
+           </div>`
+        : `<div class="reorder-col">
+             <button class="chev-btn" onclick="moveSecondaryColor('${s.id}',-1)" ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+             <button class="chev-btn" onclick="moveSecondaryColor('${s.id}',1)" ${i === displayList.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+           </div>`;
+      return `
+      <div class="list-row">
+        <input type="checkbox" onchange="toggleScSelect('${s.id}')" ${isSelected ? 'checked' : ''}>
+        <div class="row-open" onclick="openSecondaryDetail('${s.id}')">
+          <div class="srno">#${srNo}</div>
+          <div class="thumb" style="background:${s.hex}; border-radius:50%; width:40px; height:40px;"></div>
+          <div class="details">
+            <div class="dname" style="color:${s.hex}">${s.name}</div>
+            <div class="dmeta">${s.hex}</div>
+            ${dotsHtml}
+          </div>
+        </div>
+        <button class="quicktag-btn ${panelOpen ? 'active' : ''}" onclick="toggleQtSecondary('${s.id}')" title="Quick-tag a primary colour">+P</button>
+        ${reorderHtml}
+        <button class="trash-btn" onclick="deleteSecondaryColor('${s.id}')" title="Delete">&#128465;</button>
+      </div>
+      ${panelOpen ? `
+        <div class="quicktag-panel">
+          <input type="text" class="text-input" placeholder="Search primary colours to tag…" oninput="renderQtSecondaryOptions('${s.id}', this.value)" autofocus>
+          <div class="quicktag-options" id="qtPrimOptions-${s.id}">${qtPrimaryOptionsHtml(s.id, '')}</div>
+        </div>
+      ` : ''}
+    `;
+    }).join('');
+  }
+  updateScToolbar();
+  renderHomeAll();
+}
+
+function moveSecondaryColor(id, dir) {
+  const i = secondaryColors.findIndex(s => s.id === id);
+  const j = i + dir;
+  if (i === -1 || j < 0 || j >= secondaryColors.length) return;
+  [secondaryColors[i], secondaryColors[j]] = [secondaryColors[j], secondaryColors[i]];
+  renderSecondaryColoursBoard();
+}
+
+/* ---------------- Secondary Color Detail & Edit ---------------- */
+
+let secDetailId = null;
+
+function openSecondaryDetail(id) {
+  secDetailId = id;
+  const s = secondaryById(id);
+  if (!s) return;
+  document.getElementById('secDetailSwatch').style.background = s.hex;
+  document.getElementById('secDetailName').textContent = s.name;
+  document.getElementById('secDetailName').style.color = s.hex;
+  document.getElementById('secDetailHex').textContent = s.hex;
+
+  const tagged = taggedPrimariesFor(id);
+  const listEl = document.getElementById('secDetailPrimaryList');
+  listEl.innerHTML = tagged.length === 0
+    ? `<div class="empty-state">Not tagged to any primary color yet.</div>`
+    : tagged.map(p => `
+      <div class="list-row">
+        <div class="row-open" onclick="showView('list'); openDetail('${p.id}')">
+          <div class="thumb" style="background:${p.primaryHex}"></div>
+          <div class="details">
+            <div class="dname" style="color:${p.primaryHex}">${p.primaryName}</div>
+            <div class="dmeta">${p.primaryHex}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+  document.getElementById('secDetailEditBtn').onclick = () => openEditSecondaryColor(id);
+  document.getElementById('secDetailDeleteBtn').onclick = () => {
+    removeSecondaryColorEverywhere(id);
+    showView('secondarycolours');
+    renderSecondaryColoursBoard();
+  };
+  document.getElementById('secDetailPromoteMsg').textContent = '';
+  document.getElementById('secDetailMakePrimaryBtn').onclick = () => promoteSecondaryToPrimary(id);
+  document.getElementById('secDetailTagSearchInput').value = '';
+  document.getElementById('secDetailTagDropdown').style.display = 'none';
+  showView('secondaryDetail');
+}
+
+function promoteSecondaryToPrimary(id) {
+  const s = secondaryById(id);
+  if (!s) return;
+  const alreadyPrimary = catalog.find(e => e.primaryHex === s.hex);
+  if (alreadyPrimary) {
+    const msg = document.getElementById('secDetailPromoteMsg');
+    msg.style.color = 'var(--danger)';
+    msg.textContent = `${alreadyPrimary.primaryName} is already a primary color with this hex.`;
+    return;
+  }
+  catalog.push({ id: uid(), primaryHex: s.hex, primaryName: s.name, secondaryIds: [] });
+  renderCatalog();
+  showView('list');
+}
+
+function renderSecDetailTagDropdown(query) {
+  const dd = document.getElementById('secDetailTagDropdown');
+  if (!dd) return;
+  const existingPrimaryIds = new Set(taggedPrimariesFor(secDetailId).map(p => p.id));
+  const q = (query || '').trim().toLowerCase();
+  const matches = catalog.filter(e =>
+    !existingPrimaryIds.has(e.id) && (e.primaryName.toLowerCase().includes(q) || e.primaryHex.toLowerCase().includes(q))
+  ).slice(0, 30);
+  dd.innerHTML = matches.length === 0
+    ? `<div class="combo-empty">No matches</div>`
+    : matches.map(e => `
+      <div class="combo-item" onclick="tagPrimaryToSecDetailInline('${e.id}')">
+        <div class="combo-item-dot" style="background:${e.primaryHex}"></div>
+        <div class="combo-item-text"><strong>${e.primaryName}</strong><span>${e.primaryHex}</span></div>
+      </div>
+    `).join('');
+  dd.style.display = 'block';
+}
+
+function tagPrimaryToSecDetailInline(primaryId) {
+  const entry = entryById(primaryId);
+  if (!entry) return;
+  entry.secondaryIds = [...new Set([...(entry.secondaryIds || []), secDetailId])];
+  renderCatalog();
+  openSecondaryDetail(secDetailId);
+}
+
+document.getElementById('secDetailTagSearchInput').addEventListener('input', (e) => renderSecDetailTagDropdown(e.target.value));
+document.getElementById('secDetailTagSearchInput').addEventListener('focus', (e) => renderSecDetailTagDropdown(e.target.value));
+
+function openEditSecondaryColor(id) {
+  const s = secondaryById(id);
+  if (!s) return;
+  document.getElementById('editSecColorInput').value = s.hex;
+  document.getElementById('editSecHexInput').value = s.hex;
+  document.getElementById('editSecNameInput').value = s.name;
+  document.getElementById('editSecMsg').textContent = '';
+  showView('editSecondaryColor');
+}
+
+function saveEditedSecondaryColor() {
+  const msg = document.getElementById('editSecMsg');
+  const hex = document.getElementById('editSecHexInput').value.trim().toUpperCase();
+  const name = document.getElementById('editSecNameInput').value.trim();
+  if (!isValidHex(hex)) { msg.textContent = 'Enter a valid hex code, like #DBA7B1.'; return; }
+  const s = secondaryById(secDetailId);
+  if (!s) return;
+  s.hex = hex;
+  s.name = name || hex;
+  renderCatalog();
+  openSecondaryDetail(secDetailId);
+}
+
+function toggleScSelect(id) {
+  if (scSelectedSet.has(id)) scSelectedSet.delete(id); else scSelectedSet.add(id);
+  updateScToolbar();
+}
+function toggleScSelectAll(checked) {
+  scSelectedSet = new Set(checked ? secondaryColors.map(s => s.id) : []);
+  renderSecondaryColoursBoard();
+}
+function updateScToolbar() {
+  const n = scSelectedSet.size;
+  const actionsEl = document.getElementById('scToolbarActions');
+  const printBtn = `<button class="text-btn printcolours-btn" onclick="openPrintColoursForSecondaryPool()">Print colours${n > 0 ? ` (${n})` : ''}</button>`;
+  const tagBtn = n > 0 ? `<button class="text-btn addgroup-btn" onclick="openTagSecondariesToPrimary()">Tag to primary (${n})</button>` : '';
+  actionsEl.innerHTML = tagBtn + printBtn;
+  const delBtn = document.getElementById('scBulkDeleteBtn');
+  if (n > 0) {
+    delBtn.style.display = 'flex';
+    document.getElementById('scBulkDeleteCount').textContent = `(${n})`;
+  } else {
+    delBtn.style.display = 'none';
+  }
+  const chk = document.getElementById('scSelectAllChk');
+  if (chk) {
+    chk.checked = secondaryColors.length > 0 && n === secondaryColors.length;
+    chk.indeterminate = n > 0 && n < secondaryColors.length;
+  }
+}
+
+function removeSecondaryColorEverywhere(id) {
+  secondaryColors = secondaryColors.filter(s => s.id !== id);
+  catalog.forEach(entry => {
+    if (entry.secondaryIds) entry.secondaryIds = entry.secondaryIds.filter(x => x !== id);
+  });
+  const key = groupMemberKey('secondary', id);
+  groups.forEach(g => { g.colorIds = g.colorIds.filter(x => x !== key); });
+}
+
+function deleteSecondaryColor(id) {
+  removeSecondaryColorEverywhere(id);
+  scSelectedSet.delete(id);
+  renderSecondaryColoursBoard();
+}
+
+function deleteSelectedSecondaryColours() {
+  if (scSelectedSet.size === 0) return;
+  [...scSelectedSet].forEach(id => removeSecondaryColorEverywhere(id));
+  scSelectedSet = new Set();
+  renderSecondaryColoursBoard();
+}
+
+/* ---- Tag selected secondary colors to a chosen primary ---- */
+
+let tagPrimarySelectedId = null;
+
+function openTagSecondariesToPrimary() {
+  if (scSelectedSet.size === 0) return;
+  tagPrimarySelectedId = null;
+  const input = document.getElementById('tagPrimarySearchInput');
+  input.value = '';
+  document.getElementById('tagPrimaryDropdown').style.display = 'none';
+  document.getElementById('tagPrimaryBtn').disabled = true;
+  document.getElementById('tagPrimarySubHeader').textContent =
+    `Tag ${scSelectedSet.size} selected secondary color${scSelectedSet.size !== 1 ? 's' : ''} to a primary color.`;
+  showView('tagprimary');
+}
+
+function renderTagPrimaryDropdown(query) {
+  const q = (query || '').trim().toLowerCase();
+  const matches = catalog.filter(e =>
+    e.primaryName.toLowerCase().includes(q) || e.primaryHex.toLowerCase().includes(q)
+  ).slice(0, 40);
+  const dd = document.getElementById('tagPrimaryDropdown');
+  dd.innerHTML = matches.length === 0
+    ? `<div class="combo-empty">No matching primary colors</div>`
+    : matches.map(e => `
+      <div class="combo-item" onclick="selectTagPrimary('${e.id}')">
+        <div class="combo-item-dot" style="background:${e.primaryHex}"></div>
+        <div class="combo-item-text"><strong>${e.primaryName}</strong><span>${e.primaryHex}</span></div>
+      </div>
+    `).join('');
+  dd.style.display = 'block';
+}
+
+function selectTagPrimary(id) {
+  const entry = entryById(id);
+  if (!entry) return;
+  tagPrimarySelectedId = id;
+  document.getElementById('tagPrimarySearchInput').value = `${entry.primaryName} (${entry.primaryHex})`;
+  document.getElementById('tagPrimaryDropdown').style.display = 'none';
+  document.getElementById('tagPrimaryBtn').disabled = false;
+}
+
+document.getElementById('tagPrimarySearchInput').addEventListener('input', (e) => {
+  tagPrimarySelectedId = null;
+  document.getElementById('tagPrimaryBtn').disabled = true;
+  renderTagPrimaryDropdown(e.target.value);
+});
+document.getElementById('tagPrimarySearchInput').addEventListener('focus', (e) => {
+  renderTagPrimaryDropdown(e.target.value);
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.combo-wrap')) {
+    document.querySelectorAll('.combo-dropdown').forEach(dd => { dd.style.display = 'none'; });
+  }
+});
+
+function confirmTagSecondariesToPrimary() {
+  const entry = entryById(tagPrimarySelectedId);
+  if (!entry) return;
+  entry.secondaryIds = [...new Set([...(entry.secondaryIds || []), ...scSelectedSet])];
+  scSelectedSet = new Set();
+  renderCatalog();
+  showView('secondarycolours');
+  renderSecondaryColoursBoard();
+}
+
+/* ---- Tag existing secondary colors onto a primary from its Detail view ---- */
+
+let pickSecForEntryId = null;
+let pickSecSelectedSet = new Set();
+let pickSecMode = 'entry'; // 'entry' = tag existing catalog entry, 'draft' = fill current builder draft
+
+function renderDetailTagDropdown(query) {
+  const dd = document.getElementById('detailTagDropdown');
+  if (!dd) return;
+  const entry = entryById(detailId);
+  if (!entry) return;
+  const existingIds = new Set(entry.secondaryIds || []);
+  const q = (query || '').trim().toLowerCase();
+  const matches = secondaryColors.filter(s =>
+    !existingIds.has(s.id) && (s.name.toLowerCase().includes(q) || s.hex.toLowerCase().includes(q))
+  ).slice(0, 30);
+  dd.innerHTML = matches.length === 0
+    ? `<div class="combo-empty">No matches</div>`
+    : matches.map(s => `
+      <div class="combo-item" onclick="tagSecondaryToDetailInline('${s.id}')">
+        <div class="combo-item-dot" style="background:${s.hex}"></div>
+        <div class="combo-item-text"><strong>${s.name}</strong><span>${s.hex}</span></div>
+      </div>
+    `).join('');
+  dd.style.display = 'block';
+}
+
+function tagSecondaryToDetailInline(secId) {
+  const entry = entryById(detailId);
+  if (!entry) return;
+  entry.secondaryIds = [...new Set([...(entry.secondaryIds || []), secId])];
+  renderCatalog();
+  openDetail(detailId);
+}
+
+function renderDetailContrastSuggestions(baseHex) {
+  const grid = document.getElementById('detailContrastGrid');
+  if (!grid) return;
+  const entry = entryById(detailId);
+  const existingHexes = new Set(resolveSecondaries(entry).map(s => s.hex));
+  const suggestions = generateContrastSuggestions(baseHex);
+
+  grid.innerHTML = suggestions.map(sug => {
+    const level = wcagLevel(sug.ratio);
+    const alreadyTagged = existingHexes.has(sug.hex);
+    return `
+      <div class="contrast-card">
+        <div class="contrast-dot" style="background:${sug.hex}"></div>
+        <div class="contrast-hex">${sug.hex}</div>
+        <div class="contrast-label">${sug.label}</div>
+        <div class="contrast-ratio-row">
+          <span class="contrast-ratio">${sug.ratio.toFixed(2)}:1</span>
+          <span class="contrast-badge" style="background:${level.color}">${level.label}</span>
+        </div>
+        <button class="contrast-tag-btn" ${alreadyTagged ? 'disabled' : ''} onclick="tagContrastSuggestion('${sug.hex}','${sug.label}')">
+          ${alreadyTagged ? '&#10003; Tagged' : '+ Tag as Secondary'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function tagContrastSuggestion(hex, label) {
+  const secId = getOrCreateSecondaryColor(hex, label);
+  const entry = entryById(detailId);
+  if (!entry) return;
+  entry.secondaryIds = [...new Set([...(entry.secondaryIds || []), secId])];
+  renderCatalog();
+  renderSecondaryColoursBoard();
+  openDetail(detailId);
+}
+
+document.getElementById('detailTagSearchInput').addEventListener('input', (e) => renderDetailTagDropdown(e.target.value));
+document.getElementById('detailTagSearchInput').addEventListener('focus', (e) => renderDetailTagDropdown(e.target.value));
+
+function openTagSecondariesToDetail() {
+  pickSecMode = 'entry';
+  pickSecForEntryId = detailId;
+  const entry = entryById(detailId);
+  pickSecSelectedSet = new Set(entry.secondaryIds || []);
+  document.getElementById('pickSecSubHeader').textContent =
+    `Choose which secondary colors belong to "${entry.primaryName}".`;
+  renderPickSecForEntry();
+  showView('pickSecForEntry');
+}
+
+function renderPickSecForEntry() {
+  const board = document.getElementById('pickSecForEntryBoard');
+  if (secondaryColors.length === 0) {
+    board.innerHTML = `<div class="empty-state">No secondary colors yet.<br>Add some from the Secondary Colours tab first.</div>`;
+  } else {
+    board.innerHTML = secondaryColors.map(s => `
+      <div class="list-row">
+        <input type="checkbox" onchange="togglePickSecForEntry('${s.id}')" ${pickSecSelectedSet.has(s.id) ? 'checked' : ''}>
+        <div class="thumb" style="background:${s.hex}; border-radius:50%; width:40px; height:40px;"></div>
+        <div class="details">
+          <div class="dname" style="color:${s.hex}">${s.name}</div>
+          <div class="dmeta">${s.hex}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  const chk = document.getElementById('pickSecSelectAllChk');
+  chk.checked = secondaryColors.length > 0 && pickSecSelectedSet.size === secondaryColors.length;
+  chk.indeterminate = pickSecSelectedSet.size > 0 && pickSecSelectedSet.size < secondaryColors.length;
+}
+
+function togglePickSecForEntry(id) {
+  if (pickSecSelectedSet.has(id)) pickSecSelectedSet.delete(id); else pickSecSelectedSet.add(id);
+  renderPickSecForEntry();
+}
+function togglePickSecForEntrySelectAll(checked) {
+  pickSecSelectedSet = new Set(checked ? secondaryColors.map(s => s.id) : []);
+  renderPickSecForEntry();
+}
+
+function confirmPickSecForEntry() {
+  if (pickSecMode === 'draft') {
+    secondaryDraft = [...pickSecSelectedSet].map(id => {
+      const sc = secondaryById(id);
+      return { hex: sc.hex, name: sc.name };
+    });
+    renderSecondaryList();
+    showView('builder');
+    return;
+  }
+  const entry = entryById(pickSecForEntryId);
+  if (!entry) return;
+  entry.secondaryIds = [...pickSecSelectedSet];
+  renderCatalog();
+  openDetail(pickSecForEntryId);
+}
+
+function backFromPickSec() {
+  showView(pickSecMode === 'draft' ? 'builder' : 'detail');
+}
+
+/* ---- Add new secondary colors (multiple at once) ---- */
+
+let newSecondaryDraft = [];
+let bulkRoleMode = 'secondary'; // 'secondary' | 'primary' — default for all new rows
+
+function onBulkRoleChange() {
+  bulkRoleMode = document.getElementById('bulkRoleSelect').value;
+  newSecondaryDraft.forEach(row => { row.role = bulkRoleMode; });
+  renderNewSecondaryList();
+  updateBulkSaveBtnLabel();
+}
+
+function updateBulkSaveBtnLabel() {
+  const btn = document.getElementById('bulkSaveBtn');
+  if (!btn) return;
+  btn.textContent = 'Save';
+}
+
+let addColoursReturnView = 'secondarycolours';
+
+function resetBulkRoleControls(defaultRole) {
+  defaultRole = defaultRole === 'primary' ? 'primary' : 'secondary';
+  bulkRoleMode = defaultRole;
+  const sel = document.getElementById('bulkRoleSelect');
+  if (sel) sel.value = defaultRole;
+  newSecondaryDraft.forEach(row => { row.role = defaultRole; });
+  updateBulkSaveBtnLabel();
+}
+
+/* ---------------- Colour Picker (staging area for photo-picked colours) ---------------- */
+
+let colourPickerStaged = []; // [{hex, name, addedAs: 'primary'|'secondary'|undefined}]
+
+function renderColourPickerStaged() {
+  const countEl = document.getElementById('cpStagedCount');
+  const clearBtn = document.getElementById('cpClearBtn');
+  const board = document.getElementById('cpStagedBoard');
+
+  if (colourPickerStaged.length === 0) {
+    if (countEl) countEl.textContent = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    board.innerHTML = `<div class="empty-state">No colours picked yet.<br>Upload a photo to get started.</div>`;
+    return;
+  }
+
+  if (countEl) countEl.textContent = `(${colourPickerStaged.length})`;
+  if (clearBtn) clearBtn.style.display = 'inline';
+
+  board.innerHTML = colourPickerStaged.map((c, i) => {
+    if (c.addedAs) {
+      return `
+        <div class="cp-row">
+          <div class="cp-row-top">
+            <div class="cp-swatch" style="background:${c.hex}"></div>
+            <div class="cp-fields">
+              <div style="font-weight:700; font-size:13px; color:var(--brown-900);">${c.hex}</div>
+              <div style="font-size:12.5px; color:var(--muted);">${c.name ? c.name : '(no name)'}</div>
+            </div>
+          </div>
+          <div class="cp-added-tag">&#10003; Added as ${c.addedAs === 'primary' ? 'Primary' : 'Secondary'}</div>
+        </div>
+      `;
+    }
+    return `
+      <div class="cp-row">
+        <div class="cp-row-top">
+          <div class="cp-swatch" style="background:${c.hex}"></div>
+          <div class="cp-fields">
+            <input type="text" class="text-input cp-hex" data-idx="${i}" value="${c.hex}" maxlength="7">
+            <input type="text" class="text-input cp-name" data-idx="${i}" value="${c.name}" placeholder="Name (optional)">
+          </div>
+          <button class="cp-remove-btn" onclick="removeStagedItem(${i})" title="Remove">&times;</button>
+        </div>
+        <div class="cp-actions">
+          <button class="cp-add-btn cp-add-primary" onclick="addStagedToPrimary(${i})">+ Add to Primary</button>
+          <button class="cp-add-btn cp-add-secondary" onclick="addStagedToSecondary(${i})">+ Add to Secondary</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  board.querySelectorAll('.cp-hex').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = +e.target.dataset.idx;
+      let v = e.target.value.trim();
+      if (v && v[0] !== '#') v = '#' + v;
+      colourPickerStaged[idx].hex = v.toUpperCase();
+    });
+  });
+  board.querySelectorAll('.cp-name').forEach(el => {
+    el.addEventListener('input', e => {
+      colourPickerStaged[+e.target.dataset.idx].name = e.target.value;
+    });
+  });
+}
+
+function addStagedToPrimary(i) {
+  const c = colourPickerStaged[i];
+  if (!c || !isValidHex(c.hex)) return;
+  catalog.push({ id: uid(), primaryHex: c.hex, primaryName: c.name.trim() || c.hex, secondaryIds: [] });
+  c.addedAs = 'primary';
+  renderCatalog();
+  renderColourPickerStaged();
+}
+
+function addStagedToSecondary(i) {
+  const c = colourPickerStaged[i];
+  if (!c || !isValidHex(c.hex)) return;
+  getOrCreateSecondaryColor(c.hex, c.name.trim() || c.hex);
+  c.addedAs = 'secondary';
+  renderSecondaryColoursBoard();
+  renderColourPickerStaged();
+}
+
+function removeStagedItem(i) {
+  colourPickerStaged.splice(i, 1);
+  renderColourPickerStaged();
+}
+
+function clearColourPickerStaged() {
+  colourPickerStaged = [];
+  renderColourPickerStaged();
+}
+
+function openAddPrimaryColours() {
+  addColoursReturnView = 'list';
+  document.getElementById('addColoursTitle').textContent = 'Add Primary Colour(s)';
+  document.getElementById('addColoursSubHeader').textContent =
+    'Add one or more colours. Choose a default type below, then fine-tune any row individually.';
+  newSecondaryDraft = [{ hex: '#DBA7B1', name: '', role: 'primary' }];
+  renderNewSecondaryList();
+  document.getElementById('addScMsg').textContent = '';
+  resetBulkRoleControls('primary');
+  showView('addSecondaryColours');
+}
+
+function openAddSecondaryColours() {
+  addColoursReturnView = 'secondarycolours';
+  document.getElementById('addColoursTitle').textContent = 'Add Secondary Colours';
+  document.getElementById('addColoursSubHeader').textContent =
+    'Add one or more colours. Choose a default type below, then fine-tune any row individually.';
+  newSecondaryDraft = [{ hex: '#0D2340', name: '', role: 'secondary' }];
+  renderNewSecondaryList();
+  document.getElementById('addScMsg').textContent = '';
+  resetBulkRoleControls();
+  showView('addSecondaryColours');
+}
+
+function openAddNeutralColours() {
+  addColoursReturnView = 'list';
+  document.getElementById('addColoursTitle').textContent = 'Add Colour(s)';
+  document.getElementById('addColoursSubHeader').textContent =
+    'Add one or more colours. Choose a default type below, then fine-tune any row individually.';
+  newSecondaryDraft = [{ hex: '#0D2340', name: '', role: 'secondary' }];
+  renderNewSecondaryList();
+  document.getElementById('addScMsg').textContent = '';
+  resetBulkRoleControls();
+  showView('addSecondaryColours');
+}
+
+function openAddMultipleNeutralColours() {
+  addColoursReturnView = 'list';
+  document.getElementById('addColoursTitle').textContent = 'Add Multiple Colours';
+  document.getElementById('addColoursSubHeader').textContent =
+    'Add several colours at once. Choose a default type below, then fine-tune any row individually.';
+  newSecondaryDraft = [
+    { hex: '#0D2340', name: '', role: 'secondary' },
+    { hex: '#FFF1E8', name: '', role: 'secondary' },
+    { hex: '#6B7280', name: '', role: 'secondary' }
+  ];
+  renderNewSecondaryList();
+  resetBulkRoleControls();
+  document.getElementById('addScMsg').textContent = '';
+  showView('addSecondaryColours');
+}
+
+function backFromAddColours() {
+  showView(addColoursReturnView);
+  if (addColoursReturnView === 'secondarycolours') renderSecondaryColoursBoard();
+}
+
+function renderNewSecondaryList() {
+  const list = document.getElementById('newSecondaryList');
+  list.innerHTML = '';
+  newSecondaryDraft.forEach((s, i) => {
+    const srNo = String(i + 1).padStart(2, '0');
+    const row = document.createElement('div');
+    row.className = 'secondary-row';
+    row.innerHTML = `
+      <div class="row-srno">#${srNo}</div>
+      <div class="swatch-input" style="width:36px;height:36px;">
+        <input type="color" value="${isValidHex(s.hex) ? s.hex : '#cccccc'}" data-idx="${i}" class="nsc-color">
+      </div>
+      <input type="text" class="text-input hex-field nsc-hex" style="width:110px;" value="${s.hex}" data-idx="${i}" maxlength="7">
+      <input type="text" class="text-input name-field nsc-name" placeholder="Name (optional)" value="${s.name}" data-idx="${i}">
+      <div class="select-wrap row-role-wrap">
+        <select class="text-input nsc-role" data-idx="${i}" style="width:100%;">
+          <option value="secondary" ${s.role === 'secondary' ? 'selected' : ''}>Secondary</option>
+          <option value="primary" ${s.role === 'primary' ? 'selected' : ''}>Primary</option>
+        </select>
+      </div>
+      <button class="remove-btn" onclick="removeNewSecondarySlot(${i})" title="Remove">&times;</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.nsc-color').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = +e.target.dataset.idx;
+      newSecondaryDraft[idx].hex = e.target.value.toUpperCase();
+      list.querySelectorAll('.nsc-hex')[idx].value = newSecondaryDraft[idx].hex;
+    });
+  });
+  list.querySelectorAll('.nsc-hex').forEach((el, idx) => {
+    el.addEventListener('input', e => {
+      let v = e.target.value.trim();
+      if (v && v[0] !== '#') v = '#' + v;
+      newSecondaryDraft[idx].hex = v.toUpperCase();
+      if (isValidHex(newSecondaryDraft[idx].hex)) list.querySelectorAll('.nsc-color')[idx].value = newSecondaryDraft[idx].hex;
+    });
+  });
+  list.querySelectorAll('.nsc-name').forEach((el, idx) => {
+    el.addEventListener('input', e => { newSecondaryDraft[idx].name = e.target.value; });
+  });
+  list.querySelectorAll('.nsc-role').forEach((el, idx) => {
+    el.addEventListener('change', e => { newSecondaryDraft[idx].role = e.target.value; });
+  });
+}
+
+function addNewSecondarySlot() { newSecondaryDraft.push({ hex: '#FFFFFF', name: '', role: bulkRoleMode }); renderNewSecondaryList(); }
+function removeNewSecondarySlot(i) { newSecondaryDraft.splice(i, 1); renderNewSecondaryList(); }
+
+function saveNewSecondaryColours() {
+  const msg = document.getElementById('addScMsg');
+  const valid = newSecondaryDraft.filter(s => isValidHex(s.hex));
+  if (valid.length === 0) { msg.textContent = 'Add at least one valid color.'; return; }
+
+  let addedPrimary = 0, addedSecondary = 0;
+  valid.forEach(s => {
+    if (s.role === 'primary') {
+      catalog.push({ id: uid(), primaryHex: s.hex, primaryName: s.name.trim() || s.hex, secondaryIds: [] });
+      addedPrimary++;
+    } else {
+      getOrCreateSecondaryColor(s.hex, s.name.trim() || s.hex);
+      addedSecondary++;
+    }
+  });
+
+  msg.textContent = '';
+  renderCatalog();
+  renderSecondaryColoursBoard();
+
+  // Land wherever makes the most sense for what was just added
+  if (addedPrimary > 0 && addedSecondary === 0) {
+    showView('list');
+  } else if (addedPrimary === 0 && addedSecondary > 0) {
+    showView('secondarycolours');
+  } else {
+    switchTab('home');
+  }
+}
+
+/* ---------------- Backup & Restore ---------------- */
+
+let pendingRestoreData = null;
+
+function exportBackup() {
+  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `color-catalog-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('restoreFileInput').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  const msg = document.getElementById('restoreMsg');
+  const btn = document.getElementById('restoreBtn');
+  msg.style.color = 'var(--danger)';
+  msg.textContent = '';
+  pendingRestoreData = null;
+  btn.disabled = true;
+  if (!file) return;
+  document.getElementById('restoreFileName').textContent = file.name;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data || !Array.isArray(data.catalog)) throw new Error('bad format');
+      pendingRestoreData = data;
+      btn.disabled = false;
+    } catch (err) {
+      msg.textContent = 'This file could not be read as a valid backup.';
+    }
+  };
+  reader.onerror = () => { msg.textContent = 'Could not read that file. Please try again.'; };
+  reader.readAsText(file);
+});
+
+function performRestore() {
+  if (!pendingRestoreData) return;
+  secondaryColors = Array.isArray(pendingRestoreData.secondaryColors) ? pendingRestoreData.secondaryColors : [];
+  catalog = Array.isArray(pendingRestoreData.catalog) ? pendingRestoreData.catalog : [];
+  groups = Array.isArray(pendingRestoreData.groups) ? pendingRestoreData.groups : [];
+
+  // Migrate older backups (version 1) that stored secondaries embedded on each entry
+  catalog.forEach(entry => {
+    if (!entry.secondaryIds && Array.isArray(entry.secondaries)) {
+      entry.secondaryIds = entry.secondaries.map(s => getOrCreateSecondaryColor(s.hex, s.name));
+      delete entry.secondaries;
+    }
+    if (!entry.secondaryIds) entry.secondaryIds = [];
+  });
+
+  selectedSet = new Set();
+  groupFilter = '';
+  renderCatalog();
+
+  const msg = document.getElementById('restoreMsg');
+  msg.style.color = 'var(--brown-700)';
+  msg.textContent = `Restored ${catalog.length} color${catalog.length !== 1 ? 's' : ''}, ${secondaryColors.length} secondary color${secondaryColors.length !== 1 ? 's' : ''}, and ${groups.length} group${groups.length !== 1 ? 's' : ''}.`;
+  pendingRestoreData = null;
+  document.getElementById('restoreBtn').disabled = true;
+  document.getElementById('restoreFileInput').value = '';
+}
+
+resetBuilderForm();
+renderCatalog();
+</script>
+
+</body>
+</html>
