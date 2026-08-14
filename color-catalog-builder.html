@@ -176,8 +176,19 @@
   .img-picker-scroll { overflow-y: auto; padding: 18px 18px 4px; }
   .img-picker-title { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 17px; color: var(--brown-900); margin-bottom: 4px; }
   .img-picker-hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
-  .img-picker-canvas-wrap { position: relative; border-radius: 10px; overflow: hidden; margin-bottom: 14px; background: #000; max-height: 320px; display: flex; align-items: center; justify-content: center; }
-  .img-picker-canvas-wrap canvas { display: block; max-width: 100%; max-height: 320px; width: auto; height: auto; cursor: crosshair; touch-action: none; }
+  .img-picker-canvas-wrap {
+    position: relative; border-radius: 10px; overflow: auto; -webkit-overflow-scrolling: touch;
+    margin-bottom: 10px; background: #000; max-height: 320px;
+  }
+  .img-picker-canvas-wrap canvas { display: block; cursor: crosshair; }
+  .img-picker-zoom-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .img-picker-zoom-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: none; background: var(--tan-200);
+    color: var(--brown-700); font-size: 18px; font-weight: 700; cursor: pointer; line-height: 1;
+  }
+  .img-picker-zoom-btn:hover { background: #e6d5b8; }
+  .img-picker-zoom-label { font-size: 12.5px; font-weight: 700; color: var(--brown-900); min-width: 40px; text-align: center; }
+  .img-picker-zoom-reset { margin-left: auto; background: none; border: none; color: var(--muted); font-size: 12px; text-decoration: underline; cursor: pointer; }
   .img-picker-marker {
     position: absolute; width: 22px; height: 22px; border-radius: 50%;
     border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.4);
@@ -362,18 +373,36 @@
   .cp-row { border-bottom: 1px solid var(--border); padding: 13px 14px; }
   .cp-row:last-child { border-bottom: none; }
   .cp-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cp-row-clickable { cursor: pointer; border-radius: 10px; padding: 4px; margin: -4px; }
+  .cp-row-clickable:hover { background: #FBF6EC; }
+  .cp-row-arrow { margin-left: auto; color: var(--muted); font-size: 20px; font-weight: 700; flex-shrink: 0; }
   .cp-swatch { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12); }
   .cp-fields { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
   .cp-fields input { font-size: 13px; padding: 7px 9px; }
-  .cp-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .cp-actions { display: flex; gap: 6px; margin-top: 10px; }
   .cp-add-btn {
-    flex: 1; min-width: 110px; font-weight: 700; font-size: 12px; border-radius: 8px;
-    padding: 9px 10px; cursor: pointer; border: none; color: #fff;
+    flex: 1; min-width: 0; font-weight: 700; font-size: 11.5px; border-radius: 8px;
+    padding: 9px 6px; cursor: pointer; border: none; color: #fff; white-space: nowrap;
   }
   .cp-add-primary { background: var(--brown-700); }
   .cp-add-primary:hover { background: #543522; }
   .cp-add-secondary { background: var(--brown-600); }
   .cp-add-secondary:hover { background: var(--brown-700); }
+  .cp-save-plain { background: var(--tan-200); color: var(--brown-700); flex: 0 0 auto; min-width: 56px; }
+  .cp-save-plain:hover { background: #e6d5b8; }
+  .cp-cancel-btn {
+    flex: 1; font-weight: 700; font-size: 13.5px; color: var(--brown-900);
+    background: #fff; border: 1px solid var(--border); border-radius: 9px; padding: 11px; cursor: pointer;
+  }
+  .cp-cancel-btn:hover { background: #FBF6EC; }
+  .cp-saveall-btn {
+    flex: 2; font-weight: 700; font-size: 13.5px; color: #fff;
+    background: var(--brown-700); border: none; border-radius: 9px; padding: 11px; cursor: pointer;
+  }
+  .cp-saveall-btn:hover { background: #543522; }
+  .cp-saveall-btn:disabled { background: #cbb99d; cursor: default; }
+  .cp-role-wrap { width: 118px; flex-shrink: 0; }
+  .cp-role-wrap select { width: 100%; font-size: 12.5px; padding: 8px 24px 8px 9px; }
   .cp-remove-btn {
     background: none; border: none; color: #c9baa4; font-size: 18px;
     cursor: pointer; line-height: 1; padding: 4px 6px; flex-shrink: 0;
@@ -846,6 +875,13 @@
       <h1 id="groupDetailTitle">Group</h1>
     </div>
     <div class="toolbar-actions" id="groupDetailToolbarActions" style="margin-bottom:14px;"></div>
+
+    <div class="section-label">Add Colours To This Group</div>
+    <div class="combo-wrap" style="margin-bottom:16px;">
+      <input type="text" class="text-input" id="groupAddSearchInput" placeholder="Search primary or secondary colours…" autocomplete="off">
+      <div class="combo-dropdown" id="groupAddDropdown"></div>
+    </div>
+
     <div class="board">
       <div class="list-header">
         <input type="checkbox" id="groupDetailSelectAllChk" onchange="toggleGroupDetailSelectAll(this.checked)">
@@ -1097,6 +1133,20 @@
 
     <button class="add-colour-btn" onclick="openImagePickerBulk('colourPickerStaged')">&#128247; Upload Image &amp; Pick Colours</button>
 
+    <div class="frozen-bar" id="cpSaveBar" style="display:none;">
+      <div class="section-label" style="margin-bottom:6px;">Apply To All Picked Colours Below</div>
+      <div class="select-wrap" style="margin-bottom:10px;">
+        <select class="text-input" id="cpBulkRoleSelect" onchange="onCpBulkRoleChange()" style="width:100%;">
+          <option value="secondary" selected>Secondary Colours</option>
+          <option value="primary">Primary Colours</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="cp-cancel-btn" onclick="cancelColourPickerStaged()">Cancel</button>
+        <button class="cp-saveall-btn" id="cpSaveAllBtn" onclick="saveAllColourPickerStaged()">Save All</button>
+      </div>
+    </div>
+
     <div class="catalog-toolbar">
       <h2>Picked Colours <span id="cpStagedCount"></span></h2>
       <button class="text-btn clear-all-btn" id="cpClearBtn" onclick="clearColourPickerStaged()" style="display:none;">Clear all</button>
@@ -1148,6 +1198,12 @@
     <div class="img-picker-scroll">
       <div class="img-picker-title">Pick colors from your photo</div>
       <div class="img-picker-hint" id="imgPickerHint">Tap anywhere on the image, or tap a color below, to sample it.</div>
+      <div class="img-picker-zoom-row">
+        <button class="img-picker-zoom-btn" onclick="zoomImgPickerOut()" title="Zoom out">&minus;</button>
+        <span class="img-picker-zoom-label" id="imgPickerZoomLabel">100%</span>
+        <button class="img-picker-zoom-btn" onclick="zoomImgPickerIn()" title="Zoom in">+</button>
+        <button class="img-picker-zoom-reset" onclick="resetImgPickerZoom()">Reset</button>
+      </div>
       <div class="img-picker-canvas-wrap" id="imgPickerCanvasWrap">
         <canvas id="imgPickerCanvas"></canvas>
         <div class="img-picker-marker" id="imgPickerMarker"></div>
@@ -1278,6 +1334,9 @@ function selectPaletteColor(hex) {
   });
 }
 
+let imgPickerZoom = 1;
+let imgPickerBaseDisplayWidth = 0;
+
 document.getElementById('imagePickerInput').addEventListener('change', (e) => {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
@@ -1306,15 +1365,42 @@ document.getElementById('imagePickerInput').addEventListener('change', (e) => {
 
       document.getElementById('imgPickerHint').textContent = imgPickerMode === 'bulk'
         ? 'Uncheck any colors you do not want, then add the rest to your list.'
-        : 'Tap anywhere on the image, or tap a color below, to sample it.';
+        : 'Tap anywhere on the image, or tap a color below, to sample it. Use +/- to zoom in for precise picking.';
 
       document.getElementById('imgPickerOverlay').classList.add('active');
+
+      // Reset zoom based on the wrap's available width, then apply
+      const wrap = document.getElementById('imgPickerCanvasWrap');
+      imgPickerBaseDisplayWidth = wrap.clientWidth || canvas.width;
+      imgPickerZoom = 1;
+      applyImgPickerZoom();
     };
     img.onerror = () => { alert('Could not load that image. Please try another.'); };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
 });
+
+function applyImgPickerZoom() {
+  const canvas = document.getElementById('imgPickerCanvas');
+  if (!canvas.width) return;
+  const displayWidth = imgPickerBaseDisplayWidth * imgPickerZoom;
+  const aspect = canvas.height / canvas.width;
+  canvas.style.width = displayWidth + 'px';
+  canvas.style.height = (displayWidth * aspect) + 'px';
+  const label = document.getElementById('imgPickerZoomLabel');
+  if (label) label.textContent = Math.round(imgPickerZoom * 100) + '%';
+}
+
+function zoomImgPickerIn() { imgPickerZoom = Math.min(5, imgPickerZoom + 0.5); applyImgPickerZoom(); }
+function zoomImgPickerOut() { imgPickerZoom = Math.max(1, imgPickerZoom - 0.5); applyImgPickerZoom(); }
+function resetImgPickerZoom() {
+  imgPickerZoom = 1;
+  applyImgPickerZoom();
+  const wrap = document.getElementById('imgPickerCanvasWrap');
+  wrap.scrollLeft = 0;
+  wrap.scrollTop = 0;
+}
 
 function samplePickerColorAt(clientX, clientY) {
   const canvas = document.getElementById('imgPickerCanvas');
@@ -1327,8 +1413,8 @@ function samplePickerColorAt(clientX, clientY) {
   const marker = document.getElementById('imgPickerMarker');
   const wrap = document.getElementById('imgPickerCanvasWrap');
   const wrapRect = wrap.getBoundingClientRect();
-  marker.style.left = (clientX - wrapRect.left) + 'px';
-  marker.style.top = (clientY - wrapRect.top) + 'px';
+  marker.style.left = (clientX - wrapRect.left + wrap.scrollLeft) + 'px';
+  marker.style.top = (clientY - wrapRect.top + wrap.scrollTop) + 'px';
   marker.style.display = 'block';
 
   if (imgPickerMode === 'bulk') {
@@ -1347,13 +1433,37 @@ function samplePickerColorAt(clientX, clientY) {
 
 (function setupPickerCanvasEvents() {
   const canvas = document.getElementById('imgPickerCanvas');
-  canvas.addEventListener('click', (e) => samplePickerColorAt(e.clientX, e.clientY));
+  let touchStartX = 0, touchStartY = 0, touchMoved = false, lastTouchSampleTime = 0;
+
   canvas.addEventListener('touchstart', (e) => {
     if (e.touches && e.touches[0]) {
-      e.preventDefault();
-      samplePickerColorAt(e.touches[0].clientX, e.touches[0].clientY);
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchMoved = false;
     }
-  }, { passive: false });
+  }, { passive: true });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches[0]) {
+      const dx = Math.abs(e.touches[0].clientX - touchStartX);
+      const dy = Math.abs(e.touches[0].clientY - touchStartY);
+      if (dx > 6 || dy > 6) touchMoved = true;
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchend', (e) => {
+    if (!touchMoved && e.changedTouches && e.changedTouches[0]) {
+      lastTouchSampleTime = Date.now();
+      samplePickerColorAt(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    }
+  }, { passive: true });
+
+  // Desktop / mouse click. Guarded against the synthetic click some
+  // mobile browsers fire right after a handled touch, to avoid double-sampling.
+  canvas.addEventListener('click', (e) => {
+    if (Date.now() - lastTouchSampleTime < 500) return;
+    samplePickerColorAt(e.clientX, e.clientY);
+  });
 })();
 
 function closeImagePicker() {
@@ -1392,7 +1502,10 @@ function confirmBulkPaletteSelection() {
     chosen.forEach(hex => multiPrimaryDraft.push({ hex, name: '' }));
     renderMultiPrimaryList();
   } else if (imgPickerBulkTargetList === 'colourPickerStaged') {
-    chosen.forEach(hex => colourPickerStaged.push({ hex, name: '' }));
+    chosen.forEach(hex => {
+      const bulkSel = document.getElementById('cpBulkRoleSelect');
+      colourPickerStaged.push({ hex, name: '', role: (bulkSel && bulkSel.value) || 'secondary' });
+    });
     renderColourPickerStaged();
   }
   closeImagePicker();
@@ -2269,9 +2382,48 @@ function openGroupDetail(id) {
   groupDetailSelectedSet = new Set();
   const g = groups.find(g => g.id === id);
   document.getElementById('groupDetailTitle').textContent = g ? g.name : 'Group';
+  document.getElementById('groupAddSearchInput').value = '';
+  document.getElementById('groupAddDropdown').style.display = 'none';
   renderGroupDetail();
   showView('groupDetail');
 }
+
+function renderGroupAddDropdown(query) {
+  const dd = document.getElementById('groupAddDropdown');
+  if (!dd) return;
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g) return;
+  const existingKeys = new Set(g.colorIds);
+  const q = (query || '').trim().toLowerCase();
+  const all = combinedColorList();
+  const matches = all.filter(item => {
+    const key = homeKey(item);
+    if (existingKeys.has(key)) return false;
+    return item.name.toLowerCase().includes(q) || item.hex.toLowerCase().includes(q);
+  }).slice(0, 30);
+  dd.innerHTML = matches.length === 0
+    ? `<div class="combo-empty">No matching colours</div>`
+    : matches.map(item => `
+      <div class="combo-item" onclick="addColourToCurrentGroup('${homeKey(item)}')">
+        <div class="combo-item-dot" style="background:${item.hex}"></div>
+        <div class="combo-item-text"><strong>${item.name}</strong><span>${item.hex} &middot; ${item.type === 'primary' ? 'Primary' : 'Secondary'}</span></div>
+      </div>
+    `).join('');
+  dd.style.display = 'block';
+}
+
+function addColourToCurrentGroup(key) {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g) return;
+  g.colorIds = [...new Set([...g.colorIds, key])];
+  document.getElementById('groupAddSearchInput').value = '';
+  document.getElementById('groupAddDropdown').style.display = 'none';
+  renderGroupDetail();
+  renderGroupFilterOptions();
+}
+
+document.getElementById('groupAddSearchInput').addEventListener('input', (e) => renderGroupAddDropdown(e.target.value));
+document.getElementById('groupAddSearchInput').addEventListener('focus', (e) => renderGroupAddDropdown(e.target.value));
 
 function removeFromGroup(colorId) {
   const g = groups.find(g => g.id === currentGroupDetailId);
@@ -2300,6 +2452,11 @@ function renderGroupDetail() {
   board.innerHTML = members.map((m, i) => {
     const srNo = String(i + 1).padStart(3, '0');
     const isSelected = groupDetailSelectedSet.has(m.key);
+    const reorderHtml = `
+      <div class="reorder-col">
+        <button class="chev-btn" onclick="moveGroupMember('${m.key}',-1)" ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+        <button class="chev-btn" onclick="moveGroupMember('${m.key}',1)" ${i === members.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+      </div>`;
     if (m.type === 'primary') {
       const entry = m.item;
       const secs = resolveSecondaries(entry);
@@ -2317,6 +2474,7 @@ function renderGroupDetail() {
               <div class="home-dots">${secs.map(s => `<div class="home-dot" style="background:${s.hex}" title="${s.hex}${s.name ? ' - ' + s.name : ''}"></div>`).join('')}</div>
             </div>
           </div>
+          ${reorderHtml}
           <button class="trash-btn" onclick="removeFromGroup('${m.key}')" title="Remove from group">&#10005;</button>
         </div>
       `;
@@ -2334,11 +2492,22 @@ function renderGroupDetail() {
             <div class="dmeta">SECONDARY</div>
           </div>
         </div>
+        ${reorderHtml}
         <button class="trash-btn" onclick="removeFromGroup('${m.key}')" title="Remove from group">&#10005;</button>
       </div>
     `;
   }).join('');
   updateGroupDetailToolbar();
+}
+
+function moveGroupMember(key, dir) {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g) return;
+  const i = g.colorIds.indexOf(key);
+  const j = i + dir;
+  if (i === -1 || j < 0 || j >= g.colorIds.length) return;
+  [g.colorIds[i], g.colorIds[j]] = [g.colorIds[j], g.colorIds[i]];
+  renderGroupDetail();
 }
 
 function toggleGroupDetailSelect(key) {
@@ -2487,18 +2656,13 @@ function openPrintColoursForGroup() {
   const g = groups.find(g => g.id === currentGroupDetailId);
   if (!g) return;
   const keys = groupDetailSelectedSet.size > 0 ? [...groupDetailSelectedSet] : g.colorIds;
-  const primaryEntries = [];
+  const swatches = [];
   keys.forEach(key => {
     const resolved = resolveGroupMember(key);
-    if (resolved && resolved.type === 'primary') primaryEntries.push(resolved.item);
-  });
-  const items = primaryEntries;
-  const swatches = collectAllSwatches(items);
-  keys.forEach(key => {
-    const resolved = resolveGroupMember(key);
-    if (resolved && resolved.type === 'secondary' && !swatches.some(sw => sw.hex === resolved.item.hex)) {
-      swatches.push({ hex: resolved.item.hex, name: resolved.item.name });
-    }
+    if (!resolved) return;
+    const hex = resolved.type === 'primary' ? resolved.item.primaryHex : resolved.item.hex;
+    const name = resolved.type === 'primary' ? resolved.item.primaryName : resolved.item.name;
+    if (!swatches.some(sw => sw.hex === hex)) swatches.push({ hex, name });
   });
   const label = groupDetailSelectedSet.size > 0
     ? `${keys.length} selected color${keys.length !== 1 ? 's' : ''} in "${g.name}"`
@@ -2792,6 +2956,7 @@ function renderSecondaryColoursBoard() {
           </div>
         </div>
         <button class="quicktag-btn ${panelOpen ? 'active' : ''}" onclick="toggleQtSecondary('${s.id}')" title="Quick-tag a primary colour">+P</button>
+        <button class="quicktag-btn" onclick="openAddToGroupForKeys(['${groupMemberKey('secondary', s.id)}'], 'secondarycolours', null)" title="Add to a group">+G</button>
         ${reorderHtml}
         <button class="trash-btn" onclick="deleteSecondaryColor('${s.id}')" title="Delete">&#128465;</button>
       </div>
@@ -3229,16 +3394,24 @@ function renderColourPickerStaged() {
 
   board.innerHTML = colourPickerStaged.map((c, i) => {
     if (c.addedAs) {
+      const tagText = c.addedAs === 'primary' ? 'Added as Primary'
+        : c.addedAs === 'secondary' ? 'Added as Secondary'
+        : 'Saved — Not Yet Tagged';
+      const stillExists = c.linkedId && (c.addedAs === 'primary' ? entryById(c.linkedId) : secondaryById(c.linkedId));
+      const openCall = c.addedAs === 'primary'
+        ? `openDetail('${c.linkedId}')`
+        : `openSecondaryDetail('${c.linkedId}')`;
       return `
         <div class="cp-row">
-          <div class="cp-row-top">
+          <div class="cp-row-top ${stillExists ? 'cp-row-clickable' : ''}" ${stillExists ? `onclick="${openCall}"` : ''}>
             <div class="cp-swatch" style="background:${c.hex}"></div>
             <div class="cp-fields">
               <div style="font-weight:700; font-size:13px; color:var(--brown-900);">${c.hex}</div>
               <div style="font-size:12.5px; color:var(--muted);">${c.name ? c.name : '(no name)'}</div>
             </div>
+            ${stillExists ? '<span class="cp-row-arrow">&#8250;</span>' : ''}
           </div>
-          <div class="cp-added-tag">&#10003; Added as ${c.addedAs === 'primary' ? 'Primary' : 'Secondary'}</div>
+          <div class="cp-added-tag">&#10003; ${tagText}${stillExists ? ' &mdash; tap to edit' : ''}</div>
         </div>
       `;
     }
@@ -3250,15 +3423,25 @@ function renderColourPickerStaged() {
             <input type="text" class="text-input cp-hex" data-idx="${i}" value="${c.hex}" maxlength="7">
             <input type="text" class="text-input cp-name" data-idx="${i}" value="${c.name}" placeholder="Name (optional)">
           </div>
+          <div class="select-wrap cp-role-wrap">
+            <select class="text-input cp-role" data-idx="${i}">
+              <option value="secondary" ${(c.role || 'secondary') === 'secondary' ? 'selected' : ''}>Secondary</option>
+              <option value="primary" ${c.role === 'primary' ? 'selected' : ''}>Primary</option>
+              <option value="pool" ${c.role === 'pool' ? 'selected' : ''}>Decide later</option>
+            </select>
+          </div>
           <button class="cp-remove-btn" onclick="removeStagedItem(${i})" title="Remove">&times;</button>
-        </div>
-        <div class="cp-actions">
-          <button class="cp-add-btn cp-add-primary" onclick="addStagedToPrimary(${i})">+ Add to Primary</button>
-          <button class="cp-add-btn cp-add-secondary" onclick="addStagedToSecondary(${i})">+ Add to Secondary</button>
         </div>
       </div>
     `;
   }).join('');
+
+  const pendingCount = colourPickerStaged.filter(c => !c.addedAs).length;
+  const saveBar = document.getElementById('cpSaveBar');
+  if (saveBar) {
+    saveBar.style.display = pendingCount > 0 ? 'block' : 'none';
+    document.getElementById('cpSaveAllBtn').textContent = `Save All (${pendingCount})`;
+  }
 
   board.querySelectorAll('.cp-hex').forEach(el => {
     el.addEventListener('input', e => {
@@ -3268,6 +3451,11 @@ function renderColourPickerStaged() {
       colourPickerStaged[idx].hex = v.toUpperCase();
     });
   });
+  board.querySelectorAll('.cp-role').forEach(el => {
+    el.addEventListener('change', e => {
+      colourPickerStaged[+e.target.dataset.idx].role = e.target.value;
+    });
+  });
   board.querySelectorAll('.cp-name').forEach(el => {
     el.addEventListener('input', e => {
       colourPickerStaged[+e.target.dataset.idx].name = e.target.value;
@@ -3275,21 +3463,39 @@ function renderColourPickerStaged() {
   });
 }
 
-function addStagedToPrimary(i) {
-  const c = colourPickerStaged[i];
-  if (!c || !isValidHex(c.hex)) return;
-  catalog.push({ id: uid(), primaryHex: c.hex, primaryName: c.name.trim() || c.hex, secondaryIds: [] });
-  c.addedAs = 'primary';
-  renderCatalog();
+function applyStagedColourRole(c) {
+  if (!c || !isValidHex(c.hex)) return false;
+  const role = c.role || 'secondary';
+  if (role === 'primary') {
+    const newId = uid();
+    catalog.push({ id: newId, primaryHex: c.hex, primaryName: c.name.trim() || c.hex, secondaryIds: [] });
+    c.addedAs = 'primary';
+    c.linkedId = newId;
+  } else {
+    const secId = getOrCreateSecondaryColor(c.hex, c.name.trim() || c.hex);
+    c.addedAs = role === 'pool' ? 'pool' : 'secondary';
+    c.linkedId = secId;
+  }
+  return true;
+}
+
+function onCpBulkRoleChange() {
+  const val = document.getElementById('cpBulkRoleSelect').value;
+  colourPickerStaged.forEach(c => { if (!c.addedAs) c.role = val; });
   renderColourPickerStaged();
 }
 
-function addStagedToSecondary(i) {
-  const c = colourPickerStaged[i];
-  if (!c || !isValidHex(c.hex)) return;
-  getOrCreateSecondaryColor(c.hex, c.name.trim() || c.hex);
-  c.addedAs = 'secondary';
+function saveAllColourPickerStaged() {
+  const pending = colourPickerStaged.filter(c => !c.addedAs);
+  if (pending.length === 0) return;
+  pending.forEach(c => applyStagedColourRole(c));
+  renderCatalog();
   renderSecondaryColoursBoard();
+  renderColourPickerStaged();
+}
+
+function cancelColourPickerStaged() {
+  colourPickerStaged = colourPickerStaged.filter(c => !!c.addedAs);
   renderColourPickerStaged();
 }
 
