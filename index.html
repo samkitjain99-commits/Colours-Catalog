@@ -931,7 +931,7 @@
     </div>
     <div class="pc-toolbar no-print">
       <div class="pc-count" id="pcCount"></div>
-      <button class="pc-print-btn" onclick="doPrint()">&#128424; Print / Save PDF</button>
+      <button class="pc-print-btn" id="pcSavePdfBtn" onclick="doSavePdf('pc', 'Color Combinations')">&#11015; Save PDF</button>
     </div>
 
     <div id="pcPages"></div>
@@ -967,7 +967,7 @@
     </div>
     <div class="pc-toolbar no-print">
       <div class="pc-count" id="swCount"></div>
-      <button class="pc-print-btn" onclick="doPrint()">&#128424; Print / Save PDF</button>
+      <button class="pc-print-btn" id="swSavePdfBtn" onclick="doSavePdf('sw', 'Color Swatches')">&#11015; Save PDF</button>
     </div>
 
     <div id="swPages"></div>
@@ -2620,8 +2620,80 @@ function createGroupFromSelection() {
 
 /* ---------------- Prepare Catalog (print) ---------------- */
 
-function doPrint() {
-  try { window.focus(); window.print(); } catch (e) {}
+/* ---------------- Direct PDF generation (no native print dialog) ---------------- */
+
+function loadScriptOnce(src, alreadyLoadedCheck) {
+  return new Promise((resolve, reject) => {
+    if (alreadyLoadedCheck()) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Failed to load ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+let pdfLibsLoadingPromise = null;
+function ensurePdfLibs() {
+  if (!pdfLibsLoadingPromise) {
+    pdfLibsLoadingPromise = Promise.all([
+      loadScriptOnce('https://cdn.jsdelivr.net/npm/html2canvas-pro@latest/dist/html2canvas-pro.min.js', () => typeof window.html2canvas !== 'undefined'),
+      loadScriptOnce('https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js', () => typeof window.jspdf !== 'undefined')
+    ]);
+  }
+  return pdfLibsLoadingPromise;
+}
+
+function safePdfFilename(name) {
+  const safe = String(name || 'Document').replace(/[\\/:*?"<>|]+/g, '-').trim();
+  return `${safe || 'Document'}.pdf`;
+}
+
+async function buildPdfFromPages(pagesContainerId) {
+  const container = document.getElementById(pagesContainerId);
+  if (!container) return null;
+  const pages = Array.from(container.querySelectorAll('.sw-page, .pc-page'));
+  if (pages.length === 0) return null;
+
+  await ensurePdfLibs();
+  const { jsPDF } = window.jspdf;
+  const PAGE_W_MM = 210, PAGE_H_MM = 297; // A4 portrait
+
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  for (let i = 0; i < pages.length; i++) {
+    const canvas = await window.html2canvas(pages[i], {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      logging: false
+    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const ratio = canvas.height / canvas.width;
+    let w = PAGE_W_MM, h = w * ratio;
+    if (h > PAGE_H_MM) { h = PAGE_H_MM; w = h / ratio; }
+    const x = (PAGE_W_MM - w) / 2;
+    if (i > 0) pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', x, 0, w, h);
+  }
+  return pdf;
+}
+
+async function doSavePdf(which, filenameBase) {
+  const btnId = which === 'pc' ? 'pcSavePdfBtn' : 'swSavePdfBtn';
+  const pagesId = which === 'pc' ? 'pcPages' : 'swPages';
+  const btn = document.getElementById(btnId);
+  const originalLabel = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Generating…'; }
+  try {
+    const pdf = await buildPdfFromPages(pagesId);
+    if (!pdf) { alert('Nothing to save yet.'); return; }
+    pdf.save(safePdfFilename(filenameBase));
+  } catch (e) {
+    console.error(e);
+    alert('Could not generate the PDF. Please try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+  }
 }
 
 function openPreviewForSelection() {
