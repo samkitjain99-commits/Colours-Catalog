@@ -435,6 +435,44 @@
     .contrast-grid { grid-template-columns: repeat(3, 1fr); }
   }
 
+  .gu-filter-row {
+    display: flex; gap: 6px; margin: 14px 0; background: var(--tan-200);
+    border-radius: 10px; padding: 4px;
+  }
+  .gu-filter-btn {
+    flex: 1; border: none; background: none; color: var(--brown-700);
+    font-weight: 700; font-size: 12.5px; padding: 9px 6px; border-radius: 7px; cursor: pointer;
+  }
+  .gu-filter-btn.active { background: var(--brown-700); color: #fff; }
+  .gu-filter-btn:hover:not(.active) { background: #e6d5b8; }
+
+  .gu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .gu-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .gu-dot { width: 40px; height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12); flex-shrink: 0; margin-bottom: 6px; }
+  .gu-hex { font-weight: 700; font-size: 11.5px; color: var(--brown-900); }
+  .gu-name { font-size: 10.5px; color: var(--muted); margin-top: 1px; margin-bottom: 8px; }
+  .gu-actions { display: flex; gap: 5px; width: 100%; }
+  .gu-btn {
+    flex: 1; min-width: 0; font-weight: 700; font-size: 10.5px; border-radius: 7px;
+    padding: 7px 4px; cursor: pointer; border: none; color: #fff; white-space: nowrap;
+  }
+  .gu-btn-primary { background: var(--brown-700); }
+  .gu-btn-primary:hover { background: #543522; }
+  .gu-btn-secondary { background: var(--brown-600); }
+  .gu-btn-secondary:hover { background: var(--brown-700); }
+  .gu-btn:disabled { background: #cbb99d; cursor: default; }
+  .gu-added-tag { font-size: 10px; font-weight: 700; color: var(--brown-700); background: var(--tan-200); border-radius: 6px; padding: 4px 6px; width: 100%; }
+
+  @media (min-width: 460px) {
+    .gu-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 700px) {
+    .gu-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
   .quicktag-panel {
     padding: 10px 14px 14px; border-top: 1px dashed var(--border); background: #FBF6EC;
   }
@@ -689,6 +727,7 @@
 <div class="tabbar no-print" id="tabbar">
   <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">Home</button>
   <button class="tab-btn" data-tab="colourpicker" onclick="switchTab('colourpicker')">Colour Picker</button>
+  <button class="tab-btn" data-tab="generallyused" onclick="switchTab('generallyused')">Generally Used</button>
   <button class="tab-btn" data-tab="primary" onclick="switchTab('primary')">Primary Colours</button>
   <button class="tab-btn" data-tab="secondary" onclick="switchTab('secondary')">Secondary Colours</button>
   <button class="tab-btn" data-tab="groups" onclick="switchTab('groups')">Groups</button>
@@ -1159,6 +1198,65 @@
     </div>
   </div>
 
+  <!-- ============ GENERALLY USED (CURATED PALETTE) VIEW ============ -->
+  <div class="view" id="view-generallyused">
+    <div class="screen-header no-print">
+      <span class="header-icon">&#127752;</span>
+      <h1>Generally Used</h1>
+    </div>
+    <div class="page-sub no-print">A curated palette pulled from tried-and-tested color combinations, split into pastel and dark shades. Select any you like, then add them to Primary or Secondary.</div>
+
+    <div style="display:flex; gap:8px;">
+      <button class="add-colour-btn" style="flex:1; margin-bottom:0;" onclick="guToggleAddForm()" id="guAddColourToggleBtn">+ Add Colour</button>
+      <button class="photo-pick-btn" onclick="openImagePickerBulk('generallyUsed')" title="Add colours from a photo">&#128247;</button>
+    </div>
+    <div class="frozen-bar" id="guAddForm" style="display:none; padding-top:12px;">
+      <div class="section-label" style="margin-bottom:6px;">New Colour For This Palette</div>
+      <div style="display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap;">
+        <div class="swatch-input" style="width:36px;height:36px; flex-shrink:0;">
+          <input type="color" id="guNewColorPicker" value="#CCCCCC" oninput="document.getElementById('guNewHex').value=this.value.toUpperCase()">
+        </div>
+        <input type="text" class="text-input" id="guNewHex" placeholder="#RRGGBB" maxlength="7" style="width:100px;">
+        <input type="text" class="text-input" id="guNewName" placeholder="Name (optional)" style="flex:1; min-width:120px;">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="cp-cancel-btn" onclick="guToggleAddForm()">Cancel</button>
+        <button class="cp-saveall-btn" onclick="guAddNewColour()">Add to Palette</button>
+      </div>
+      <div class="form-msg" id="guAddFormMsg"></div>
+    </div>
+
+    <div class="frozen-bar" id="guToolbar" style="display:none;">
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <button class="gu-btn gu-btn-primary" style="padding:11px;" id="guAddPrimaryBtn" onclick="addSelectedGeneralToPrimary()">Add to Primary</button>
+        <button class="gu-btn gu-btn-secondary" style="padding:11px;" id="guAddSecondaryBtn" onclick="addSelectedGeneralToSecondary()">Add to Secondary</button>
+      </div>
+      <button class="text-btn printcolours-btn" id="guPrintBtn" onclick="printSelectedGeneralItems()">Print colours</button>
+    </div>
+
+    <div class="gu-filter-row">
+      <button class="gu-filter-btn active" id="guFilterAllBtn" onclick="setGuFilter('all')">All</button>
+      <button class="gu-filter-btn" id="guFilterPastelBtn" onclick="setGuFilter('pastel')">Pastel Shades</button>
+      <button class="gu-filter-btn" id="guFilterDarkBtn" onclick="setGuFilter('dark')">Dark Shades</button>
+    </div>
+
+    <div class="board" id="guPastelSection">
+      <div class="list-header">
+        <input type="checkbox" id="guPastelSelectAllChk" onchange="toggleGuSelectAll('pastel', this.checked)">
+        <div class="lh-details">Pastel Shades <span id="guPastelCount"></span></div>
+      </div>
+      <div id="guPastelBoard"></div>
+    </div>
+
+    <div class="board" id="guDarkSection" style="margin-top:16px;">
+      <div class="list-header">
+        <input type="checkbox" id="guDarkSelectAllChk" onchange="toggleGuSelectAll('dark', this.checked)">
+        <div class="lh-details">Dark Shades <span id="guDarkCount"></span></div>
+      </div>
+      <div id="guDarkBoard"></div>
+    </div>
+  </div>
+
   <div class="view" id="view-backup">
     <div class="screen-header">
       <button class="back-btn" onclick="showView('list')">&#10005;</button>
@@ -1507,6 +1605,19 @@ function confirmBulkPaletteSelection() {
       colourPickerStaged.push({ hex, name: '', role: (bulkSel && bulkSel.value) || 'secondary' });
     });
     renderColourPickerStaged();
+  } else if (imgPickerBulkTargetList === 'generallyUsed') {
+    if (!generallyUsedPalette) generallyUsedPalette = buildGenerallyUsedPalette();
+    const usedIds = new Set([...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].map(c => c.id));
+    let n = 0;
+    chosen.forEach(hex => {
+      while (usedIds.has('c' + n)) n++;
+      const id = 'c' + n;
+      usedIds.add(id);
+      const item = { hex, name: hex, id };
+      const bucket = luminance(hex) >= 0.5 ? generallyUsedPalette.pastels : generallyUsedPalette.darks;
+      bucket.unshift(item);
+    });
+    renderGenerallyUsed();
   }
   closeImagePicker();
 }
@@ -1549,6 +1660,16 @@ function getOrCreateSecondaryColor(hex, name) {
   return sc.id;
 }
 
+// Stable snapshot of the original seed palette (20 primaries + their secondaries),
+// captured once at load time. Used by "Generally Used" so it keeps working as a
+// reference palette even if the user later edits or clears their live catalog.
+const SEED_REFERENCE_COLORS = (() => {
+  const seen = new Map();
+  catalog.forEach(e => { if (!seen.has(e.primaryHex)) seen.set(e.primaryHex, e.primaryName); });
+  secondaryColors.forEach(s => { if (!seen.has(s.hex)) seen.set(s.hex, s.name); });
+  return [...seen.entries()].map(([hex, name]) => ({ hex, name }));
+})();
+
 function resolveSecondaries(entry) {
   return (entry.secondaryIds || [])
     .map(id => secondaryColors.find(s => s.id === id))
@@ -1575,6 +1696,13 @@ function luminance(hex) {
   return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
 }
 function contrastText(hex) { return luminance(hex) > 0.55 ? "#1b2540" : "#ffffff"; }
+function nameTextColor(hex) {
+  // Colors used directly as text (e.g. a color's own name shown in its own hex)
+  // become illegible once they get close to white/very light — fall back to a
+  // readable brown instead of returning the literal (near-invisible) hex.
+  if (!isValidHex(hex)) return hex;
+  return luminance(hex) > 0.82 ? '#8a7358' : hex;
+}
 function entryById(id) { return catalog.find(e => e.id === id); }
 function indexById(id) { return catalog.findIndex(e => e.id === id); }
 
@@ -1678,6 +1806,7 @@ const VIEW_TO_TAB = {
   secondarycolours: 'secondary', addSecondaryColours: 'secondary', tagprimary: 'secondary',
   secondaryDetail: 'secondary', editSecondaryColor: 'secondary',
   colourpicker: 'colourpicker',
+  generallyused: 'generallyused',
   backup: 'backup'
 };
 
@@ -1704,6 +1833,9 @@ function switchTab(tab) {
   } else if (tab === 'colourpicker') {
     showView('colourpicker');
     renderColourPickerStaged();
+  } else if (tab === 'generallyused') {
+    showView('generallyused');
+    renderGenerallyUsed();
   } else if (tab === 'backup') {
     showView('backup');
   }
@@ -2098,7 +2230,7 @@ function renderHomeAll() {
           <div class="srno">#${srNo}</div>
           <div class="thumb" style="background:${item.hex}; border-radius:50%;"></div>
           <div class="details">
-            <div class="dname" style="color:${item.hex}">${item.name}</div>
+            <div class="dname" style="color:${nameTextColor(item.hex)}">${item.name}</div>
             <div class="dmeta">${item.hex}</div>
           </div>
           <span class="type-badge ${badgeClass}" title="${isPrimary ? 'Primary' : 'Secondary'} colour">${badgeLetter}</span>
@@ -2262,7 +2394,7 @@ function renderCatalog() {
           <div class="srno">#${srNo}</div>
           <div class="thumb" style="background:${entry.primaryHex}"></div>
           <div class="details">
-            <div class="dname" style="color:${entry.primaryHex}">${entry.primaryName}</div>
+            <div class="dname" style="color:${nameTextColor(entry.primaryHex)}">${entry.primaryName}</div>
             <div class="dmeta">${entry.primaryHex}</div>
             <div class="dmeta">${shadeCount} shade${shadeCount !== 1 ? 's' : ''}</div>
             <div class="home-dots">${secs.map(s => `<div class="home-dot" style="background:${s.hex}" title="${s.hex}${s.name ? ' - ' + s.name : ''}"></div>`).join('')}</div>
@@ -2294,7 +2426,7 @@ function openDetail(id) {
   const entry = entryById(id);
   document.getElementById('detailSwatch').style.background = entry.primaryHex;
   document.getElementById('detailName').textContent = entry.primaryName;
-  document.getElementById('detailName').style.color = entry.primaryHex;
+  document.getElementById('detailName').style.color = nameTextColor(entry.primaryHex);
   document.getElementById('detailHex').textContent = entry.primaryHex;
 
   const grid = document.getElementById('detailSecondaryGrid');
@@ -2468,7 +2600,7 @@ function renderGroupDetail() {
             <div class="srno">#${srNo}</div>
             <div class="thumb" style="background:${entry.primaryHex}"></div>
             <div class="details">
-              <div class="dname" style="color:${entry.primaryHex}">${entry.primaryName}</div>
+              <div class="dname" style="color:${nameTextColor(entry.primaryHex)}">${entry.primaryName}</div>
               <div class="dmeta">${entry.primaryHex}</div>
               <div class="dmeta">${shadeCount} shade${shadeCount !== 1 ? 's' : ''} &middot; PRIMARY</div>
               <div class="home-dots">${secs.map(s => `<div class="home-dot" style="background:${s.hex}" title="${s.hex}${s.name ? ' - ' + s.name : ''}"></div>`).join('')}</div>
@@ -2487,7 +2619,7 @@ function renderGroupDetail() {
           <div class="srno">#${srNo}</div>
           <div class="thumb" style="background:${s.hex}; border-radius:50%; width:46px; height:46px;"></div>
           <div class="details">
-            <div class="dname" style="color:${s.hex}">${s.name}</div>
+            <div class="dname" style="color:${nameTextColor(s.hex)}">${s.name}</div>
             <div class="dmeta">${s.hex}</div>
             <div class="dmeta">SECONDARY</div>
           </div>
@@ -2802,7 +2934,7 @@ function renderAllColoursSelector() {
         <input type="checkbox" onchange="toggleAllColourSelect('${s.hex}')" ${allColoursSelected.has(s.hex) ? 'checked' : ''}>
         <div class="thumb" style="background:${s.hex}; border-radius:50%; width:40px; height:40px;"></div>
         <div class="details">
-          <div class="dname" style="color:${s.hex}">${s.name}</div>
+          <div class="dname" style="color:${nameTextColor(s.hex)}">${s.name}</div>
           <div class="dmeta">${s.hex}</div>
         </div>
       </div>
@@ -2892,7 +3024,7 @@ function renderPrepareCatalog(ids, label) {
         <div class="pc-row">
           <div class="pc-num" style="background:${entry.primaryHex}; color:${badgeText};">${globalIdx}</div>
           <div class="pc-pname">
-            <div class="name" style="color:${entry.primaryHex}">${entry.primaryName}</div>
+            <div class="name" style="color:${nameTextColor(entry.primaryHex)}">${entry.primaryName}</div>
             <div class="hex">${entry.primaryHex}</div>
           </div>
           <div class="pc-primary-swatch" style="background:${entry.primaryHex}"></div>
@@ -3022,7 +3154,7 @@ function renderSecondaryColoursBoard() {
           <div class="srno">#${srNo}</div>
           <div class="thumb" style="background:${s.hex}; border-radius:50%; width:40px; height:40px;"></div>
           <div class="details">
-            <div class="dname" style="color:${s.hex}">${s.name}</div>
+            <div class="dname" style="color:${nameTextColor(s.hex)}">${s.name}</div>
             <div class="dmeta">${s.hex}</div>
             ${dotsHtml}
           </div>
@@ -3063,7 +3195,7 @@ function openSecondaryDetail(id) {
   if (!s) return;
   document.getElementById('secDetailSwatch').style.background = s.hex;
   document.getElementById('secDetailName').textContent = s.name;
-  document.getElementById('secDetailName').style.color = s.hex;
+  document.getElementById('secDetailName').style.color = nameTextColor(s.hex);
   document.getElementById('secDetailHex').textContent = s.hex;
 
   const tagged = taggedPrimariesFor(id);
@@ -3075,7 +3207,7 @@ function openSecondaryDetail(id) {
         <div class="row-open" onclick="showView('list'); openDetail('${p.id}')">
           <div class="thumb" style="background:${p.primaryHex}"></div>
           <div class="details">
-            <div class="dname" style="color:${p.primaryHex}">${p.primaryName}</div>
+            <div class="dname" style="color:${nameTextColor(p.primaryHex)}">${p.primaryName}</div>
             <div class="dmeta">${p.primaryHex}</div>
           </div>
         </div>
@@ -3375,7 +3507,7 @@ function renderPickSecForEntry() {
         <input type="checkbox" onchange="togglePickSecForEntry('${s.id}')" ${pickSecSelectedSet.has(s.id) ? 'checked' : ''}>
         <div class="thumb" style="background:${s.hex}; border-radius:50%; width:40px; height:40px;"></div>
         <div class="details">
-          <div class="dname" style="color:${s.hex}">${s.name}</div>
+          <div class="dname" style="color:${nameTextColor(s.hex)}">${s.name}</div>
           <div class="dmeta">${s.hex}</div>
         </div>
       </div>
@@ -3448,6 +3580,268 @@ function resetBulkRoleControls(defaultRole) {
 /* ---------------- Colour Picker (staging area for photo-picked colours) ---------------- */
 
 let colourPickerStaged = []; // [{hex, name, addedAs: 'primary'|'secondary'|undefined}]
+
+/* ---------------- Generally Used: curated 50-pastel / 50-dark palette ---------------- */
+
+let generallyUsedPalette = null; // { pastels: [{hex,name}], darks: [{hex,name}] }
+
+function buildGenerallyUsedPalette() {
+  const pastels = [], darks = [];
+  SEED_REFERENCE_COLORS.forEach(item => {
+    (luminance(item.hex) >= 0.5 ? pastels : darks).push({ hex: item.hex, name: item.name });
+  });
+  pastels.sort((a, b) => luminance(b.hex) - luminance(a.hex));
+  darks.sort((a, b) => luminance(b.hex) - luminance(a.hex));
+  pastels.forEach((item, i) => { item.id = 'p' + i; });
+  darks.forEach((item, i) => { item.id = 'd' + i; });
+  return { pastels, darks };
+}
+
+let guSelected = new Set(); // item.id values currently checked, across both sections
+let guEditingId = null; // item.id currently in inline edit mode
+
+function guRowHtml(item, section, i) {
+  const existingPrimary = catalog.find(e => e.primaryHex.toUpperCase() === item.hex.toUpperCase());
+  const existingSecondary = secondaryColors.find(s => s.hex.toUpperCase() === item.hex.toUpperCase());
+  const isSelected = guSelected.has(item.id);
+  const srNo = String(i + 1).padStart(2, '0');
+  const isAdded = !!(existingPrimary || existingSecondary);
+
+  if (guEditingId === item.id) {
+    return `
+      <div class="list-row">
+        <input type="checkbox" onchange="toggleGuSelect('${item.id}')" ${isSelected ? 'checked' : ''}>
+        <div class="row-open" style="cursor:default;">
+          <div class="srno">#${srNo}</div>
+          <div class="thumb" style="background:${item.hex}; border-radius:50%;"></div>
+          <div class="details" style="gap:6px; display:flex; flex-direction:column;">
+            <input type="text" class="text-input gu-edit-hex" data-id="${item.id}" value="${item.hex}" maxlength="7" style="font-size:13px; padding:6px 8px;">
+            <input type="text" class="text-input gu-edit-name" data-id="${item.id}" value="${item.name}" style="font-size:13px; padding:6px 8px;">
+          </div>
+        </div>
+        <button class="quicktag-btn active" onclick="guStopEditing()" title="Done editing">Done</button>
+        <button class="quicktag-btn" onclick="guMoveToOtherSection('${item.id}','${section}')" title="Move to ${section === 'pastel' ? 'Dark' : 'Pastel'} Shades">${section === 'pastel' ? '&#8600; Dark' : '&#8599; Pastel'}</button>
+        <button class="trash-btn" onclick="guDeleteFromPalette('${item.id}')" title="Remove from this list">&#128465;</button>
+      </div>
+    `;
+  }
+
+  let statusHtml = '';
+  if (existingPrimary && existingSecondary) {
+    statusHtml = `<div class="dmeta" style="color:var(--brown-700); font-weight:700;">&#10003; Added as Primary &amp; Secondary &mdash; tap to edit</div>`;
+  } else if (existingPrimary) {
+    statusHtml = `<div class="dmeta" style="color:var(--brown-700); font-weight:700;">&#10003; Added as Primary &mdash; tap to edit</div>`;
+  } else if (existingSecondary) {
+    statusHtml = `<div class="dmeta" style="color:var(--brown-700); font-weight:700;">&#10003; Added as Secondary &mdash; tap to edit</div>`;
+  } else {
+    statusHtml = `<div class="dmeta" style="font-style:italic;">Tap to edit name/colour</div>`;
+  }
+  const rowClickCall = isAdded
+    ? (existingPrimary ? `openDetail('${existingPrimary.id}')` : `openSecondaryDetail('${existingSecondary.id}')`)
+    : `guStartEditing('${item.id}')`;
+
+  return `
+    <div class="list-row">
+      <input type="checkbox" onchange="toggleGuSelect('${item.id}')" ${isSelected ? 'checked' : ''}>
+      <div class="row-open" onclick="${rowClickCall}">
+        <div class="srno">#${srNo}</div>
+        <div class="thumb" style="background:${item.hex}; border-radius:50%;"></div>
+        <div class="details">
+          <div class="dname" style="color:${nameTextColor(item.hex)}">${item.name}</div>
+          <div class="dmeta">${item.hex}</div>
+          ${statusHtml}
+        </div>
+      </div>
+      <button class="quicktag-btn" onclick="event.stopPropagation(); guMoveToOtherSection('${item.id}','${section}')" title="Move to ${section === 'pastel' ? 'Dark' : 'Pastel'} Shades">${section === 'pastel' ? '&#8600;' : '&#8599;'}</button>
+      <button class="trash-btn" onclick="event.stopPropagation(); guDeleteFromPalette('${item.id}')" title="Remove from this list">&#128465;</button>
+    </div>
+  `;
+}
+
+function guStartEditing(id) {
+  guEditingId = id;
+  renderGenerallyUsed();
+  const input = document.querySelector(`.gu-edit-name[data-id="${id}"]`);
+  if (input) input.focus();
+}
+
+function guStopEditing() {
+  guEditingId = null;
+  renderGenerallyUsed();
+}
+
+function guDeleteFromPalette(id) {
+  if (!generallyUsedPalette) return;
+  generallyUsedPalette.pastels = generallyUsedPalette.pastels.filter(c => c.id !== id);
+  generallyUsedPalette.darks = generallyUsedPalette.darks.filter(c => c.id !== id);
+  guSelected.delete(id);
+  if (guEditingId === id) guEditingId = null;
+  renderGenerallyUsed();
+}
+
+function guMoveToOtherSection(id, fromSection) {
+  if (!generallyUsedPalette) return;
+  const fromList = fromSection === 'pastel' ? generallyUsedPalette.pastels : generallyUsedPalette.darks;
+  const toList = fromSection === 'pastel' ? generallyUsedPalette.darks : generallyUsedPalette.pastels;
+  const idx = fromList.findIndex(c => c.id === id);
+  if (idx === -1) return;
+  const [item] = fromList.splice(idx, 1);
+  toList.unshift(item);
+  renderGenerallyUsed();
+}
+
+let guFilter = 'all'; // 'all' | 'pastel' | 'dark'
+
+function setGuFilter(filter) {
+  guFilter = filter;
+  document.getElementById('guFilterAllBtn').classList.toggle('active', filter === 'all');
+  document.getElementById('guFilterPastelBtn').classList.toggle('active', filter === 'pastel');
+  document.getElementById('guFilterDarkBtn').classList.toggle('active', filter === 'dark');
+  document.getElementById('guPastelSection').style.display = (filter === 'all' || filter === 'pastel') ? 'block' : 'none';
+  document.getElementById('guDarkSection').style.display = (filter === 'all' || filter === 'dark') ? 'block' : 'none';
+}
+
+function guToggleAddForm() {
+  const form = document.getElementById('guAddForm');
+  const isOpen = form.style.display !== 'none';
+  form.style.display = isOpen ? 'none' : 'block';
+  document.getElementById('guAddColourToggleBtn').innerHTML = isOpen ? '+ Add Colour' : '&#10005; Close';
+  if (!isOpen) {
+    document.getElementById('guNewHex').value = '#CCCCCC';
+    document.getElementById('guNewColorPicker').value = '#CCCCCC';
+    document.getElementById('guNewName').value = '';
+    document.getElementById('guAddFormMsg').textContent = '';
+  }
+}
+
+function guAddNewColour() {
+  const msg = document.getElementById('guAddFormMsg');
+  let hex = document.getElementById('guNewHex').value.trim();
+  if (hex && hex[0] !== '#') hex = '#' + hex;
+  hex = hex.toUpperCase();
+  const name = document.getElementById('guNewName').value.trim();
+  if (!isValidHex(hex)) { msg.textContent = 'Enter a valid hex code, e.g. #A3C9D8.'; return; }
+  if (!generallyUsedPalette) generallyUsedPalette = buildGenerallyUsedPalette();
+
+  const allIds = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].map(c => c.id);
+  let n = 0;
+  while (allIds.includes('c' + n)) n++;
+  const item = { hex, name: name || hex, id: 'c' + n };
+
+  const bucket = luminance(hex) >= 0.5 ? generallyUsedPalette.pastels : generallyUsedPalette.darks;
+  bucket.unshift(item);
+
+  guToggleAddForm();
+  renderGenerallyUsed();
+}
+
+function renderGenerallyUsed() {
+  if (!generallyUsedPalette) generallyUsedPalette = buildGenerallyUsedPalette();
+  const pastelBoard = document.getElementById('guPastelBoard');
+  const darkBoard = document.getElementById('guDarkBoard');
+  if (!pastelBoard || !darkBoard) return;
+  pastelBoard.innerHTML = generallyUsedPalette.pastels.map((item, i) => guRowHtml(item, 'pastel', i)).join('');
+  darkBoard.innerHTML = generallyUsedPalette.darks.map((item, i) => guRowHtml(item, 'dark', i)).join('');
+
+  document.getElementById('guPastelCount').textContent = `(${generallyUsedPalette.pastels.length})`;
+  document.getElementById('guDarkCount').textContent = `(${generallyUsedPalette.darks.length})`;
+
+  const pastelIds = generallyUsedPalette.pastels.map(c => c.id);
+  const darkIds = generallyUsedPalette.darks.map(c => c.id);
+  const pastelSelectedCount = pastelIds.filter(id => guSelected.has(id)).length;
+  const darkSelectedCount = darkIds.filter(id => guSelected.has(id)).length;
+  const pastelChk = document.getElementById('guPastelSelectAllChk');
+  const darkChk = document.getElementById('guDarkSelectAllChk');
+  pastelChk.checked = pastelSelectedCount > 0 && pastelSelectedCount === pastelIds.length;
+  pastelChk.indeterminate = pastelSelectedCount > 0 && pastelSelectedCount < pastelIds.length;
+  darkChk.checked = darkSelectedCount > 0 && darkSelectedCount === darkIds.length;
+  darkChk.indeterminate = darkSelectedCount > 0 && darkSelectedCount < darkIds.length;
+
+  updateGuToolbar();
+
+  document.querySelectorAll('.gu-edit-hex').forEach(el => {
+    el.addEventListener('input', e => {
+      const id = e.target.dataset.id;
+      const item = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].find(c => c.id === id);
+      if (!item) return;
+      let v = e.target.value.trim();
+      if (v && v[0] !== '#') v = '#' + v;
+      item.hex = v.toUpperCase();
+      const row = e.target.closest('.list-row');
+      const thumb = row && row.querySelector('.thumb');
+      if (thumb && isValidHex(item.hex)) thumb.style.background = item.hex;
+    });
+  });
+  document.querySelectorAll('.gu-edit-name').forEach(el => {
+    el.addEventListener('input', e => {
+      const id = e.target.dataset.id;
+      const item = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].find(c => c.id === id);
+      if (item) item.name = e.target.value;
+    });
+  });
+}
+
+function toggleGuSelect(id) {
+  if (guSelected.has(id)) guSelected.delete(id); else guSelected.add(id);
+  renderGenerallyUsed();
+}
+
+function toggleGuSelectAll(section, checked) {
+  const list = section === 'pastel' ? generallyUsedPalette.pastels : generallyUsedPalette.darks;
+  list.forEach(item => { if (checked) guSelected.add(item.id); else guSelected.delete(item.id); });
+  renderGenerallyUsed();
+}
+
+function updateGuToolbar() {
+  const bar = document.getElementById('guToolbar');
+  const n = guSelected.size;
+  bar.style.display = n > 0 ? 'block' : 'none';
+  const primaryBtn = document.getElementById('guAddPrimaryBtn');
+  const secondaryBtn = document.getElementById('guAddSecondaryBtn');
+  const printBtn = document.getElementById('guPrintBtn');
+  if (primaryBtn) primaryBtn.textContent = `Add to Primary${n > 0 ? ` (${n})` : ''}`;
+  if (secondaryBtn) secondaryBtn.textContent = `Add to Secondary${n > 0 ? ` (${n})` : ''}`;
+  if (printBtn) printBtn.textContent = `Print colours${n > 0 ? ` (${n})` : ''}`;
+}
+
+function printSelectedGeneralItems() {
+  const items = selectedGuItems();
+  if (items.length === 0) return;
+  const swatches = items.map(item => ({ hex: item.hex, name: item.name }));
+  const label = `${swatches.length} selected color${swatches.length !== 1 ? 's' : ''} from Generally Used`;
+  openAllColoursSelectorFromSwatches(swatches, label);
+}
+
+function selectedGuItems() {
+  const all = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks];
+  return all.filter(item => guSelected.has(item.id));
+}
+
+function addSelectedGeneralToPrimary() {
+  const items = selectedGuItems();
+  items.forEach(item => {
+    if (!isValidHex(item.hex)) return;
+    if (catalog.some(e => e.primaryHex.toUpperCase() === item.hex.toUpperCase())) return;
+    catalog.push({ id: uid(), primaryHex: item.hex, primaryName: item.name.trim() || item.hex, secondaryIds: [] });
+  });
+  guSelected = new Set();
+  guEditingId = null;
+  renderCatalog();
+  renderGenerallyUsed();
+}
+
+function addSelectedGeneralToSecondary() {
+  const items = selectedGuItems();
+  items.forEach(item => {
+    if (!isValidHex(item.hex)) return;
+    if (secondaryColors.some(s => s.hex.toUpperCase() === item.hex.toUpperCase())) return;
+    getOrCreateSecondaryColor(item.hex, item.name.trim() || item.hex);
+  });
+  guSelected = new Set();
+  guEditingId = null;
+  renderSecondaryColoursBoard();
+  renderGenerallyUsed();
+}
 
 function renderColourPickerStaged() {
   const countEl = document.getElementById('cpStagedCount');
