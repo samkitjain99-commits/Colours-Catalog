@@ -1606,7 +1606,7 @@ function confirmBulkPaletteSelection() {
     });
     renderColourPickerStaged();
   } else if (imgPickerBulkTargetList === 'generallyUsed') {
-    if (!generallyUsedPalette) generallyUsedPalette = buildGenerallyUsedPalette();
+    if (!generallyUsedPalette) generallyUsedPalette = loadGuPaletteFromStorage() || buildGenerallyUsedPalette();
     const usedIds = new Set([...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].map(c => c.id));
     let n = 0;
     chosen.forEach(hex => {
@@ -1679,6 +1679,35 @@ function resolveSecondaries(entry) {
 function secondaryById(id) { return secondaryColors.find(s => s.id === id); }
 
 let groups = []; // [{id, name, colorIds:[]}]
+
+const APP_STATE_STORAGE_KEY = 'colourCatalog_appState_v1';
+
+function saveAppStateToStorage() {
+  try {
+    localStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify({ catalog, secondaryColors, groups }));
+  } catch (e) { /* localStorage unavailable (e.g. private mode) — fail silently */ }
+}
+
+function loadAppStateFromStorage() {
+  try {
+    const raw = localStorage.getItem(APP_STATE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.catalog) && Array.isArray(parsed.secondaryColors) && Array.isArray(parsed.groups)) {
+      return parsed;
+    }
+  } catch (e) { /* corrupt or inaccessible — fall back to the built-in seed data */ }
+  return null;
+}
+
+(function restoreAppStateIfPresent() {
+  const saved = loadAppStateFromStorage();
+  if (!saved) return;
+  catalog = saved.catalog;
+  secondaryColors = saved.secondaryColors;
+  groups = saved.groups;
+})();
+
 let groupFilter = ""; // group id or "" for all
 let selectedSet = new Set(); // set of catalog entry ids
 let editId = null;      // null = adding new; id = editing that entry
@@ -2166,6 +2195,7 @@ function renderToolbarActions() {
 }
 
 function renderGroupFilterOptions() {
+  saveAppStateToStorage();
   const sel = document.getElementById('groupFilterSelect');
   const current = groupFilter;
   sel.innerHTML = '<option value="">All Groups</option>' +
@@ -2358,6 +2388,7 @@ function togglePrimarySort() {
 
 function renderCatalog() {
   renderGroupFilterOptions();
+  saveAppStateToStorage();
   const board = document.getElementById('catalogBoard');
   const countEl = document.getElementById('catalogCount');
   const naturalList = currentFilteredCatalog();
@@ -2481,6 +2512,7 @@ function commitRenameGroup(id, value) {
 }
 
 function renderGroupsList(renamingId) {
+  saveAppStateToStorage();
   const board = document.getElementById('groupsBoard');
   if (groups.length === 0) {
     board.innerHTML = `<div class="empty-state">No groups yet.<br>Create one above to organize your colors.</div>`;
@@ -2569,6 +2601,7 @@ function removeFromGroup(colorId) {
 let groupDetailSelectedSet = new Set();
 
 function renderGroupDetail() {
+  saveAppStateToStorage();
   const g = groups.find(g => g.id === currentGroupDetailId);
   const board = document.getElementById('groupDetailBoard');
   if (!g || g.colorIds.length === 0) {
@@ -3120,6 +3153,7 @@ function toggleSecondarySort() {
 }
 
 function renderSecondaryColoursBoard() {
+  saveAppStateToStorage();
   document.getElementById('scSubHeader').textContent =
     `${secondaryColors.length} secondary color${secondaryColors.length !== 1 ? 's' : ''} in your pool. These don't need to belong to any primary color.`;
 
@@ -3585,6 +3619,25 @@ let colourPickerStaged = []; // [{hex, name, addedAs: 'primary'|'secondary'|unde
 
 let generallyUsedPalette = null; // { pastels: [{hex,name}], darks: [{hex,name}] }
 
+const GU_STORAGE_KEY = 'colourCatalog_generallyUsedPalette_v1';
+
+function saveGuPaletteToStorage() {
+  if (!generallyUsedPalette) return;
+  try {
+    localStorage.setItem(GU_STORAGE_KEY, JSON.stringify(generallyUsedPalette));
+  } catch (e) { /* localStorage unavailable (e.g. private mode) — fail silently */ }
+}
+
+function loadGuPaletteFromStorage() {
+  try {
+    const raw = localStorage.getItem(GU_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.pastels) && Array.isArray(parsed.darks)) return parsed;
+  } catch (e) { /* corrupt or inaccessible — fall back to fresh build */ }
+  return null;
+}
+
 function buildGenerallyUsedPalette() {
   const pastels = [], darks = [];
   SEED_REFERENCE_COLORS.forEach(item => {
@@ -3606,6 +3659,12 @@ function guRowHtml(item, section, i) {
   const isSelected = guSelected.has(item.id);
   const srNo = String(i + 1).padStart(2, '0');
   const isAdded = !!(existingPrimary || existingSecondary);
+  const sectionLength = (section === 'pastel' ? generallyUsedPalette.pastels : generallyUsedPalette.darks).length;
+  const reorderHtml = `
+    <div class="reorder-col">
+      <button class="chev-btn" onclick="event.stopPropagation(); moveGuItem('${item.id}','${section}',-1)" ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+      <button class="chev-btn" onclick="event.stopPropagation(); moveGuItem('${item.id}','${section}',1)" ${i === sectionLength - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+    </div>`;
 
   if (guEditingId === item.id) {
     return `
@@ -3621,6 +3680,7 @@ function guRowHtml(item, section, i) {
         </div>
         <button class="quicktag-btn active" onclick="guStopEditing()" title="Done editing">Done</button>
         <button class="quicktag-btn" onclick="guMoveToOtherSection('${item.id}','${section}')" title="Move to ${section === 'pastel' ? 'Dark' : 'Pastel'} Shades">${section === 'pastel' ? '&#8600; Dark' : '&#8599; Pastel'}</button>
+        ${reorderHtml}
         <button class="trash-btn" onclick="guDeleteFromPalette('${item.id}')" title="Remove from this list">&#128465;</button>
       </div>
     `;
@@ -3653,6 +3713,7 @@ function guRowHtml(item, section, i) {
         </div>
       </div>
       <button class="quicktag-btn" onclick="event.stopPropagation(); guMoveToOtherSection('${item.id}','${section}')" title="Move to ${section === 'pastel' ? 'Dark' : 'Pastel'} Shades">${section === 'pastel' ? '&#8600;' : '&#8599;'}</button>
+      ${reorderHtml}
       <button class="trash-btn" onclick="event.stopPropagation(); guDeleteFromPalette('${item.id}')" title="Remove from this list">&#128465;</button>
     </div>
   `;
@@ -3690,6 +3751,16 @@ function guMoveToOtherSection(id, fromSection) {
   renderGenerallyUsed();
 }
 
+function moveGuItem(id, section, dir) {
+  if (!generallyUsedPalette) return;
+  const list = section === 'pastel' ? generallyUsedPalette.pastels : generallyUsedPalette.darks;
+  const i = list.findIndex(c => c.id === id);
+  const j = i + dir;
+  if (i === -1 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  renderGenerallyUsed();
+}
+
 let guFilter = 'all'; // 'all' | 'pastel' | 'dark'
 
 function setGuFilter(filter) {
@@ -3721,7 +3792,7 @@ function guAddNewColour() {
   hex = hex.toUpperCase();
   const name = document.getElementById('guNewName').value.trim();
   if (!isValidHex(hex)) { msg.textContent = 'Enter a valid hex code, e.g. #A3C9D8.'; return; }
-  if (!generallyUsedPalette) generallyUsedPalette = buildGenerallyUsedPalette();
+  if (!generallyUsedPalette) generallyUsedPalette = loadGuPaletteFromStorage() || buildGenerallyUsedPalette();
 
   const allIds = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].map(c => c.id);
   let n = 0;
@@ -3736,7 +3807,7 @@ function guAddNewColour() {
 }
 
 function renderGenerallyUsed() {
-  if (!generallyUsedPalette) generallyUsedPalette = buildGenerallyUsedPalette();
+  if (!generallyUsedPalette) generallyUsedPalette = loadGuPaletteFromStorage() || buildGenerallyUsedPalette();
   const pastelBoard = document.getElementById('guPastelBoard');
   const darkBoard = document.getElementById('guDarkBoard');
   if (!pastelBoard || !darkBoard) return;
@@ -3770,6 +3841,7 @@ function renderGenerallyUsed() {
       const row = e.target.closest('.list-row');
       const thumb = row && row.querySelector('.thumb');
       if (thumb && isValidHex(item.hex)) thumb.style.background = item.hex;
+      saveGuPaletteToStorage();
     });
   });
   document.querySelectorAll('.gu-edit-name').forEach(el => {
@@ -3777,8 +3849,11 @@ function renderGenerallyUsed() {
       const id = e.target.dataset.id;
       const item = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].find(c => c.id === id);
       if (item) item.name = e.target.value;
+      saveGuPaletteToStorage();
     });
   });
+
+  saveGuPaletteToStorage();
 }
 
 function toggleGuSelect(id) {
