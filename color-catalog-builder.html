@@ -1606,7 +1606,7 @@ function confirmBulkPaletteSelection() {
     });
     renderColourPickerStaged();
   } else if (imgPickerBulkTargetList === 'generallyUsed') {
-    if (!generallyUsedPalette) generallyUsedPalette = loadGuPaletteFromStorage() || buildGenerallyUsedPalette();
+    generallyUsedPalette = getOrInitGuPalette();
     const usedIds = new Set([...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].map(c => c.id));
     let n = 0;
     chosen.forEach(hex => {
@@ -3650,6 +3650,89 @@ function buildGenerallyUsedPalette() {
   return { pastels, darks };
 }
 
+/* ---------------- Generally Used: user's own hand-made colour chart ----------------
+   These are the user's own embroidery-thread swatches, read off their photographed
+   chart. Section (pastel vs dark) is kept exactly as the user organised their chart,
+   NOT recomputed from luminance — a couple of these (e.g. the wine/magenta tone on
+   the Pastel page) would otherwise misclassify as "dark" under the usual rule. */
+const CHART_COLORS_PASTEL = [
+  { hex: '#825D5D', name: 'Pastel Tomato' },
+  { hex: '#716F4A', name: 'Light Mehndi' },
+  { hex: '#645564', name: 'Light Wine' },
+  { hex: '#4B4C47', name: 'Taupe Grey' },
+  { hex: '#7E7558', name: 'Golden Bisquit' },
+  { hex: '#64879C', name: 'Aqua Blue' },
+  { hex: '#3A4E58', name: 'Teal Blue' },
+  { hex: '#64384F', name: 'Pastel Wine' },
+  { hex: '#948665', name: 'Biscuit' },
+  { hex: '#506056', name: 'Sage Green' },
+  { hex: '#65799C', name: 'Powder Blue' },
+  { hex: '#999687', name: 'Cream' },
+  { hex: '#CFAEBF', name: 'Rose Pink' },
+  { hex: '#3E3543', name: 'Dark Wine' },
+];
+const CHART_COLORS_DARK = [
+  { hex: '#5C282B', name: 'Red' },
+  { hex: '#312B30', name: 'Burgundy' },
+  { hex: '#232D39', name: 'Mor Pinch' },
+  { hex: '#28302E', name: 'Bottle Green [L1]' },
+  { hex: '#2B2A29', name: 'Coffee Brown' },
+  { hex: '#C9917A', name: 'Dark Peach' },
+  { hex: '#B6A053', name: 'Mango Yellow' },
+  { hex: '#58212A', name: 'Blood Red' },
+  { hex: '#424A53', name: 'Dark Grey' },
+  { hex: '#3C3637', name: 'Chocolate Brown' },
+  { hex: '#7D2F39', name: 'Dark Tomato [L2]' },
+  { hex: '#363D20', name: 'Bright Mehndi' },
+  { hex: '#593936', name: 'Rust Brown' },
+  { hex: '#775228', name: 'Mustard' },
+  { hex: '#24434A', name: 'Rama Green' },
+  { hex: '#1F2226', name: 'Navy Blue' },
+  { hex: '#3E2833', name: 'Falsa' },
+  { hex: '#1E2424', name: 'Bottle Green [L2]' },
+  { hex: '#362850', name: 'Dark Purple' },
+  { hex: '#58342C', name: 'Rust' },
+  { hex: '#1D2023', name: 'Black' },
+  { hex: '#3D1D26', name: 'Maroon (Light)' },
+  { hex: '#222522', name: 'Dark Mehndi' },
+  { hex: '#2B191D', name: 'Maroon (Dark)' },
+  { hex: '#944346', name: 'Tomato [L1]' },
+  { hex: '#711939', name: 'Light Rani Pink' },
+];
+
+const GU_CHART_MERGED_KEY = 'colourCatalog_chartColorsMerged_v1';
+
+function mergeChartColorsIntoGu() {
+  if (!generallyUsedPalette) return;
+  try {
+    if (localStorage.getItem(GU_CHART_MERGED_KEY) === '1') return;
+  } catch (e) { /* if localStorage is unavailable, fall through and merge anyway for this session */ }
+
+  const usedIds = new Set([...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].map(c => c.id));
+  const nextId = (prefix) => {
+    let n = 0;
+    while (usedIds.has(prefix + n)) n++;
+    const id = prefix + n;
+    usedIds.add(id);
+    return id;
+  };
+  CHART_COLORS_PASTEL.forEach(c => {
+    generallyUsedPalette.pastels.push({ hex: c.hex, name: c.name, id: nextId('cp') });
+  });
+  CHART_COLORS_DARK.forEach(c => {
+    generallyUsedPalette.darks.push({ hex: c.hex, name: c.name, id: nextId('cd') });
+  });
+
+  try { localStorage.setItem(GU_CHART_MERGED_KEY, '1'); } catch (e) { /* fail silently */ }
+  saveGuPaletteToStorage();
+}
+
+function getOrInitGuPalette() {
+  if (!generallyUsedPalette) generallyUsedPalette = loadGuPaletteFromStorage() || buildGenerallyUsedPalette();
+  mergeChartColorsIntoGu();
+  return generallyUsedPalette;
+}
+
 let guSelected = new Set(); // item.id values currently checked, across both sections
 let guEditingId = null; // item.id currently in inline edit mode
 
@@ -3792,7 +3875,7 @@ function guAddNewColour() {
   hex = hex.toUpperCase();
   const name = document.getElementById('guNewName').value.trim();
   if (!isValidHex(hex)) { msg.textContent = 'Enter a valid hex code, e.g. #A3C9D8.'; return; }
-  if (!generallyUsedPalette) generallyUsedPalette = loadGuPaletteFromStorage() || buildGenerallyUsedPalette();
+  generallyUsedPalette = getOrInitGuPalette();
 
   const allIds = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].map(c => c.id);
   let n = 0;
@@ -3807,7 +3890,7 @@ function guAddNewColour() {
 }
 
 function renderGenerallyUsed() {
-  if (!generallyUsedPalette) generallyUsedPalette = loadGuPaletteFromStorage() || buildGenerallyUsedPalette();
+  generallyUsedPalette = getOrInitGuPalette();
   const pastelBoard = document.getElementById('guPastelBoard');
   const darkBoard = document.getElementById('guDarkBoard');
   if (!pastelBoard || !darkBoard) return;
