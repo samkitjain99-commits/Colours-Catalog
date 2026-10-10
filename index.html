@@ -2521,7 +2521,7 @@ function openPrintColoursForHomeSelection() {
   const label = homeSelectedSet.size > 0
     ? `${items.length} selected color${items.length !== 1 ? 's' : ''}`
     : `all ${items.length} color${items.length !== 1 ? 's' : ''}`;
-  renderPrintColoursFromSwatches(items.map(it => ({ hex: it.hex, name: it.name })), label);
+  renderPrintColoursFromSwatches(items.map(it => ({ hex: it.hex, name: it.name })), label, { targets: [{ arr: () => catalog, hexOf: e => e.primaryHex }, { arr: () => secondaryColors, hexOf: x => x.hex }], refresh: refreshAllListsAfterReorder });
   printColoursReturnView = 'list';
   showView('printcolours');
 }
@@ -3100,7 +3100,7 @@ function openPrintColoursForSelection() {
   const label = selectedSet.size > 0 ? `${ids.length} selected color${ids.length !== 1 ? 's' : ''}` :
     (groupFilter ? `${ids.length} color${ids.length !== 1 ? 's' : ''} in this group` : `all ${ids.length} color${ids.length !== 1 ? 's' : ''}`);
   const items = ids.map(id => entryById(id)).filter(Boolean);
-  renderPrintColoursFromSwatches(collectAllSwatches(items), label);
+  renderPrintColoursFromSwatches(collectAllSwatches(items), label, { targets: [{ arr: () => catalog, hexOf: e => e.primaryHex }], refresh: refreshAllListsAfterReorder });
   printColoursReturnView = 'list';
   showView('printcolours');
 }
@@ -3120,7 +3120,12 @@ function openPrintColoursForGroup() {
   const label = groupDetailSelectedSet.size > 0
     ? `${keys.length} selected color${keys.length !== 1 ? 's' : ''} in "${g.name}"`
     : `${keys.length} color${keys.length !== 1 ? 's' : ''} in "${g.name}"`;
-  renderPrintColoursFromSwatches(swatches, label);
+  const gid = g.id;
+  renderPrintColoursFromSwatches(swatches, label, {
+    targets: [{ arr: () => { const gg = groups.find(x => x.id === gid); return gg ? gg.colorIds : null; },
+                hexOf: key => { const r = resolveGroupMember(key); return r ? (r.type === 'primary' ? r.item.primaryHex : r.item.hex) : ''; } }],
+    refresh: () => { renderGroupDetail(); }
+  });
   printColoursReturnView = 'groupDetail';
   showView('printcolours');
 }
@@ -3209,6 +3214,32 @@ function renderPrintColours(ids, label) {
 }
 
 let swCurrentSwatches = [], swCurrentLabel = '';
+let swSource = null; // { targets: [{ arr: () => array, hexOf: item => hex }], refresh: () => void } — where the previewed colours really live
+
+// After the preview is reordered, apply that order back to the real list(s).
+// Only the previewed items change places among the slots they already occupy; everything else stays put.
+function applyPreviewOrderToSource() {
+  if (!swSource) return;
+  const order = swCurrentSwatches.map(s => String(s.hex).toUpperCase());
+  swSource.targets.forEach(t => {
+    const arr = t.arr();
+    if (!arr) return;
+    const slots = [], picked = [], seen = new Set();
+    arr.forEach((item, i) => {
+      const h = String(t.hexOf(item) || '').toUpperCase();
+      if (h && order.includes(h) && !seen.has(h)) { seen.add(h); slots.push(i); picked.push({ item, h }); }
+    });
+    picked.sort((a, b) => order.indexOf(a.h) - order.indexOf(b.h));
+    slots.forEach((slot, k) => { arr[slot] = picked[k].item; });
+  });
+  if (swSource.refresh) swSource.refresh();
+}
+
+function refreshAllListsAfterReorder() {
+  renderCatalog();
+  renderSecondaryColoursBoard();
+  renderHomeAll();
+}
 
 // Download a list of {hex, name} as an Excel file (Sr No, Hex Code, Colour Name).
 // The same file can be re-uploaded through the Excel upload buttons.
@@ -3240,14 +3271,15 @@ function downloadSelectedGeneralExcel() {
 
 function removeSwatchFromPreview(idx) {
   swCurrentSwatches.splice(idx, 1);
-  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel);
+  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
 }
 
 function moveSwatchInPreview(idx, dir) {
   const j = idx + dir;
   if (j < 0 || j >= swCurrentSwatches.length) return;
   [swCurrentSwatches[idx], swCurrentSwatches[j]] = [swCurrentSwatches[j], swCurrentSwatches[idx]];
-  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel);
+  applyPreviewOrderToSource();
+  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
 }
 
 function moveSwatchToPosition(idx) {
@@ -3258,10 +3290,12 @@ function moveSwatchToPosition(idx) {
   if (!(pos >= 1 && pos <= n) || pos - 1 === idx) return;
   const [item] = swCurrentSwatches.splice(idx, 1);
   swCurrentSwatches.splice(pos - 1, 0, item);
-  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel);
+  applyPreviewOrderToSource();
+  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
 }
 
-function renderPrintColoursFromSwatches(swatches, label) {
+function renderPrintColoursFromSwatches(swatches, label, source) {
+  swSource = source || null;
   swCurrentSwatches = swatches.slice();
   swCurrentLabel = label;
   const PER_PAGE = 16;
@@ -3367,7 +3401,7 @@ function openPrintColoursForSecondaryPool() {
   const label = scSelectedSet.size > 0
     ? `${items.length} selected secondary color${items.length !== 1 ? 's' : ''}`
     : `all ${items.length} secondary color${items.length !== 1 ? 's' : ''} in your pool`;
-  renderPrintColoursFromSwatches(items.map(s => ({ hex: s.hex, name: s.name })), label);
+  renderPrintColoursFromSwatches(items.map(s => ({ hex: s.hex, name: s.name })), label, { targets: [{ arr: () => secondaryColors, hexOf: x => x.hex }], refresh: refreshAllListsAfterReorder });
   printColoursReturnView = 'list';
   showView('printcolours');
 }
@@ -4253,7 +4287,10 @@ function printSelectedGeneralItems() {
   if (items.length === 0) return;
   const swatches = items.map(item => ({ hex: item.hex, name: item.name }));
   const label = `${swatches.length} selected color${swatches.length !== 1 ? 's' : ''} from Generally Used`;
-  renderPrintColoursFromSwatches(swatches, label);
+  renderPrintColoursFromSwatches(swatches, label, {
+    targets: [{ arr: () => generallyUsedPalette.pastels, hexOf: x => x.hex }, { arr: () => generallyUsedPalette.darks, hexOf: x => x.hex }],
+    refresh: () => renderGenerallyUsed()
+  });
   printColoursReturnView = 'generallyused';
   showView('printcolours');
 }
