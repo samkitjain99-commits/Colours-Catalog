@@ -2826,13 +2826,19 @@ async function buildPdfFromPages(pagesContainerId) {
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   for (let i = 0; i < pages.length; i++) {
+    // Render at ~300 dpi for A4 (2480px wide) so printed swatches stay crisp,
+    // while capping total pixels so phones' canvas memory limits aren't exceeded.
+    const cssW = pages[i].offsetWidth || 400, cssH = pages[i].offsetHeight || 600;
+    let renderScale = Math.max(2, 2480 / cssW);
+    const MAX_PIXELS = 14e6;
+    if (cssW * cssH * renderScale * renderScale > MAX_PIXELS) renderScale = Math.sqrt(MAX_PIXELS / (cssW * cssH));
     const canvas = await window.html2canvas(pages[i], {
-      scale: 2,
+      scale: renderScale,
       backgroundColor: '#ffffff',
       useCORS: true,
       logging: false
     });
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
     const ratio = canvas.height / canvas.width;
     let w = PAGE_W_MM, h = w * ratio;
     if (h > PAGE_H_MM) { h = PAGE_H_MM; w = h / ratio; }
