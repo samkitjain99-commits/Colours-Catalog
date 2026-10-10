@@ -1180,6 +1180,7 @@
     <button class="add-colour-btn" onclick="openImagePickerBulk('colourPickerStaged')">&#128247; Upload Image &amp; Pick Colours</button>
     <button class="add-colour-btn" style="margin-top:10px;" onclick="document.getElementById('colourSheetInput').value=''; document.getElementById('colourSheetInput').click();">&#128196; Upload Excel / CSV of Hex Codes</button>
     <input type="file" id="colourSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0])">
+    <button class="text-btn" style="margin-top:8px; font-weight:700;" onclick="downloadColourTemplate()">&#11015; Download Excel template</button>
     <div class="page-sub no-print" style="margin-top:6px;">Any sheet works: put hex codes (like #A3C9D8) in any column, optionally with a colour name next to each.</div>
 
     <div class="frozen-bar" id="cpSaveBar" style="display:none;">
@@ -1663,6 +1664,36 @@ function extractHexRowsFromGrid(grid) {
     out.push({ hex, name });
   });
   return out;
+}
+
+async function downloadColourTemplate() {
+  const rows = [
+    ['Hex Code', 'Colour Name'],
+    ['#DBA7B1', 'Dusty Pink'],
+    ['#6B7043', 'Olive Green'],
+    ['#4B1F3D', 'Plum'],
+    ['', ''],
+  ];
+  try {
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined');
+    const ws = window.XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 14 }, { wch: 28 }];
+    // store hex column as text so Excel never reinterprets values like 123456 as numbers
+    for (let r = 1; r < 200; r++) {
+      const ref = 'A' + (r + 1);
+      if (ws[ref]) ws[ref].t = 's';
+    }
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, 'Colours');
+    window.XLSX.writeFile(wb, 'Colour_Template.xlsx');
+  } catch (e) {
+    // offline fallback: plain CSV, which the uploader also accepts
+    const csv = rows.map(r => r.join(',')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'Colour_Template.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
 }
 
 async function handleColourSheetUpload(file) {
