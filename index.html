@@ -442,6 +442,12 @@
     .contrast-grid { grid-template-columns: repeat(3, 1fr); }
   }
 
+  .sw-card { position: relative; }
+  .sw-remove { position: absolute; top: -2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; border: none; background: #e9dcc6; color: var(--brown-700); font-size: 11px; font-weight: 700; line-height: 22px; padding: 0; cursor: pointer; z-index: 2; }
+  .sw-remove:disabled { opacity: 0.3; cursor: default; }
+  .sw-mv { font-size: 9px; }
+  .sw-remove:hover:not(:disabled) { background: var(--brown-700); color: #fff; }
+  @media print { .sw-remove { display: none !important; } }
   .gu-filter-row {
     display: flex; gap: 6px; margin: 14px 0; background: var(--tan-200);
     border-radius: 10px; padding: 4px;
@@ -2997,7 +3003,8 @@ async function buildPdfFromPages(pagesContainerId) {
       scale: renderScale,
       backgroundColor: '#ffffff',
       useCORS: true,
-      logging: false
+      logging: false,
+      ignoreElements: (el) => el.classList && el.classList.contains('sw-remove')
     });
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
     const ratio = canvas.height / canvas.width;
@@ -3157,7 +3164,34 @@ function renderPrintColours(ids, label) {
   renderPrintColoursFromSwatches(swatches, label);
 }
 
+let swCurrentSwatches = [], swCurrentLabel = '';
+
+function removeSwatchFromPreview(idx) {
+  swCurrentSwatches.splice(idx, 1);
+  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel);
+}
+
+function moveSwatchInPreview(idx, dir) {
+  const j = idx + dir;
+  if (j < 0 || j >= swCurrentSwatches.length) return;
+  [swCurrentSwatches[idx], swCurrentSwatches[j]] = [swCurrentSwatches[j], swCurrentSwatches[idx]];
+  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel);
+}
+
+function moveSwatchToPosition(idx) {
+  const n = swCurrentSwatches.length;
+  const v = prompt(`Move this colour to position (1 - ${n}):`, String(idx + 1));
+  if (v === null) return;
+  const pos = parseInt(v, 10);
+  if (!(pos >= 1 && pos <= n) || pos - 1 === idx) return;
+  const [item] = swCurrentSwatches.splice(idx, 1);
+  swCurrentSwatches.splice(pos - 1, 0, item);
+  renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel);
+}
+
 function renderPrintColoursFromSwatches(swatches, label) {
+  swCurrentSwatches = swatches.slice();
+  swCurrentLabel = label;
   const PER_PAGE = 16;
   const pages = [];
   for (let i = 0; i < swatches.length; i += PER_PAGE) pages.push(swatches.slice(i, i + PER_PAGE));
@@ -3165,7 +3199,7 @@ function renderPrintColoursFromSwatches(swatches, label) {
   const totalPages = pages.length;
 
   document.getElementById('swCount').textContent =
-    `Showing ${swatches.length} color${swatches.length !== 1 ? 's' : ''} from ${label} \u00B7 ${totalPages} page${totalPages !== 1 ? 's' : ''}`;
+    `Showing ${swatches.length} color${swatches.length !== 1 ? 's' : ''} from ${label} \u00B7 ${totalPages} page${totalPages !== 1 ? 's' : ''} \u00B7 \u2715 removes, \u25C0 \u25B6 move, tap a number to jump to a position`;
 
   const pagesEl = document.getElementById('swPages');
   pagesEl.innerHTML = pages.map((pageSwatches, pi) => {
@@ -3173,7 +3207,10 @@ function renderPrintColoursFromSwatches(swatches, label) {
       const globalIdx = pi * PER_PAGE + ci + 1;
       return `
       <div class="sw-card">
-        <div class="sw-srno">#${String(globalIdx).padStart(2, '0')}</div>
+        <button class="sw-remove no-print" onclick="removeSwatchFromPreview(${globalIdx - 1})" title="Remove from this sheet">&#10005;</button>
+        <button class="sw-remove sw-mv no-print" style="top:26px; right:auto; left:0;" onclick="moveSwatchInPreview(${globalIdx - 1}, -1)" ${globalIdx === 1 ? 'disabled' : ''} title="Move earlier">&#9664;</button>
+        <button class="sw-remove sw-mv no-print" style="top:26px; right:0;" onclick="moveSwatchInPreview(${globalIdx - 1}, 1)" ${globalIdx === swatches.length ? 'disabled' : ''} title="Move later">&#9654;</button>
+        <div class="sw-srno" onclick="moveSwatchToPosition(${globalIdx - 1})" title="Tap to move to a specific position" style="cursor:pointer;">#${String(globalIdx).padStart(2, '0')}</div>
         <div class="sw-dot" style="background:${s.hex}"></div>
         <div class="sw-hex">${s.hex}</div>
         ${s.name ? `<div class="sw-name">${s.name}</div>` : ''}
