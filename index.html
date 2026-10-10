@@ -2883,6 +2883,18 @@ function groupKeysToSwatches(keys) {
   }).filter(Boolean);
 }
 
+function addGroupSelectionToOtherGroup() {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g || groupDetailSelectedSet.size === 0) return;
+  const keys = g.colorIds.filter(k => groupDetailSelectedSet.has(k) && resolveGroupMember(k));
+  if (keys.length === 0) return;
+  addToGroupExcludeId = g.id;
+  openAddToGroupForKeys(keys, 'groupDetail', () => {
+    groupDetailSelectedSet = new Set();
+    renderGroupDetail();
+  });
+}
+
 function downloadGroupExcel() {
   const g = groups.find(g => g.id === currentGroupDetailId);
   if (!g) return;
@@ -2898,6 +2910,7 @@ function updateGroupDetailToolbar() {
   const actionsEl = document.getElementById('groupDetailToolbarActions');
   if (n > 0) {
     actionsEl.innerHTML = `
+      <button class="text-btn addgroup-btn" onclick="addGroupSelectionToOtherGroup()">Add to another group (${n})</button>
       <button class="text-btn preview-btn" onclick="openPreviewForGroup()">Prepare catalog (${n})</button>
       <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print colours (${n})</button>
       <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadGroupExcel()">Download Excel (${n})</button>
@@ -2936,6 +2949,7 @@ function removeSelectedFromGroup() {
 
 let addToGroupReturnView = 'list';
 let addToGroupOnDone = null; // optional extra callback after adding
+let addToGroupExcludeId = null; // group to leave out of the picker (the one the colours are already in)
 
 function openAddToGroup() {
   if (selectedSet.size === 0) return;
@@ -2953,12 +2967,13 @@ function openAddToGroupForKeys(keys, returnView, onDone) {
   const existingSection = document.getElementById('atgExistingSection');
   const select = document.getElementById('atgGroupSelect');
   const addBtn = document.getElementById('atgAddBtn');
-  if (groups.length === 0) {
+  const pickableGroups = groups.filter(g => g.id !== addToGroupExcludeId);
+  if (pickableGroups.length === 0) {
     existingSection.style.display = 'none';
   } else {
     existingSection.style.display = '';
     select.innerHTML = '<option value="">Select a group…</option>' +
-      groups.map(g => `<option value="${g.id}">${escapeHtml(g.name)} (${g.colorIds.length})</option>`).join('');
+      pickableGroups.map(g => `<option value="${g.id}">${escapeHtml(g.name)} (${g.colorIds.length})</option>`).join('');
     select.value = '';
     addBtn.disabled = true;
     select.onchange = () => { addBtn.disabled = !select.value; };
@@ -2968,6 +2983,7 @@ function openAddToGroupForKeys(keys, returnView, onDone) {
 }
 
 function finishAddToGroup() {
+  addToGroupExcludeId = null;
   if (addToGroupOnDone) addToGroupOnDone();
   renderHomeAll();
   renderGroupFilterOptions();
