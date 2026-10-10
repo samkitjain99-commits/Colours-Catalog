@@ -1008,7 +1008,7 @@
   <!-- ============ PRINT COLOURS (FLAT SWATCH SHEET) VIEW ============ -->
   <div class="view" id="view-printcolours">
     <div class="screen-header no-print">
-      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <button class="back-btn" onclick="showView(printColoursReturnView)">&#10005;</button>
       <h1>Print Colours</h1>
     </div>
     <div class="pc-toolbar no-print">
@@ -2494,6 +2494,7 @@ function openPrintColoursForHomeSelection() {
     ? `${items.length} selected color${items.length !== 1 ? 's' : ''}`
     : `all ${items.length} color${items.length !== 1 ? 's' : ''}`;
   renderPrintColoursFromSwatches(items.map(it => ({ hex: it.hex, name: it.name })), label);
+  printColoursReturnView = 'list';
   showView('printcolours');
 }
 
@@ -3146,6 +3147,7 @@ function confirmPrintSelectedColours() {
   const chosen = allColoursPool.filter(s => allColoursSelected.has(s.hex));
   if (chosen.length === 0) return;
   renderPrintColoursFromSwatches(chosen, `${chosen.length} selected color${chosen.length !== 1 ? 's' : ''}`);
+  printColoursReturnView = 'list';
   showView('printcolours');
 }
 
@@ -3257,6 +3259,7 @@ function openPrintColoursForSecondaryPool() {
     ? `${items.length} selected secondary color${items.length !== 1 ? 's' : ''}`
     : `all ${items.length} secondary color${items.length !== 1 ? 's' : ''} in your pool`;
   renderPrintColoursFromSwatches(items.map(s => ({ hex: s.hex, name: s.name })), label);
+  printColoursReturnView = 'list';
   showView('printcolours');
 }
 
@@ -4132,12 +4135,16 @@ function updateGuToolbar() {
   if (clearSelBtn) clearSelBtn.textContent = `Clear all selected${n > 0 ? ` (${n})` : ''}`;
 }
 
+let printColoursReturnView = 'list';
+
 function printSelectedGeneralItems() {
   const items = selectedGuItems();
   if (items.length === 0) return;
   const swatches = items.map(item => ({ hex: item.hex, name: item.name }));
   const label = `${swatches.length} selected color${swatches.length !== 1 ? 's' : ''} from Generally Used`;
-  openAllColoursSelectorFromSwatches(swatches, label);
+  renderPrintColoursFromSwatches(swatches, label);
+  printColoursReturnView = 'generallyused';
+  showView('printcolours');
 }
 
 function selectedGuItems() {
