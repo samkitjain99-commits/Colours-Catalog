@@ -929,6 +929,11 @@
     <div class="toolbar-actions" id="groupDetailToolbarActions" style="margin-bottom:14px;"></div>
 
     <div class="section-label">Add Colours To This Group</div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+      <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="document.getElementById('groupSheetInput').value=''; document.getElementById('groupSheetInput').click();">&#128196; Import Excel / CSV</button>
+      <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadColourTemplate('colourPicker')">&#11015; Template</button>
+      <input type="file" id="groupSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0], 'group')">
+    </div>
     <div class="combo-wrap" style="margin-bottom:16px;">
       <input type="text" class="text-input" id="groupAddSearchInput" placeholder="Search primary or secondary colours…" autocomplete="off">
       <div class="combo-dropdown" id="groupAddDropdown"></div>
@@ -1020,6 +1025,7 @@
     <div class="pc-toolbar no-print">
       <div class="pc-count" id="swCount"></div>
       <button class="pc-print-btn" id="swSavePdfBtn" onclick="doSavePdf('sw', 'Color Swatches')">&#11015; Save PDF</button>
+      <button class="pc-print-btn" style="background:var(--brown-500, #8b5e3c);" onclick="downloadPreviewExcel()">&#128196; Excel</button>
     </div>
 
     <div id="swPages"></div>
@@ -1257,6 +1263,7 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="text-btn addgroup-btn" id="guGroupBtn" onclick="addSelectedGeneralToGroup()">Add to group</button>
         <button class="text-btn printcolours-btn" id="guPrintBtn" onclick="printSelectedGeneralItems()">Print colours</button>
+        <button class="text-btn" id="guExcelBtn" style="text-decoration:underline; font-weight:700;" onclick="downloadSelectedGeneralExcel()">Download Excel</button>
         <button class="text-btn clear-all-btn" id="guClearSelBtn" style="margin-left:auto; display:inline;" onclick="clearGuSelection()">Clear all</button>
       </div>
     </div>
@@ -1769,6 +1776,21 @@ function confirmBulkPaletteSelection() {
       colourPickerStaged.push({ hex, name: imgPickerNameByHex[hex] || '', role: (bulkSel && bulkSel.value) || 'secondary' });
     });
     renderColourPickerStaged();
+  } else if (imgPickerBulkTargetList === 'group') {
+    const g = groups.find(g => g.id === currentGroupDetailId);
+    if (g) {
+      chosen.forEach(hex => {
+        const H = hex.toUpperCase();
+        const prim = catalog.find(e => e.primaryHex.toUpperCase() === H);
+        const key = prim ? groupMemberKey('primary', prim.id)
+          : groupMemberKey('secondary', getOrCreateSecondaryColor(H, imgPickerNameByHex[hex] || H));
+        if (!g.colorIds.includes(key)) g.colorIds.push(key);
+      });
+      renderSecondaryColoursBoard();
+      renderGroupDetail();
+      renderGroupFilterOptions();
+      renderHomeAll();
+    }
   } else if (imgPickerBulkTargetList === 'generallyUsed') {
     generallyUsedPalette = getOrInitGuPalette();
     const usedIds = new Set([...generallyUsedPalette.pastels, ...generallyUsedPalette.darks].map(c => c.id));
@@ -2853,6 +2875,22 @@ function toggleGroupDetailSelectAll(checked) {
   renderGroupDetail();
 }
 
+function groupKeysToSwatches(keys) {
+  return keys.map(k => {
+    const r = resolveGroupMember(k);
+    if (!r) return null;
+    return r.type === 'primary' ? { hex: r.item.primaryHex, name: r.item.primaryName } : { hex: r.item.hex, name: r.item.name };
+  }).filter(Boolean);
+}
+
+function downloadGroupExcel() {
+  const g = groups.find(g => g.id === currentGroupDetailId);
+  if (!g) return;
+  const keys = groupDetailSelectedSet.size > 0 ? g.colorIds.filter(k => groupDetailSelectedSet.has(k)) : g.colorIds;
+  const safe = String(g.name || 'Group').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'Group';
+  downloadColoursExcel(groupKeysToSwatches(keys), safe + ' - Colours');
+}
+
 function updateGroupDetailToolbar() {
   const g = groups.find(g => g.id === currentGroupDetailId);
   const total = g ? g.colorIds.length : 0;
@@ -2862,11 +2900,13 @@ function updateGroupDetailToolbar() {
     actionsEl.innerHTML = `
       <button class="text-btn preview-btn" onclick="openPreviewForGroup()">Prepare catalog (${n})</button>
       <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print colours (${n})</button>
+      <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadGroupExcel()">Download Excel (${n})</button>
     `;
   } else {
     actionsEl.innerHTML = `
       <button class="text-btn preview-btn" onclick="openPreviewForGroup()">Prepare catalog</button>
       <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print colours</button>
+      <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadGroupExcel()">Download Excel</button>
     `;
   }
   const bulkBtn = document.getElementById('groupDetailBulkRemoveBtn');
@@ -3165,6 +3205,34 @@ function renderPrintColours(ids, label) {
 }
 
 let swCurrentSwatches = [], swCurrentLabel = '';
+
+// Download a list of {hex, name} as an Excel file (Sr No, Hex Code, Colour Name).
+// The same file can be re-uploaded through the Excel upload buttons.
+async function downloadColoursExcel(list, baseName) {
+  if (!list || list.length === 0) { alert('No colours to download.'); return; }
+  const rows = [['Sr No', 'Hex Code', 'Colour Name']].concat(list.map((c, i) => [i + 1, c.hex, c.name || '']));
+  try {
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined');
+    const ws = window.XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 30 }];
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, 'Colours');
+    window.XLSX.writeFile(wb, baseName + '.xlsx');
+  } catch (e) {
+    const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = baseName + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+}
+
+function downloadPreviewExcel() { downloadColoursExcel(swCurrentSwatches, 'Colour_List'); }
+
+function downloadSelectedGeneralExcel() {
+  const items = selectedGuItems();
+  downloadColoursExcel(items.map(i => ({ hex: i.hex, name: i.name })), 'Generally_Used_Selected');
+}
 
 function removeSwatchFromPreview(idx) {
   swCurrentSwatches.splice(idx, 1);
@@ -4168,6 +4236,8 @@ function updateGuToolbar() {
   if (printBtn) printBtn.textContent = `Print colours${n > 0 ? ` (${n})` : ''}`;
   const groupBtn = document.getElementById('guGroupBtn');
   if (groupBtn) groupBtn.textContent = `Add to group${n > 0 ? ` (${n})` : ''}`;
+  const excelBtn = document.getElementById('guExcelBtn');
+  if (excelBtn) excelBtn.textContent = `Download Excel${n > 0 ? ` (${n})` : ''}`;
   const clearSelBtn = document.getElementById('guClearSelBtn');
   if (clearSelBtn) clearSelBtn.textContent = `Clear all selected${n > 0 ? ` (${n})` : ''}`;
 }
