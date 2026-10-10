@@ -3100,7 +3100,9 @@ function openPrintColoursForSelection() {
   const label = selectedSet.size > 0 ? `${ids.length} selected color${ids.length !== 1 ? 's' : ''}` :
     (groupFilter ? `${ids.length} color${ids.length !== 1 ? 's' : ''} in this group` : `all ${ids.length} color${ids.length !== 1 ? 's' : ''}`);
   const items = ids.map(id => entryById(id)).filter(Boolean);
-  openAllColoursSelector(items, label);
+  renderPrintColoursFromSwatches(collectAllSwatches(items), label);
+  printColoursReturnView = 'list';
+  showView('printcolours');
 }
 
 function openPrintColoursForGroup() {
@@ -3118,7 +3120,9 @@ function openPrintColoursForGroup() {
   const label = groupDetailSelectedSet.size > 0
     ? `${keys.length} selected color${keys.length !== 1 ? 's' : ''} in "${g.name}"`
     : `${keys.length} color${keys.length !== 1 ? 's' : ''} in "${g.name}"`;
-  openAllColoursSelectorFromSwatches(swatches, label);
+  renderPrintColoursFromSwatches(swatches, label);
+  printColoursReturnView = 'groupDetail';
+  showView('printcolours');
 }
 
 function collectAllSwatches(items) {
