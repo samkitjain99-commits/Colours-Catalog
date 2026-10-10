@@ -1179,8 +1179,8 @@
 
     <button class="add-colour-btn" onclick="openImagePickerBulk('colourPickerStaged')">&#128247; Upload Image &amp; Pick Colours</button>
     <button class="add-colour-btn" style="margin-top:10px;" onclick="document.getElementById('colourSheetInput').value=''; document.getElementById('colourSheetInput').click();">&#128196; Upload Excel / CSV of Hex Codes</button>
-    <input type="file" id="colourSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0])">
-    <button class="text-btn" style="margin-top:8px; font-weight:700;" onclick="downloadColourTemplate()">&#11015; Download Excel template</button>
+    <input type="file" id="colourSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0], 'colourPickerStaged')">
+    <button class="text-btn" style="margin-top:8px; font-weight:700;" onclick="downloadColourTemplate('colourPicker')">&#11015; Download Excel template</button>
     <div class="page-sub no-print" style="margin-top:6px;">Any sheet works: put hex codes (like #A3C9D8) in any column, optionally with a colour name next to each.</div>
 
     <div class="frozen-bar" id="cpSaveBar" style="display:none;">
@@ -1220,6 +1220,12 @@
     <div style="display:flex; gap:8px;">
       <button class="add-colour-btn" style="flex:1; margin-bottom:0;" onclick="guToggleAddForm()" id="guAddColourToggleBtn">+ Add Colour</button>
       <button class="photo-pick-btn" onclick="openImagePickerBulk('generallyUsed')" title="Add colours from a photo">&#128247;</button>
+      <button class="photo-pick-btn" onclick="document.getElementById('guSheetInput').value=''; document.getElementById('guSheetInput').click();" title="Add colours from an Excel / CSV file">&#128196;</button>
+      <input type="file" id="guSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0], 'generallyUsed')">
+    </div>
+    <div style="margin:8px 0 0;">
+      <button class="text-btn" style="font-weight:700;" onclick="downloadColourTemplate('generallyUsed')">&#11015; Download Excel template</button>
+      <span style="font-size:11.5px; color:var(--muted);"> &mdash; fill in hex codes, names, and optionally Pastel/Dark</span>
     </div>
     <div class="frozen-bar" id="guAddForm" style="display:none; padding-top:12px;">
       <div class="section-label" style="margin-bottom:6px;">New Colour For This Palette</div>
@@ -1242,7 +1248,10 @@
         <button class="gu-btn gu-btn-primary" style="padding:11px;" id="guAddPrimaryBtn" onclick="addSelectedGeneralToPrimary()">Add to Primary</button>
         <button class="gu-btn gu-btn-secondary" style="padding:11px;" id="guAddSecondaryBtn" onclick="addSelectedGeneralToSecondary()">Add to Secondary</button>
       </div>
-      <button class="text-btn printcolours-btn" id="guPrintBtn" onclick="printSelectedGeneralItems()">Print colours</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="text-btn addgroup-btn" id="guGroupBtn" onclick="addSelectedGeneralToGroup()">Add to group</button>
+        <button class="text-btn printcolours-btn" id="guPrintBtn" onclick="printSelectedGeneralItems()">Print colours</button>
+      </div>
     </div>
 
     <div class="gu-filter-row">
@@ -1356,6 +1365,7 @@ let imgPickerBulkTargetList = null; // 'newSecondaryDraft' or 'multiPrimaryDraft
 let imgPickerSelectedPalette = new Set(); // hexes checked, bulk mode only
 let imgPickerSheetMode = false; // true when the overlay is showing hex codes imported from Excel/CSV
 let imgPickerNameByHex = {};
+let imgPickerSectionByHex = {};
 
 function openImagePicker(target) {
   imgPickerMode = 'single';
@@ -1634,7 +1644,7 @@ function setImgPickerSheetLayout(on) {
   document.getElementById('imgPickerTitle').textContent = on ? 'Pick colours from your spreadsheet' : 'Pick colors from your photo';
   document.getElementById('imgPickerHint').textContent = on ? 'Tick the colours you want to bring into the Colour Picker.' : 'Tap anywhere on the image, or tap a color below, to sample it.';
   document.getElementById('imgPickerPaletteLabel').textContent = on ? 'Colours found in your file' : 'Colors found in this photo';
-  if (!on) { imgPickerNameByHex = {}; }
+  if (!on) { imgPickerNameByHex = {}; imgPickerSectionByHex = {}; }
 }
 
 function toggleSheetSelectAll(checked) {
@@ -1660,14 +1670,23 @@ function extractHexRowsFromGrid(grid) {
     if (!hex || seen.has(hex)) return;
     seen.add(hex);
     // name = first other cell that is non-empty, not purely numeric, and not another hex code
-    const name = cells.find((c, i) => i !== hexIdx && c && !/^[\d.\s#-]+$/.test(c) && !HEX.test(c)) || '';
-    out.push({ hex, name });
+    const SEC = /^(pastel|dark)(\s+shades?)?$/i;
+    const secCell = cells.find((c, i) => i !== hexIdx && SEC.test(c));
+    const section = secCell ? (secCell.trim().toLowerCase().startsWith('p') ? 'pastel' : 'dark') : '';
+    const name = cells.find((c, i) => i !== hexIdx && c && !/^[\d.\s#-]+$/.test(c) && !HEX.test(c) && !SEC.test(c)) || '';
+    out.push({ hex, name, section });
   });
   return out;
 }
 
-async function downloadColourTemplate() {
-  const rows = [
+async function downloadColourTemplate(kind) {
+  const rows = kind === 'generallyUsed' ? [
+    ['Hex Code', 'Colour Name', 'Section (Pastel or Dark - optional)'],
+    ['#F7F3E6', 'Warm Cream', 'Pastel'],
+    ['#6B7043', 'Olive Green', 'Dark'],
+    ['#4B1F3D', 'Plum', ''],
+    ['', '', ''],
+  ] : [
     ['Hex Code', 'Colour Name'],
     ['#DBA7B1', 'Dusty Pink'],
     ['#6B7043', 'Olive Green'],
@@ -1677,7 +1696,7 @@ async function downloadColourTemplate() {
   try {
     await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined');
     const ws = window.XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wch: 14 }, { wch: 28 }];
+    ws['!cols'] = [{ wch: 14 }, { wch: 28 }, { wch: 34 }];
     // store hex column as text so Excel never reinterprets values like 123456 as numbers
     for (let r = 1; r < 200; r++) {
       const ref = 'A' + (r + 1);
@@ -1685,18 +1704,19 @@ async function downloadColourTemplate() {
     }
     const wb = window.XLSX.utils.book_new();
     window.XLSX.utils.book_append_sheet(wb, ws, 'Colours');
-    window.XLSX.writeFile(wb, 'Colour_Template.xlsx');
+    window.XLSX.writeFile(wb, kind === 'generallyUsed' ? 'Generally_Used_Template.xlsx' : 'Colour_Template.xlsx');
   } catch (e) {
     // offline fallback: plain CSV, which the uploader also accepts
     const csv = rows.map(r => r.join(',')).join('\r\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    a.download = 'Colour_Template.csv';
+    a.download = kind === 'generallyUsed' ? 'Generally_Used_Template.csv' : 'Colour_Template.csv';
     document.body.appendChild(a); a.click(); a.remove();
   }
 }
 
-async function handleColourSheetUpload(file) {
+async function handleColourSheetUpload(file, target) {
+  target = target || 'colourPickerStaged';
   if (!file) return;
   try {
     await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined');
@@ -1712,10 +1732,11 @@ async function handleColourSheetUpload(file) {
       return;
     }
     imgPickerMode = 'bulk';
-    imgPickerBulkTargetList = 'colourPickerStaged';
+    imgPickerBulkTargetList = target;
     imgPickerPalette = rows.map(r => r.hex);
     imgPickerNameByHex = {};
-    rows.forEach(r => { imgPickerNameByHex[r.hex] = r.name; });
+    imgPickerSectionByHex = {};
+    rows.forEach(r => { imgPickerNameByHex[r.hex] = r.name; if (r.section) imgPickerSectionByHex[r.hex] = r.section; });
     imgPickerSelectedPalette = new Set();
     setImgPickerSheetLayout(true);
     renderImgPickerPalette();
@@ -1749,8 +1770,10 @@ function confirmBulkPaletteSelection() {
       while (usedIds.has('c' + n)) n++;
       const id = 'c' + n;
       usedIds.add(id);
-      const item = { hex, name: hex, id };
-      const bucket = luminance(hex) >= 0.5 ? generallyUsedPalette.pastels : generallyUsedPalette.darks;
+      const item = { hex, name: imgPickerNameByHex[hex] || hex, id };
+      const sec = imgPickerSectionByHex[hex];
+      const toPastel = sec ? sec === 'pastel' : luminance(hex) >= 0.5;
+      const bucket = toPastel ? generallyUsedPalette.pastels : generallyUsedPalette.darks;
       bucket.unshift(item);
     });
     renderGenerallyUsed();
@@ -4102,6 +4125,8 @@ function updateGuToolbar() {
   if (primaryBtn) primaryBtn.textContent = `Add to Primary${n > 0 ? ` (${n})` : ''}`;
   if (secondaryBtn) secondaryBtn.textContent = `Add to Secondary${n > 0 ? ` (${n})` : ''}`;
   if (printBtn) printBtn.textContent = `Print colours${n > 0 ? ` (${n})` : ''}`;
+  const groupBtn = document.getElementById('guGroupBtn');
+  if (groupBtn) groupBtn.textContent = `Add to group${n > 0 ? ` (${n})` : ''}`;
 }
 
 function printSelectedGeneralItems() {
@@ -4115,6 +4140,27 @@ function printSelectedGeneralItems() {
 function selectedGuItems() {
   const all = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks];
   return all.filter(item => guSelected.has(item.id));
+}
+
+function addSelectedGeneralToGroup() {
+  const items = selectedGuItems().filter(item => isValidHex(item.hex));
+  if (items.length === 0) return;
+  // Groups hold catalog entries, so each chosen colour must exist as a Primary or Secondary.
+  // Use an existing match if there is one; otherwise add it to the Secondary pool.
+  const keys = [];
+  items.forEach(item => {
+    const hex = item.hex.toUpperCase();
+    const prim = catalog.find(e => e.primaryHex.toUpperCase() === hex);
+    if (prim) { keys.push(groupMemberKey('primary', prim.id)); return; }
+    const sid = getOrCreateSecondaryColor(hex, item.name.trim() || hex);
+    keys.push(groupMemberKey('secondary', sid));
+  });
+  openAddToGroupForKeys([...new Set(keys)], 'generallyused', () => {
+    guSelected = new Set();
+    guEditingId = null;
+    renderSecondaryColoursBoard();
+    renderGenerallyUsed();
+  });
 }
 
 function addSelectedGeneralToPrimary() {
