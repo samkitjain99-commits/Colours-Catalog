@@ -1251,6 +1251,7 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="text-btn addgroup-btn" id="guGroupBtn" onclick="addSelectedGeneralToGroup()">Add to group</button>
         <button class="text-btn printcolours-btn" id="guPrintBtn" onclick="printSelectedGeneralItems()">Print colours</button>
+        <button class="text-btn clear-all-btn" id="guClearSelBtn" style="margin-left:auto; display:inline;" onclick="clearGuSelection()">Clear all</button>
       </div>
     </div>
 
@@ -4127,6 +4128,8 @@ function updateGuToolbar() {
   if (printBtn) printBtn.textContent = `Print colours${n > 0 ? ` (${n})` : ''}`;
   const groupBtn = document.getElementById('guGroupBtn');
   if (groupBtn) groupBtn.textContent = `Add to group${n > 0 ? ` (${n})` : ''}`;
+  const clearSelBtn = document.getElementById('guClearSelBtn');
+  if (clearSelBtn) clearSelBtn.textContent = `Clear all selected${n > 0 ? ` (${n})` : ''}`;
 }
 
 function printSelectedGeneralItems() {
@@ -4140,6 +4143,12 @@ function printSelectedGeneralItems() {
 function selectedGuItems() {
   const all = [...generallyUsedPalette.pastels, ...generallyUsedPalette.darks];
   return all.filter(item => guSelected.has(item.id));
+}
+
+function clearGuSelection() {
+  guSelected = new Set();
+  guEditingId = null;
+  renderGenerallyUsed();
 }
 
 function addSelectedGeneralToGroup() {
