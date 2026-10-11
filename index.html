@@ -1238,6 +1238,8 @@
       <button class="text-btn clear-all-btn" id="cpClearBtn" onclick="clearColourPickerStaged()" style="display:none;">Clear all</button>
     </div>
 
+    <div id="cpSelBar" class="no-print"></div>
+
     <div class="board">
       <div id="cpStagedBoard">
         <div class="empty-state">No colours picked yet.<br>Upload a photo to get started.</div>
@@ -4427,6 +4429,59 @@ function addSelectedGeneralToSecondary() {
   renderGenerallyUsed();
 }
 
+function selectedStaged() { return colourPickerStaged.filter(c => c.sel && isValidHex(c.hex)); }
+
+function toggleStagedSelect(i, checked) {
+  if (colourPickerStaged[i]) colourPickerStaged[i].sel = checked;
+  renderStagedSelBar();
+}
+
+function toggleStagedSelectAll(checked) {
+  colourPickerStaged.forEach(c => { c.sel = checked; });
+  renderColourPickerStaged();
+}
+
+function clearStagedSelection() {
+  colourPickerStaged.forEach(c => { c.sel = false; });
+  renderColourPickerStaged();
+}
+
+function renderStagedSelBar() {
+  const bar = document.getElementById('cpSelBar');
+  if (!bar) return;
+  const total = colourPickerStaged.length;
+  if (total === 0) { bar.innerHTML = ''; return; }
+  const n = colourPickerStaged.filter(c => c.sel).length;
+  bar.innerHTML = `
+    <div class="frozen-bar" style="padding:10px 12px; margin-bottom:10px;">
+      <label style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; color:var(--brown-900); cursor:pointer;">
+        <input type="checkbox" ${n === total ? 'checked' : ''} onchange="toggleStagedSelectAll(this.checked)"> Select all (${total})
+      </label>
+      ${n > 0 ? `
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center;">
+        <button class="text-btn printcolours-btn" onclick="printSelectedStaged()">Print colours (${n})</button>
+        <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadStagedExcel()">Download Excel (${n})</button>
+        <button class="text-btn clear-all-btn" style="margin-left:auto; display:inline;" onclick="clearStagedSelection()">Clear all selected (${n})</button>
+      </div>` : ''}
+    </div>`;
+}
+
+function printSelectedStaged() {
+  const items = selectedStaged();
+  if (items.length === 0) return;
+  const swatches = items.map(c => ({ hex: c.hex, name: c.name || '' }));
+  renderPrintColoursFromSwatches(swatches, `${swatches.length} selected color${swatches.length !== 1 ? 's' : ''} from Colour Picker`, {
+    targets: [{ arr: () => colourPickerStaged, hexOf: c => c.hex }],
+    refresh: () => renderColourPickerStaged()
+  });
+  printColoursReturnView = 'colourpicker';
+  showView('printcolours');
+}
+
+function downloadStagedExcel() {
+  downloadColoursExcel(selectedStaged().map(c => ({ hex: c.hex, name: c.name || '' })), 'Colour_Picker_Selected');
+}
+
 function renderColourPickerStaged() {
   const countEl = document.getElementById('cpStagedCount');
   const clearBtn = document.getElementById('cpClearBtn');
@@ -4436,6 +4491,7 @@ function renderColourPickerStaged() {
     if (countEl) countEl.textContent = '';
     if (clearBtn) clearBtn.style.display = 'none';
     board.innerHTML = `<div class="empty-state">No colours picked yet.<br>Upload a photo to get started.</div>`;
+    renderStagedSelBar();
     return;
   }
 
@@ -4454,6 +4510,7 @@ function renderColourPickerStaged() {
       return `
         <div class="cp-row">
           <div class="cp-row-top ${stillExists ? 'cp-row-clickable' : ''}" ${stillExists ? `onclick="${openCall}"` : ''}>
+            <input type="checkbox" class="cp-sel" ${c.sel ? 'checked' : ''} onclick="event.stopPropagation()" onchange="toggleStagedSelect(${i}, this.checked)" title="Select">
             <div class="cp-swatch" style="background:${c.hex}"></div>
             <div class="cp-fields">
               <div style="font-weight:700; font-size:13px; color:var(--brown-900);">${c.hex}</div>
@@ -4468,6 +4525,7 @@ function renderColourPickerStaged() {
     return `
       <div class="cp-row">
         <div class="cp-row-top">
+          <input type="checkbox" class="cp-sel" ${c.sel ? 'checked' : ''} onchange="toggleStagedSelect(${i}, this.checked)" title="Select">
           <div class="cp-swatch" style="background:${c.hex}"></div>
           <div class="cp-fields">
             <input type="text" class="text-input cp-hex" data-idx="${i}" value="${c.hex}" maxlength="7">
@@ -4486,6 +4544,7 @@ function renderColourPickerStaged() {
     `;
   }).join('');
 
+  renderStagedSelBar();
   const pendingCount = colourPickerStaged.filter(c => !c.addedAs).length;
   const saveBar = document.getElementById('cpSaveBar');
   if (saveBar) {
