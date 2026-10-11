@@ -1272,6 +1272,7 @@
     <div class="bd-actions no-print">
       <button class="add-secondary-btn" onclick="libPrint()">Print colours</button>
       <button class="add-secondary-btn" onclick="libExcel()">Excel</button>
+      <button class="add-secondary-btn" onclick="libEditOpen()">Edit</button>
       <button class="add-secondary-btn" id="libSelBtn" onclick="libOnlySel=!libOnlySel;renderLibrary()">Selected (0)</button>
       <button class="add-secondary-btn" onclick="libSelectAll(true)">Select all</button>
       <button class="add-secondary-btn" onclick="libSelectAll(false)">Clear</button>
@@ -1281,6 +1282,19 @@
     <div class="lib-bar no-print" id="libBar" style="display:none">
       <div class="lib-count" id="libCount"></div>
       <button class="lib-pill" onclick="libAddToBatch()">Add to batch</button>
+    </div>
+  </div>
+
+  <div class="view" id="view-libEdit">
+    <div class="screen-header no-print">
+      <button class="back-btn" onclick="showView('library')">&#10005;</button>
+      <h1>Edit colours</h1>
+    </div>
+    <div class="page-sub no-print" id="libEditSub"></div>
+    <div class="builder no-print">
+      <div id="libEditRows"></div>
+      <div class="form-msg" id="libEditMsg"></div>
+      <button class="save-btn" onclick="libEditSave()">Save changes</button>
     </div>
   </div>
 
@@ -5296,6 +5310,48 @@ function libPrint() {
 }
 function libExcel() { downloadColoursExcel(libTargets(), libSel.size ? 'Library_Selected' : 'Library_Colours'); }
 function libSelectAll(on) { libRows.forEach(r => { if (on) libSel.add(r.hex); else libSel.delete(r.hex); }); if (!on) libSel = new Set(); renderLibrary(); }
+let libEditList = [];
+function libEditOpen() {
+  const sel = libSel.size ? libTargets() : [];
+  if (!sel.length) { alert('Select the colours you want to edit first (tap them), or use Selected to review them.'); return; }
+  libEditList = sel.map(c => ({ old: c.hex.toUpperCase(), hex: c.hex.toUpperCase(), name: c.name || '' }));
+  document.getElementById('libEditSub').textContent = `Change the name or hex code of ${sel.length} colour${sel.length !== 1 ? 's' : ''}. Changes apply everywhere the colour is saved (primary, secondary, Generally Used).`;
+  document.getElementById('libEditMsg').textContent = '';
+  document.getElementById('libEditRows').innerHTML = libEditList.map((c, i) => `
+    <div class="bd-item" style="grid-template-columns:44px 1fr">
+      <input type="color" id="leC${i}" value="${c.hex.toLowerCase()}" style="width:44px;height:44px;border:none;padding:0;background:none" oninput="libEditSync(${i},'color')">
+      <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:6px">
+        <input class="bd-in" style="margin:0" id="leH${i}" value="${c.hex}" oninput="libEditSync(${i},'hex')">
+        <input class="bd-in" style="margin:0" id="leN${i}" value="${escapeHtml(c.name)}" placeholder="Name">
+      </div></div>`).join('');
+  showView('libEdit');
+}
+function libEditSync(i, from) {
+  const c = document.getElementById('leC' + i), h = document.getElementById('leH' + i);
+  if (from === 'color') h.value = c.value.toUpperCase();
+  else { let v = h.value.trim(); if (v && v[0] !== '#') v = '#' + v; if (isValidHex(v)) c.value = v.toLowerCase(); }
+}
+function libEditSave() {
+  const msg = document.getElementById('libEditMsg'); msg.style.color = 'var(--danger)';
+  const edits = [];
+  for (let i = 0; i < libEditList.length; i++) {
+    let h = document.getElementById('leH' + i).value.trim().toUpperCase(); if (h && h[0] !== '#') h = '#' + h;
+    if (!isValidHex(h)) { msg.textContent = `Row ${i + 1}: enter a valid 6-digit hex code.`; return; }
+    edits.push({ old: libEditList[i].old, hex: h, name: document.getElementById('leN' + i).value.trim() });
+  }
+  const gu = getOrInitGuPalette(); let touched = 0;
+  edits.forEach(e => {
+    const same = x => (x || '').toUpperCase() === e.old;
+    catalog.forEach(p => { if (same(p.primaryHex)) { p.primaryHex = e.hex; if (e.name) p.primaryName = e.name; touched++; } });
+    secondaryColors.forEach(sc => { if (same(sc.hex)) { sc.hex = e.hex; if (e.name) sc.name = e.name; touched++; } });
+    [...gu.pastels, ...gu.darks].forEach(c => { if (same(c.hex)) { c.hex = e.hex; if (e.name) c.name = e.name; touched++; } });
+    if (libSel.delete(e.old)) libSel.add(e.hex);
+  });
+  saveAppStateToStorage(); saveGuPaletteToStorage();
+  refreshAllListsAfterReorder();
+  if (typeof renderGenerallyUsed === 'function') renderGenerallyUsed();
+  showView('library'); renderLibrary();
+}
 function libToggle(h) { if (libSel.has(h)) libSel.delete(h); else libSel.add(h); renderLibrary(); }
 function libUpdateBar() {
   if (libOnlySel && !libSel.size) { libOnlySel = false; return renderLibrary(); }
