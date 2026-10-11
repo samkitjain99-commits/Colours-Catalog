@@ -1059,6 +1059,7 @@
     <div class="pc-toolbar no-print">
       <div class="pc-count" id="pcCount"></div>
       <button class="pc-print-btn" id="pcSavePdfBtn" onclick="doSavePdf('pc', 'Color Combinations')">&#11015; Save PDF</button>
+      <button class="pc-print-btn" id="pcSharePdfBtn" style="background:#1FA855;" onclick="sharePdf('pc', 'Color Combinations')">&#128172; Share on WhatsApp</button>
     </div>
 
     <div id="pcPages"></div>
@@ -1096,6 +1097,7 @@
       <div class="pc-count" id="swCount"></div>
       <button class="pc-print-btn" id="swSavePdfBtn" onclick="doSavePdf('sw', 'Color Swatches')">&#11015; Save PDF</button>
       <button class="pc-print-btn" style="background:var(--brown-500, #8b5e3c);" onclick="downloadPreviewExcel()">&#128196; Excel</button>
+      <button class="pc-print-btn" id="swSharePdfBtn" style="background:#1FA855;flex-basis:100%;" onclick="sharePdf('sw', 'Color Swatches')">&#128172; Share on WhatsApp</button>
     </div>
     <div class="gu-filter-row no-print" style="margin:0 0 12px;">
       <button class="gu-filter-btn" onclick="sortPreviewByLightness('light-dark')">&#9728; Light &rarr; Dark</button>
@@ -3305,6 +3307,26 @@ async function buildPdfFromPages(pagesContainerId) {
     pdf.addImage(imgData, 'JPEG', x, 0, w, h);
   }
   return pdf;
+}
+
+async function sharePdf(which, filenameBase) {
+  const btn = document.getElementById(which === 'pc' ? 'pcSharePdfBtn' : 'swSharePdfBtn');
+  const old = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Preparing PDF…'; }
+  try {
+    const pdf = await buildPdfFromPages(which === 'pc' ? 'pcPages' : 'swPages');
+    if (!pdf) { alert('Nothing to share yet.'); return; }
+    const fname = safePdfFilename(filenameBase);
+    const file = new File([pdf.output('blob')], fname, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: filenameBase });   // phone share sheet → choose WhatsApp
+    } else {
+      pdf.save(fname);
+      alert('Sharing files is not supported in this browser, so the PDF was downloaded. Open WhatsApp and attach it from your downloads.');
+    }
+  } catch (e) {
+    if (!e || e.name !== 'AbortError') { console.error(e); alert('Could not prepare the PDF. Please try again.'); }
+  } finally { if (btn) { btn.disabled = false; btn.innerHTML = old; } }
 }
 
 async function doSavePdf(which, filenameBase) {
