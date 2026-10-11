@@ -482,6 +482,7 @@
   .lib-sw { height:64px; border-radius:8px; border:1px solid rgba(0,0,0,.15); }
   .lib-nm { font-size:11.5px; font-weight:700; color:var(--brown-900); margin-top:5px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .lib-hx { font-size:10.5px; color:var(--muted); }
+  .lib-open { position:absolute; top:10px; left:10px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(255,255,255,.85); color:var(--brown-700); font-size:16px; line-height:1; font-weight:700; cursor:pointer; padding:0; }
   .lib-tick { position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%; background:var(--brown-700); color:#fff; font-size:12px; display:none; align-items:center; justify-content:center; }
   .lib-card.on .lib-tick { display:flex; }
   .lib-bar { position:fixed; left:0; right:0; bottom:18px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:50; pointer-events:none; }
@@ -1021,6 +1022,7 @@
         <div class="empty-state">No colors in this group yet.</div>
       </div>
     </div>
+    <div class="page-sub" style="margin-top:10px">Tap colours to select. To reorder, open Print colours — move or sort there and the group order updates.</div>
   </div>
 
   <!-- ============ ADD TO GROUP VIEW ============ -->
@@ -3039,54 +3041,19 @@ function renderGroupDetail() {
     return resolved ? { key, ...resolved } : null;
   }).filter(Boolean);
 
-  board.innerHTML = members.map((m, i) => {
-    const srNo = String(i + 1).padStart(3, '0');
-    const isSelected = groupDetailSelectedSet.has(m.key);
-    const reorderHtml = `
-      <div class="reorder-col">
-        <button class="chev-btn" onclick="moveGroupMember('${m.key}',-1)" ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
-        <button class="chev-btn" onclick="moveGroupMember('${m.key}',1)" ${i === members.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
-      </div>`;
-    if (m.type === 'primary') {
-      const entry = m.item;
-      const secs = resolveSecondaries(entry);
-      const shadeCount = secs.length;
-      return `
-        <div class="list-row">
-          <input type="checkbox" onchange="toggleGroupDetailSelect('${m.key}')" ${isSelected ? 'checked' : ''}>
-          <div class="row-open" onclick="openDetail('${entry.id}')">
-            <div class="srno">#${srNo}</div>
-            <div class="thumb" style="background:${entry.primaryHex}"></div>
-            <div class="details">
-              <div class="dname" style="color:${nameTextColor(entry.primaryHex)}">${entry.primaryName}</div>
-              <div class="dmeta">${entry.primaryHex}</div>
-              <div class="dmeta">${shadeCount} shade${shadeCount !== 1 ? 's' : ''} &middot; PRIMARY</div>
-              <div class="home-dots">${secs.map(s => `<div class="home-dot" style="background:${s.hex}" title="${s.hex}${s.name ? ' - ' + s.name : ''}"></div>`).join('')}</div>
-            </div>
-          </div>
-          ${reorderHtml}
-          <button class="trash-btn" onclick="removeFromGroup('${m.key}')" title="Remove from group">&#10005;</button>
-        </div>
-      `;
-    }
-    const s = m.item;
+  board.innerHTML = `<div class="lib-grid" style="padding:10px 10px 18px">` + members.map((m, i) => {
+    const isP = m.type === 'primary';
+    const hex = isP ? m.item.primaryHex : m.item.hex;
+    const name = isP ? m.item.primaryName : m.item.name;
+    const open = isP ? `openDetail('${m.item.id}')` : `openSecondaryDetail('${m.item.id}')`;
+    const sub = isP ? `PRIMARY · ${resolveSecondaries(m.item).length} shades` : 'SECONDARY';
     return `
-      <div class="list-row">
-        <input type="checkbox" onchange="toggleGroupDetailSelect('${m.key}')" ${isSelected ? 'checked' : ''}>
-        <div class="row-open" onclick="openSecondaryDetail('${s.id}')">
-          <div class="srno">#${srNo}</div>
-          <div class="thumb" style="background:${s.hex}; border-radius:50%; width:46px; height:46px;"></div>
-          <div class="details">
-            <div class="dname" style="color:${nameTextColor(s.hex)}">${s.name}</div>
-            <div class="dmeta">${s.hex}</div>
-            <div class="dmeta">SECONDARY</div>
-          </div>
-        </div>
-        ${reorderHtml}
-        <button class="trash-btn" onclick="removeFromGroup('${m.key}')" title="Remove from group">&#10005;</button>
-      </div>
-    `;
-  }).join('');
+      <div class="lib-card ${groupDetailSelectedSet.has(m.key) ? 'on' : ''}" onclick="this.classList.toggle('on'); toggleGroupDetailSelect('${m.key}')">
+        <div class="lib-sw" style="background:${hex}"></div><span class="lib-tick">&#10003;</span>
+        <button class="lib-open" onclick="event.stopPropagation(); ${open}" title="Open">&#8250;</button>
+        <div class="lib-nm">${i + 1}. ${escapeHtml(name || hex)}</div><div class="lib-hx">${hex}</div><div class="lib-hx" style="font-size:9.5px;letter-spacing:.3px">${sub}</div>
+      </div>`;
+  }).join('') + `</div>`;
   updateGroupDetailToolbar();
 }
 
