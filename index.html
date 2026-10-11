@@ -3309,24 +3309,45 @@ async function buildPdfFromPages(pagesContainerId) {
   return pdf;
 }
 
+let sharePdfCache = null; // { key, file } — lets a second tap share instantly (phones only allow sharing right after a tap)
 async function sharePdf(which, filenameBase) {
   const btn = document.getElementById(which === 'pc' ? 'pcSharePdfBtn' : 'swSharePdfBtn');
-  const old = btn ? btn.innerHTML : '';
-  if (btn) { btn.disabled = true; btn.innerHTML = 'Preparing PDF…'; }
+  const label = '&#128172; Share on WhatsApp';
+  const container = document.getElementById(which === 'pc' ? 'pcPages' : 'swPages');
+  if (!container) return;
+  const key = which + '|' + container.innerHTML;
+  const canShareFiles = f => !!(navigator.canShare && navigator.share && navigator.canShare({ files: [f] }));
+  const doShare = async file => { await navigator.share({ files: [file], title: filenameBase }); };
   try {
+    // Second tap: the PDF is already built, so share inside the tap.
+    if (sharePdfCache && sharePdfCache.key === key) {
+      if (btn) btn.innerHTML = label;
+      await doShare(sharePdfCache.file);
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Preparing PDF…'; }
     const pdf = await buildPdfFromPages(which === 'pc' ? 'pcPages' : 'swPages');
     if (!pdf) { alert('Nothing to share yet.'); return; }
     const fname = safePdfFilename(filenameBase);
     const file = new File([pdf.output('blob')], fname, { type: 'application/pdf' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: filenameBase });   // phone share sheet → choose WhatsApp
-    } else {
+    if (!canShareFiles(file)) {
       pdf.save(fname);
       alert('Sharing files is not supported in this browser, so the PDF was downloaded. Open WhatsApp and attach it from your downloads.');
+      return;
+    }
+    sharePdfCache = { key, file };
+    try { await doShare(file); }
+    catch (e) {
+      if (e && e.name === 'AbortError') return;
+      // Phones block sharing once PDF generation has taken a few seconds — ask for one more tap.
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#9989; PDF ready — tap to share'; }
+      return;
     }
   } catch (e) {
-    if (!e || e.name !== 'AbortError') { console.error(e); alert('Could not prepare the PDF. Please try again.'); }
-  } finally { if (btn) { btn.disabled = false; btn.innerHTML = old; } }
+    if (e && e.name === 'AbortError') return;
+    console.error(e);
+    alert('Could not share the PDF (' + ((e && (e.name || e.message)) || 'error') + '). Use Save PDF instead.');
+  } finally { if (btn && !(btn.innerHTML.indexOf('tap to share') > -1)) { btn.disabled = false; btn.innerHTML = label; } else if (btn) btn.disabled = false; }
 }
 
 async function doSavePdf(which, filenameBase) {
