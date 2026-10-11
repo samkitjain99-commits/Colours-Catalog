@@ -1213,7 +1213,23 @@
     </div>
     <div class="page-sub no-print">Upload a photo, pick out colours you like, then decide whether each becomes a Primary or Secondary colour.</div>
 
-    <button class="add-colour-btn" onclick="openImagePickerBulk('colourPickerStaged')">&#128247; Upload Image &amp; Pick Colours</button>
+    <button class="add-colour-btn" onclick="cpToggleAddForm()" id="cpAddColourToggleBtn">+ Add Colour (type hex code)</button>
+    <div class="frozen-bar" id="cpAddForm" style="display:none; padding-top:12px; margin-bottom:12px;">
+      <div class="section-label" style="margin-bottom:6px;">New Colour</div>
+      <div style="display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap;">
+        <div class="swatch-input" style="width:36px;height:36px; flex-shrink:0;">
+          <input type="color" id="cpNewColorPicker" value="#CCCCCC" oninput="document.getElementById('cpNewHex').value=this.value.toUpperCase()">
+        </div>
+        <input type="text" class="text-input" id="cpNewHex" placeholder="#RRGGBB" maxlength="7" style="width:100px;" oninput="cpSyncPickerFromHex()">
+        <input type="text" class="text-input" id="cpNewName" placeholder="Name (optional)" style="flex:1; min-width:120px;">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="cp-cancel-btn" onclick="cpToggleAddForm()">Done</button>
+        <button class="cp-saveall-btn" onclick="cpAddManualColour()">Add Colour</button>
+      </div>
+      <div class="form-msg" id="cpAddFormMsg"></div>
+    </div>
+    <button class="add-colour-btn" style="margin-top:10px;" onclick="openImagePickerBulk('colourPickerStaged')">&#128247; Upload Image &amp; Pick Colours</button>
     <button class="add-colour-btn" style="margin-top:10px;" onclick="document.getElementById('colourSheetInput').value=''; document.getElementById('colourSheetInput').click();">&#128196; Upload Excel / CSV of Hex Codes</button>
     <input type="file" id="colourSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0], 'colourPickerStaged')">
     <button class="text-btn" style="margin-top:8px; font-weight:700;" onclick="downloadColourTemplate('colourPicker')">&#11015; Download Excel template</button>
@@ -4427,6 +4443,36 @@ function addSelectedGeneralToSecondary() {
   guEditingId = null;
   renderSecondaryColoursBoard();
   renderGenerallyUsed();
+}
+
+function cpToggleAddForm() {
+  const f = document.getElementById('cpAddForm');
+  const open = f.style.display === 'none';
+  f.style.display = open ? 'block' : 'none';
+  document.getElementById('cpAddFormMsg').textContent = '';
+  if (open) document.getElementById('cpNewHex').focus();
+}
+
+function cpSyncPickerFromHex() {
+  let v = document.getElementById('cpNewHex').value.trim();
+  if (v && v[0] !== '#') v = '#' + v;
+  if (isValidHex(v)) document.getElementById('cpNewColorPicker').value = v.toLowerCase();
+}
+
+function cpAddManualColour() {
+  const msg = document.getElementById('cpAddFormMsg');
+  let hex = document.getElementById('cpNewHex').value.trim();
+  if (hex && hex[0] !== '#') hex = '#' + hex;
+  hex = hex.toUpperCase();
+  const name = document.getElementById('cpNewName').value.trim();
+  if (!isValidHex(hex)) { msg.textContent = 'Enter a valid hex code, e.g. #A3C9D8.'; return; }
+  const bulkSel = document.getElementById('cpBulkRoleSelect');
+  colourPickerStaged.push({ hex, name, role: (bulkSel && bulkSel.value) || 'secondary' });
+  document.getElementById('cpNewHex').value = '';
+  document.getElementById('cpNewName').value = '';
+  msg.textContent = `Added ${hex}. Add another, or tap Done.`;
+  renderColourPickerStaged();
+  document.getElementById('cpNewHex').focus();
 }
 
 function selectedStaged() { return colourPickerStaged.filter(c => c.sel && isValidHex(c.hex)); }
