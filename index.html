@@ -3086,6 +3086,8 @@ function toggleGroupDetailSelect(key) {
   updateGroupDetailToolbar();
 }
 
+function clearGroupDetailSelection() { groupDetailSelectedSet = new Set(); renderGroupDetail(); }
+
 function toggleGroupDetailSelectAll(checked) {
   const g = groups.find(g => g.id === currentGroupDetailId);
   groupDetailSelectedSet = new Set(checked && g ? g.colorIds : []);
@@ -3131,6 +3133,7 @@ function updateGroupDetailToolbar() {
       <button class="text-btn preview-btn" onclick="openPreviewForGroup()">Prepare catalog (${n})</button>
       <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print colours (${n})</button>
       <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadGroupExcel()">Download Excel (${n})</button>
+      <button class="text-btn" style="font-weight:700; text-decoration:underline; color:var(--danger);" onclick="clearGroupDetailSelection()">Clear selection</button>
     `;
   } else {
     actionsEl.innerHTML = `
