@@ -444,6 +444,52 @@
 
   .summary-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin: 0 0 14px; }
   .summary-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  /* ---------- Dye batches ---------- */
+  .bd-in { display:block; width:100%; font-family:inherit; font-size:14px; border:1px solid var(--border); border-radius:9px; padding:9px 10px; background:#fff; color:var(--brown-900); margin:6px 0 10px; box-sizing:border-box; }
+  .builder label { display:block; font-size:12px; color:var(--muted); font-weight:600; }
+  .bd-two { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .bd-actions { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
+  .bd-actions .add-colour-btn { width:auto; flex:1 1 100%; }
+  .bd-actions .add-secondary-btn { flex:1; }
+  .bd-chips { display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; }
+  .bd-chip { flex-shrink:0; border:1px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:6px 12px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .bd-chip.on { background:var(--brown-700); color:#fff; }
+  .bd-card { background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:10px; cursor:pointer; }
+  .bd-card.overdue { border-color:var(--danger); }
+  .bd-row1 { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .bd-name { font-weight:700; color:var(--brown-900); font-size:14.5px; }
+  .bd-meta { font-size:12px; color:var(--muted); margin-top:4px; }
+  .bd-badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; background:var(--tan-200); color:var(--brown-700); white-space:nowrap; }
+  .bd-badge.at { background:#FCE8C8; color:#8A5A00; } .bd-badge.rec { background:#DDEFD9; color:#2F6B2A; } .bd-badge.redo { background:#F6D9D3; color:var(--danger); }
+  .bd-dots { display:flex; flex-wrap:wrap; gap:3px; margin-top:8px; }
+  .bd-dot { width:16px; height:16px; border-radius:4px; border:1px solid rgba(0,0,0,.15); }
+  .bd-item { display:grid; grid-template-columns:34px 1fr auto; gap:8px; align-items:center; padding:8px 0; border-top:1px solid var(--border); }
+  .bd-sw { width:34px; height:34px; border-radius:8px; border:1px solid rgba(0,0,0,.18); }
+  .bd-iname { font-size:13px; font-weight:700; color:var(--brown-900); }
+  .bd-ihex { font-size:11px; color:var(--muted); font-weight:500; }
+  .bd-fields { grid-column:2 / 4; display:grid; grid-template-columns:1.4fr .8fr .7fr; gap:6px; }
+  .bd-fields input, .bd-fields select { font-family:inherit; font-size:13px; border:1px solid var(--border); border-radius:8px; padding:7px 8px; min-width:0; width:100%; box-sizing:border-box; background:#fff; }
+  .bd-x { background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer; }
+  .bd-total { font-size:13px; font-weight:700; color:var(--brown-700); margin-top:10px; }
+  .bd-pool-row { display:flex; align-items:center; gap:10px; padding:7px 0; border-top:1px solid var(--border); font-size:13px; }
+  .bd-glance { margin-top:10px; padding:10px 12px; border-radius:10px; background:var(--tan-200); font-size:13px; font-weight:700; color:var(--brown-700); cursor:pointer; }
+  .bd-glance.warn { background:#F6D9D3; color:var(--danger); }
+
+  .lib-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding-bottom:130px; }
+  .lib-card { background:#fff; border:2px solid var(--border); border-radius:12px; padding:6px; cursor:pointer; position:relative; text-align:left; font-family:inherit; }
+  .lib-card.on { border-color:var(--brown-700); box-shadow:0 0 0 2px var(--brown-700) inset; }
+  .lib-sw { height:64px; border-radius:8px; border:1px solid rgba(0,0,0,.15); }
+  .lib-nm { font-size:11.5px; font-weight:700; color:var(--brown-900); margin-top:5px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .lib-hx { font-size:10.5px; color:var(--muted); }
+  .lib-tick { position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%; background:var(--brown-700); color:#fff; font-size:12px; display:none; align-items:center; justify-content:center; }
+  .lib-card.on .lib-tick { display:flex; }
+  .lib-bar { position:fixed; left:0; right:0; bottom:18px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:50; pointer-events:none; }
+  .lib-count { background:#fff; color:var(--brown-700); border:1px solid var(--border); font-size:12.5px; font-weight:700; padding:4px 12px; border-radius:99px; box-shadow:0 2px 8px rgba(0,0,0,.12); }
+  .lib-pill { pointer-events:auto; background:var(--brown-700); color:#fff; border:none; font-family:inherit; font-size:15px; font-weight:700; padding:14px 38px; border-radius:99px; box-shadow:0 4px 14px rgba(0,0,0,.28); cursor:pointer; }
+  .bd-modal { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100; display:flex; align-items:flex-end; justify-content:center; }
+  .bd-modal-card { background:var(--cream); width:100%; max-width:700px; border-radius:18px 18px 0 0; padding:16px; max-height:75vh; overflow:auto; box-sizing:border-box; }
+  .bd-pick { display:flex; justify-content:space-between; width:100%; text-align:left; background:#fff; border:1px solid var(--border); border-radius:10px; padding:11px 12px; margin-bottom:8px; font-family:inherit; font-size:13.5px; font-weight:700; color:var(--brown-900); cursor:pointer; }
+
   .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .summary-size { margin-top: 10px; font-size: 11.5px; font-weight: 600; color: var(--muted); text-align: center; }
   .summary-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; background: var(--tan-200); border-radius: 10px; padding: 9px 2px; cursor: pointer; font-family: inherit; }
@@ -747,6 +793,8 @@
 <div class="topbar"></div>
 <div class="tabbar no-print" id="tabbar">
   <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">Home</button>
+  <button class="tab-btn" data-tab="library" onclick="switchTab('library')">Colour Library</button>
+  <button class="tab-btn" data-tab="batches" onclick="switchTab('batches')">Dye Batches</button>
   <button class="tab-btn" data-tab="colourpicker" onclick="switchTab('colourpicker')">Colour Picker</button>
   <button class="tab-btn" data-tab="generallyused" onclick="switchTab('generallyused')">Generally Used</button>
   <button class="tab-btn" data-tab="primary" onclick="switchTab('primary')">Primary Colours</button>
@@ -774,6 +822,7 @@
         <button class="summary-tile" onclick="switchTab('generallyused'); setGuFilter('dark')"><span class="summary-num" id="sumDark">0</span><span class="summary-lbl">Dark</span></button>
       </div>
       <div class="summary-size" id="sumSize">Data size: &mdash;</div>
+      <div class="bd-glance" id="bdGlance" style="display:none" onclick="switchTab('batches')"></div>
     </div>
 
     <div class="filter-row no-print">
@@ -1204,6 +1253,109 @@
     </div>
   </div>
 
+  <!-- ============ COLOUR LIBRARY ============ -->
+  <div class="view" id="view-library">
+    <div class="screen-header no-print">
+      <span class="header-icon">&#127912;</span>
+      <h1>Colour Library</h1>
+    </div>
+    <div class="page-sub no-print">Every colour in one place. Tap colours to select, then add them to a dye batch.</div>
+    <div class="bd-two no-print">
+      <input class="bd-in" id="libSearch" placeholder="Search name or hex" oninput="renderLibrary()">
+      <select class="bd-in" id="libSrc" onchange="renderLibrary()"></select>
+    </div>
+    <div class="lib-grid" id="libGrid"></div>
+    <div class="lib-bar no-print" id="libBar" style="display:none">
+      <div class="lib-count" id="libCount"></div>
+      <button class="lib-pill" onclick="libAddToBatch()">Add to batch</button>
+    </div>
+  </div>
+
+  <div class="bd-modal no-print" id="libModal" style="display:none" onclick="if(event.target===this)libCloseModal()">
+    <div class="bd-modal-card">
+      <div class="section-label">Add to which batch?</div>
+      <div id="libBatchList"></div>
+      <button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="libCloseModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ============ DYE BATCHES ============ -->
+  <div class="view" id="view-batches">
+    <div class="screen-header no-print">
+      <span class="header-icon">&#129525;</span>
+      <h1>Dye Batches</h1>
+    </div>
+    <div class="page-sub no-print">Each batch is one dispatch to the dyer — colours, lace design, quantity and status.</div>
+    <div class="filter-row no-print"><button class="add-colour-btn" onclick="bdNew()">+ New Batch</button></div>
+    <div class="bd-chips no-print" id="bdChips"></div>
+    <div id="bdList"></div>
+  </div>
+
+  <div class="view" id="view-batchDetail">
+    <div class="screen-header no-print">
+      <button class="back-btn" onclick="switchTab('batches')">&#10005;</button>
+      <h1 id="bdTitle">Batch</h1>
+    </div>
+    <div class="builder no-print">
+      <div class="section-label">Batch details</div>
+      <input class="bd-in" id="bdName" placeholder="Batch name (e.g. Diwali order 1)" oninput="bdField('name',this.value)">
+      <input class="bd-in" id="bdDyer" placeholder="Dyer / vendor" oninput="bdField('dyer',this.value)">
+      <div class="bd-two">
+        <label>Date sent<input class="bd-in" type="date" id="bdSent" onchange="bdField('sentDate',this.value)"></label>
+        <label>Expected back<input class="bd-in" type="date" id="bdExp" onchange="bdField('expectedDate',this.value)"></label>
+      </div>
+      <label>Status
+        <select class="bd-in" id="bdStatus" onchange="bdField('status',this.value)">
+          <option>To send</option><option>At dyer</option><option>Received</option><option>Redo</option>
+        </select>
+      </label>
+      <textarea class="bd-in" id="bdNotes" rows="2" placeholder="Notes for the dyer (optional)" oninput="bdField('notes',this.value)"></textarea>
+    </div>
+    <div class="builder no-print">
+      <div class="section-label">Colours in this batch <span id="bdCount"></span></div>
+      <div class="bd-actions">
+        <button class="add-colour-btn" onclick="bdOpenAdd()">+ Add colours</button>
+        <button class="add-secondary-btn" onclick="bdFillAll('design')">Design for all</button>
+        <button class="add-secondary-btn" onclick="bdFillAll('qty')">Qty for all</button>
+      </div>
+      <div id="bdItems"></div>
+      <div class="bd-total" id="bdTotal"></div>
+    </div>
+    <div class="builder no-print">
+      <button class="save-btn" id="bdPdfBtn" onclick="bdDyerPdf(false)">Download dyer sheet (PDF)</button>
+      <button class="add-secondary-btn" id="bdShareBtn" onclick="bdDyerPdf(true)" style="margin-top:10px;width:100%;">Share dyer sheet (WhatsApp etc.)</button>
+      <button class="add-secondary-btn" onclick="bdDuplicate()" style="margin-top:10px;width:100%;">Duplicate batch</button>
+      <button class="add-secondary-btn" onclick="bdDelete()" style="margin-top:10px;width:100%;color:var(--danger);">Delete batch</button>
+    </div>
+  </div>
+
+  <div class="view" id="view-batchAdd">
+    <div class="screen-header no-print">
+      <button class="back-btn" onclick="showView('batchDetail')">&#10005;</button>
+      <h1>Add colours</h1>
+    </div>
+    <div class="builder no-print">
+      <div class="section-label">Type a hex code</div>
+      <div class="bd-two">
+        <input class="bd-in" id="bdaHex" placeholder="#C2185B">
+        <input class="bd-in" id="bdaName" placeholder="Name (optional)">
+      </div>
+      <button class="add-secondary-btn" style="width:100%" onclick="bdAddManual()">Add this colour</button>
+      <div class="form-msg" id="bdaMsg"></div>
+    </div>
+    <div class="builder no-print">
+      <div class="section-label">Pick from your colours</div>
+      <input class="bd-in" id="bdaSearch" placeholder="Search name or hex" oninput="bdRenderPool()">
+      <select class="bd-in" id="bdaSrc" onchange="bdRenderPool()"></select>
+      <div class="bd-actions">
+        <button class="add-secondary-btn" onclick="bdPoolAll(true)">Select all shown</button>
+        <button class="add-secondary-btn" onclick="bdPoolAll(false)">Clear</button>
+      </div>
+      <div id="bdaPool"></div>
+      <button class="save-btn" id="bdaConfirm" onclick="bdConfirmAdd()" disabled>Add to batch</button>
+    </div>
+  </div>
+
   <!-- ============ BACKUP & RESTORE VIEW ============ -->
   <!-- ============ COLOUR PICKER (FROM PHOTOS) VIEW ============ -->
   <div class="view" id="view-colourpicker">
@@ -1343,7 +1495,7 @@
     <div class="builder">
       <div class="section-label">Export</div>
       <p style="font-size:13px; color:var(--brown-900); margin-bottom:14px; line-height:1.5;">
-        Download everything in your catalog — colors and groups — as a single backup file.
+        Download everything in your catalog — colors, groups and dye batches — as a single backup file.
       </p>
       <button class="save-btn" onclick="exportBackup()">Download Backup (.json)</button>
     </div>
@@ -1909,6 +2061,7 @@ function resolveSecondaries(entry) {
 function secondaryById(id) { return secondaryColors.find(s => s.id === id); }
 
 let groups = []; // [{id, name, colorIds:[]}]
+let batches = []; // dye batches
 
 const APP_STATE_STORAGE_KEY = 'colourCatalog_appState_v1';
 
@@ -1923,7 +2076,7 @@ function updateSummaryCard() {
     set('sumSecondary', secondaryColors.length);
     set('sumGroups', groups.length);
     // size of everything saved in this browser (colours, groups, Generally Used lists)
-    const bytes = new Blob([JSON.stringify({ catalog, secondaryColors, groups }), JSON.stringify(gu)]).size;
+    const bytes = new Blob([JSON.stringify({ catalog, secondaryColors, groups }), JSON.stringify(gu), JSON.stringify(batches)]).size;
     const mb = bytes / (1024 * 1024);
     const sizeEl = document.getElementById('sumSize');
     if (sizeEl) sizeEl.textContent = `Data size: ${mb < 0.01 ? '<0.01' : mb.toFixed(2)} MB (${(bytes / 1024).toFixed(1)} KB) of ~5 MB browser storage`;
@@ -2087,7 +2240,9 @@ const VIEW_TO_TAB = {
   secondaryDetail: 'secondary', editSecondaryColor: 'secondary',
   colourpicker: 'colourpicker',
   generallyused: 'generallyused',
-  backup: 'backup'
+  backup: 'backup',
+  library: 'library',
+  batches: 'batches', batchDetail: 'batches', batchAdd: 'batches'
 };
 
 function showView(name) {
@@ -2116,6 +2271,12 @@ function switchTab(tab) {
   } else if (tab === 'generallyused') {
     showView('generallyused');
     renderGenerallyUsed();
+  } else if (tab === 'library') {
+    showView('library');
+    renderLibrary();
+  } else if (tab === 'batches') {
+    showView('batches');
+    renderBatches();
   } else if (tab === 'backup') {
     showView('backup');
   }
@@ -4806,7 +4967,7 @@ function saveNewSecondaryColours() {
 let pendingRestoreData = null;
 
 function exportBackup() {
-  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors };
+  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4859,20 +5020,283 @@ function performRestore() {
     if (!entry.secondaryIds) entry.secondaryIds = [];
   });
 
+  if (Array.isArray(pendingRestoreData.batches)) { batches = pendingRestoreData.batches; saveBatches(); }
   selectedSet = new Set();
   groupFilter = '';
   renderCatalog();
 
   const msg = document.getElementById('restoreMsg');
   msg.style.color = 'var(--brown-700)';
-  msg.textContent = `Restored ${catalog.length} color${catalog.length !== 1 ? 's' : ''}, ${secondaryColors.length} secondary color${secondaryColors.length !== 1 ? 's' : ''}, and ${groups.length} group${groups.length !== 1 ? 's' : ''}.`;
+  msg.textContent = `Restored ${catalog.length} color${catalog.length !== 1 ? 's' : ''}, ${secondaryColors.length} secondary color${secondaryColors.length !== 1 ? 's' : ''}, and ${groups.length} group${groups.length !== 1 ? 's' : ''}` + (Array.isArray(pendingRestoreData.batches) ? `, ${batches.length} dye batch${batches.length !== 1 ? 'es' : ''}.` : '.');
   pendingRestoreData = null;
   document.getElementById('restoreBtn').disabled = true;
   document.getElementById('restoreFileInput').value = '';
 }
 
+/* ---------------- Dye Batches ---------------- */
+
+const BATCH_KEY = 'colourCatalog_batches_v1';
+const BD_STATUSES = ['To send', 'At dyer', 'Received', 'Redo'];
+try { const r = localStorage.getItem(BATCH_KEY); if (r) { const p = JSON.parse(r); if (Array.isArray(p)) batches = p; } } catch (e) {}
+let bdCurrentId = null, bdFilter = 'Active', bdPoolSel = new Set(), bdPoolRows = [];
+
+function saveBatches() {
+  try { localStorage.setItem(BATCH_KEY, JSON.stringify(batches)); } catch (e) {}
+  updateBatchGlance();
+}
+function bdById(id) { return batches.find(b => b.id === id); }
+function bdToday() { return new Date().toISOString().slice(0, 10); }
+function bdIsOverdue(b) { return b.status === 'At dyer' && b.expectedDate && b.expectedDate < bdToday(); }
+function bdFmtDate(d) { if (!d) return '—'; const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+function bdBadgeClass(s) { return s === 'At dyer' ? 'at' : s === 'Received' ? 'rec' : s === 'Redo' ? 'redo' : ''; }
+function bdQtyTotals(b) {
+  const t = {};
+  (b.items || []).forEach(i => { const q = parseFloat(i.qty); if (q > 0) t[i.unit || 'm'] = (t[i.unit || 'm'] || 0) + q; });
+  return Object.entries(t).map(([u, q]) => `${+q.toFixed(2)} ${u}`).join(' + ');
+}
+
+function updateBatchGlance() {
+  const el = document.getElementById('bdGlance');
+  if (!el) return;
+  const at = batches.filter(b => b.status === 'At dyer');
+  const over = at.filter(bdIsOverdue);
+  if (!batches.length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.className = 'bd-glance' + (over.length ? ' warn' : '');
+  el.textContent = `At dyer: ${at.length} batch${at.length !== 1 ? 'es' : ''}` + (over.length ? ` · ${over.length} overdue` : '') + '  ›';
+}
+
+function renderBatches() {
+  const filters = ['Active', ...BD_STATUSES, 'All'];
+  document.getElementById('bdChips').innerHTML = filters.map(f =>
+    `<button class="bd-chip ${bdFilter === f ? 'on' : ''}" onclick="bdFilter='${f}';renderBatches()">${f}</button>`).join('');
+  let list = batches.filter(b => bdFilter === 'All' ? true : bdFilter === 'Active' ? (b.status === 'To send' || b.status === 'At dyer' || b.status === 'Redo') : b.status === bdFilter);
+  list = list.slice().sort((a, b) => (bdIsOverdue(b) - bdIsOverdue(a)) || ((a.expectedDate || '9') < (b.expectedDate || '9') ? -1 : 1));
+  const box = document.getElementById('bdList');
+  if (!list.length) { box.innerHTML = `<div class="empty-state">No batches here.<br>Tap "+ New Batch" to create one.</div>`; return; }
+  box.innerHTML = list.map(b => {
+    const od = bdIsOverdue(b);
+    const dots = (b.items || []).slice(0, 40).map(i => `<span class="bd-dot" style="background:${i.hex}"></span>`).join('');
+    return `<div class="bd-card ${od ? 'overdue' : ''}" onclick="bdOpen('${b.id}')">
+      <div class="bd-row1"><span class="bd-name">${escapeHtml(b.name || 'Untitled batch')}</span><span class="bd-badge ${bdBadgeClass(b.status)}">${od ? 'Overdue · ' : ''}${b.status}</span></div>
+      <div class="bd-meta">${escapeHtml(b.dyer || 'No dyer set')} · Sent ${bdFmtDate(b.sentDate)} · Due ${bdFmtDate(b.expectedDate)}</div>
+      <div class="bd-meta">${(b.items || []).length} colour${(b.items || []).length !== 1 ? 's' : ''}${bdQtyTotals(b) ? ' · ' + bdQtyTotals(b) : ''}</div>
+      <div class="bd-dots">${dots}</div></div>`;
+  }).join('');
+}
+
+function bdNew() {
+  const b = { id: uid(), name: '', dyer: '', sentDate: bdToday(), expectedDate: '', status: 'To send', notes: '', items: [] };
+  batches.unshift(b); saveBatches(); bdOpen(b.id);
+}
+function bdOpen(id) {
+  bdCurrentId = id; const b = bdById(id); if (!b) return;
+  document.getElementById('bdName').value = b.name || '';
+  document.getElementById('bdDyer').value = b.dyer || '';
+  document.getElementById('bdSent').value = b.sentDate || '';
+  document.getElementById('bdExp').value = b.expectedDate || '';
+  document.getElementById('bdStatus').value = b.status;
+  document.getElementById('bdNotes').value = b.notes || '';
+  document.getElementById('bdShareBtn').style.display = (navigator.canShare && navigator.share) ? '' : 'none';
+  bdRenderItems();
+  showView('batchDetail');
+}
+function bdField(k, v) {
+  const b = bdById(bdCurrentId); if (!b) return;
+  b[k] = v;
+  if (k === 'status' && v === 'At dyer' && !b.sentDate) { b.sentDate = bdToday(); document.getElementById('bdSent').value = b.sentDate; }
+  document.getElementById('bdTitle').textContent = b.name || 'Batch';
+  saveBatches();
+}
+function bdRenderItems() {
+  const b = bdById(bdCurrentId); if (!b) return;
+  document.getElementById('bdTitle').textContent = b.name || 'Batch';
+  document.getElementById('bdCount').textContent = `(${b.items.length})`;
+  const units = ['m', 'yd', 'pcs', 'rolls'];
+  document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
+    <div class="bd-item">
+      <div class="bd-sw" style="background:${i.hex}"></div>
+      <div><div class="bd-iname">${n + 1}. ${escapeHtml(i.name || i.hex)}</div><div class="bd-ihex">${i.hex}</div></div>
+      <button class="bd-x" onclick="bdRemoveItem('${i.id}')">&#10005;</button>
+      <div class="bd-fields">
+        <input placeholder="Lace design" value="${escapeHtml(i.design || '')}" oninput="bdItemField('${i.id}','design',this.value)">
+        <input placeholder="Qty" inputmode="decimal" value="${escapeHtml(String(i.qty || ''))}" oninput="bdItemField('${i.id}','qty',this.value)">
+        <select onchange="bdItemField('${i.id}','unit',this.value)">${units.map(u => `<option ${((i.unit || 'm') === u) ? 'selected' : ''}>${u}</option>`).join('')}</select>
+      </div></div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
+  const t = bdQtyTotals(b);
+  document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
+}
+function bdItemField(id, k, v) {
+  const b = bdById(bdCurrentId); const i = b && b.items.find(x => x.id === id); if (!i) return;
+  i[k] = v; saveBatches();
+  if (k !== 'design') { const t = bdQtyTotals(b); document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : ''; }
+}
+function bdRemoveItem(id) { const b = bdById(bdCurrentId); b.items = b.items.filter(i => i.id !== id); saveBatches(); bdRenderItems(); }
+function bdFillAll(k) {
+  const b = bdById(bdCurrentId); if (!b || !b.items.length) return;
+  const v = prompt(k === 'design' ? 'Lace design for ALL colours in this batch:' : 'Quantity for ALL colours in this batch:');
+  if (v === null) return;
+  b.items.forEach(i => { i[k] = v.trim(); }); saveBatches(); bdRenderItems();
+}
+function bdDuplicate() {
+  const b = bdById(bdCurrentId); if (!b) return;
+  const c = JSON.parse(JSON.stringify(b));
+  c.id = uid(); c.name = (b.name || 'Batch') + ' (copy)'; c.status = 'To send'; c.sentDate = bdToday(); c.expectedDate = '';
+  c.items.forEach(i => { i.id = uid(); });
+  batches.unshift(c); saveBatches(); bdOpen(c.id);
+}
+function bdDelete() {
+  if (!confirm('Delete this batch?')) return;
+  batches = batches.filter(b => b.id !== bdCurrentId); saveBatches(); switchTab('batches');
+}
+
+/* add colours */
+function bdOpenAdd() {
+  bdPoolSel = new Set();
+  const sel = document.getElementById('bdaSrc');
+  sel.innerHTML = `<option value="all">All colours</option><option value="primary">Primary</option><option value="secondary">Secondary</option><option value="pastel">Generally Used – Pastel</option><option value="dark">Generally Used – Dark</option>` +
+    groups.map(g => `<option value="g:${g.id}">Group: ${escapeHtml(g.name)}</option>`).join('');
+  document.getElementById('bdaSearch').value = '';
+  document.getElementById('bdaHex').value = ''; document.getElementById('bdaName').value = ''; document.getElementById('bdaMsg').textContent = '';
+  bdRenderPool(); showView('batchAdd');
+}
+function bdPoolSource(srcArg) {
+  const src = srcArg || document.getElementById('bdaSrc').value;
+  const gu = getOrInitGuPalette();
+  const P = catalog.map(e => ({ hex: e.primaryHex, name: e.primaryName }));
+  const S = secondaryColors.map(s => ({ hex: s.hex, name: s.name }));
+  const PA = gu.pastels.map(c => ({ hex: c.hex, name: c.name })), DA = gu.darks.map(c => ({ hex: c.hex, name: c.name }));
+  let rows;
+  if (src === 'primary') rows = P; else if (src === 'secondary') rows = S; else if (src === 'pastel') rows = PA; else if (src === 'dark') rows = DA;
+  else if (src.indexOf('g:') === 0) { const g = groups.find(x => x.id === src.slice(2)); rows = g ? g.colorIds.map(resolveGroupMember).filter(Boolean).map(m => ({ hex: m.type === 'primary' ? m.item.primaryHex : m.item.hex, name: m.type === 'primary' ? m.item.primaryName : m.item.name })) : []; }
+  else rows = [...P, ...S, ...PA, ...DA];
+  const seen = new Set();
+  return rows.filter(r => { const h = (r.hex || '').toUpperCase(); if (!h || seen.has(h)) return false; seen.add(h); r.hex = h; return true; });
+}
+function bdRenderPool() {
+  const q = document.getElementById('bdaSearch').value.trim().toLowerCase();
+  bdPoolRows = bdPoolSource().filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
+  document.getElementById('bdaPool').innerHTML = bdPoolRows.length ? bdPoolRows.map(r =>
+    `<label class="bd-pool-row"><input type="checkbox" ${bdPoolSel.has(r.hex) ? 'checked' : ''} onchange="bdPoolToggle('${r.hex}',this.checked)"><span class="bd-sw" style="background:${r.hex};width:26px;height:26px"></span><span><b>${escapeHtml(r.name || r.hex)}</b><br><span class="bd-ihex">${r.hex}</span></span></label>`).join('') : `<div class="empty-state">No colours match.</div>`;
+  bdPoolUpdateBtn();
+}
+function bdPoolToggle(h, on) { if (on) bdPoolSel.add(h); else bdPoolSel.delete(h); bdPoolUpdateBtn(); }
+function bdPoolAll(on) { bdPoolRows.forEach(r => { if (on) bdPoolSel.add(r.hex); else bdPoolSel.delete(r.hex); }); bdRenderPool(); }
+function bdPoolUpdateBtn() { const b = document.getElementById('bdaConfirm'); b.disabled = bdPoolSel.size === 0; b.textContent = bdPoolSel.size ? `Add ${bdPoolSel.size} to batch` : 'Add to batch'; }
+function bdAddItems(list) {
+  const b = bdById(bdCurrentId); let n = 0;
+  list.forEach(c => { if (b.items.some(i => i.hex === c.hex)) return; b.items.push({ id: uid(), hex: c.hex, name: c.name || c.hex, design: '', qty: '', unit: 'm' }); n++; });
+  saveBatches(); return n;
+}
+function bdConfirmAdd() {
+  const all = bdPoolSource().filter(r => bdPoolSel.has(r.hex));
+  bdAddItems(all); bdRenderItems(); showView('batchDetail');
+}
+function bdAddManual() {
+  let h = document.getElementById('bdaHex').value.trim().toUpperCase(); if (h && h[0] !== '#') h = '#' + h;
+  const msg = document.getElementById('bdaMsg');
+  if (!isValidHex(h)) { msg.style.color = 'var(--danger)'; msg.textContent = 'Enter a valid 6-digit hex code, e.g. #C2185B.'; return; }
+  const n = bdAddItems([{ hex: h, name: document.getElementById('bdaName').value.trim() }]);
+  msg.style.color = 'var(--brown-700)'; msg.textContent = n ? `Added ${h}.` : 'Already in this batch.';
+  document.getElementById('bdaHex').value = ''; document.getElementById('bdaName').value = '';
+  bdRenderItems();
+}
+
+/* dyer sheet PDF (rendered off-screen at A4 proportions so it is crisp and identical on every device) */
+function bdBuildSheetPages(b) {
+  const ROWS = 12, items = b.items, pagesN = Math.max(1, Math.ceil(items.length / ROWS));
+  const tot = bdQtyTotals(b);
+  let html = '';
+  for (let p = 0; p < pagesN; p++) {
+    const rows = items.slice(p * ROWS, p * ROWS + ROWS).map((i, k) => `
+      <div style="display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid #d8cdb8;height:68px;box-sizing:border-box">
+        <div style="width:30px;font-weight:700;color:#7a6a55;font-size:15px">${p * ROWS + k + 1}</div>
+        <div style="width:86px;height:50px;border-radius:6px;border:1px solid #999;background:${i.hex};flex-shrink:0"></div>
+        <div style="width:210px"><div style="font-weight:700;font-size:16px;color:#2b1d12">${escapeHtml(i.name || i.hex)}</div><div style="font-size:13px;color:#6b5a45;font-family:monospace">${i.hex}</div></div>
+        <div style="flex:1;font-size:15px;color:#2b1d12">${escapeHtml(i.design || '')}</div>
+        <div style="width:110px;text-align:right;font-weight:700;font-size:16px;color:#2b1d12">${i.qty ? escapeHtml(String(i.qty)) + ' ' + (i.unit || 'm') : ''}</div>
+      </div>`).join('');
+    html += `<div class="sw-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative">
+      ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dye Order${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
+      <div style="display:flex;gap:30px;margin:14px 0 6px;font-size:14px;color:#2b1d12;flex-wrap:wrap">
+        <div><span style="color:#7a6a55">Dyer:</span> <b>${escapeHtml(b.dyer || '—')}</b></div>
+        <div><span style="color:#7a6a55">Date sent:</span> <b>${bdFmtDate(b.sentDate)}</b></div>
+        <div><span style="color:#7a6a55">Needed by:</span> <b>${bdFmtDate(b.expectedDate)}</b></div>
+        <div><span style="color:#7a6a55">Colours:</span> <b>${items.length}</b>${tot ? ` &nbsp; <span style="color:#7a6a55">Total:</span> <b>${tot}</b>` : ''}</div></div>
+      ${b.notes ? `<div style="margin:8px 0;padding:10px 12px;background:#f4ecdc;border-radius:8px;font-size:14px;color:#2b1d12;white-space:pre-wrap">${escapeHtml(b.notes)}</div>` : ''}`
+      : `<div style="font-size:16px;font-weight:700;color:#7a6a55">Dye Order${b.name ? ' — ' + escapeHtml(b.name) : ''} (continued)</div>`}
+      <div style="display:flex;gap:14px;margin-top:16px;padding-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="width:30px">#</div><div style="width:86px">Shade</div><div style="width:210px">Colour</div><div style="flex:1">Lace design</div><div style="width:110px;text-align:right">Quantity</div></div>
+      ${rows}
+      <div style="position:absolute;left:44px;right:44px;bottom:30px;display:flex;justify-content:space-between;font-size:11px;color:#8a7a65"><span>Shade codes are screen hex values — please match against the physical swatch supplied.</span><span>Page ${p + 1} / ${pagesN}</span></div>
+    </div>`;
+  }
+  return html;
+}
+async function bdDyerPdf(share) {
+  const b = bdById(bdCurrentId); if (!b) return;
+  if (!b.items.length) { alert('Add at least one colour first.'); return; }
+  const btn = document.getElementById(share ? 'bdShareBtn' : 'bdPdfBtn'); const old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Generating…';
+  let stage = document.getElementById('bdPdfStage');
+  if (!stage) { stage = document.createElement('div'); stage.id = 'bdPdfStage'; stage.style.cssText = 'position:absolute;left:-10000px;top:0;width:794px;'; document.body.appendChild(stage); }
+  try {
+    stage.innerHTML = bdBuildSheetPages(b);
+    const pdf = await buildPdfFromPages('bdPdfStage');
+    const fname = safePdfFilename('Dye Order - ' + (b.name || 'batch'));
+    if (share && navigator.canShare) {
+      const file = new File([pdf.output('blob')], fname, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: b.name || 'Dye order' }); return; }
+    }
+    pdf.save(fname);
+  } catch (e) { if (e && e.name !== 'AbortError') { console.error(e); alert('Could not generate the PDF. Please try again.'); } }
+  finally { stage.innerHTML = ''; btn.disabled = false; btn.textContent = old; }
+}
+
+/* ---------------- Colour Library ---------------- */
+let libSel = new Set(), libRows = [];
+function renderLibrary() {
+  const sel = document.getElementById('libSrc');
+  if (!sel.options.length || sel.dataset.g !== String(groups.length)) {
+    const cur = sel.value;
+    sel.innerHTML = `<option value="all">All colours</option><option value="primary">Primary</option><option value="secondary">Secondary</option><option value="pastel">Pastel</option><option value="dark">Dark</option>` + groups.map(g => `<option value="g:${g.id}">Group: ${escapeHtml(g.name)}</option>`).join('');
+    sel.dataset.g = String(groups.length); if (cur) sel.value = cur;
+  }
+  const q = document.getElementById('libSearch').value.trim().toLowerCase();
+  libRows = bdPoolSource(sel.value).filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
+  document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map(r => `
+    <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
+      <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>
+      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
+  libUpdateBar();
+}
+function libToggle(h) { if (libSel.has(h)) libSel.delete(h); else libSel.add(h); renderLibrary(); }
+function libUpdateBar() {
+  const bar = document.getElementById('libBar');
+  bar.style.display = libSel.size ? 'flex' : 'none';
+  document.getElementById('libCount').textContent = `${libSel.size} colour${libSel.size !== 1 ? 's' : ''} selected`;
+}
+const libNameByHex = h => { const r = bdPoolSource('all').find(x => x.hex === h); return r ? r.name : h; };
+function libAddToBatch() {
+  if (!libSel.size) return;
+  const open = batches.filter(b => b.status !== 'Received');
+  document.getElementById('libBatchList').innerHTML = `<button class="bd-pick" onclick="libDoAdd('new')">+ New batch</button>` +
+    open.map(b => `<button class="bd-pick" onclick="libDoAdd('${b.id}')"><span>${escapeHtml(b.name || 'Untitled batch')}</span><span style="color:var(--muted);font-weight:600">${b.status} · ${b.items.length}</span></button>`).join('');
+  document.getElementById('libModal').style.display = 'flex';
+}
+function libCloseModal() { document.getElementById('libModal').style.display = 'none'; }
+function libDoAdd(id) {
+  libCloseModal();
+  if (id === 'new') { const b = { id: uid(), name: '', dyer: '', sentDate: bdToday(), expectedDate: '', status: 'To send', notes: '', items: [] }; batches.unshift(b); id = b.id; }
+  bdCurrentId = id;
+  const list = bdPoolSource('all').filter(r => libSel.has(r.hex));
+  const n = bdAddItems(list);
+  libSel = new Set();
+  bdOpen(id);
+}
+
 resetBuilderForm();
 renderCatalog();
+updateBatchGlance();
 </script>
 
 </body>
