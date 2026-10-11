@@ -450,7 +450,7 @@
   .bd-two { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .bd-actions { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
   .bd-actions .add-colour-btn { width:auto; flex:1 1 100%; }
-  .bd-actions .add-secondary-btn { flex:1; }
+  .bd-actions .add-secondary-btn { flex:1; white-space:nowrap; padding-left:6px; padding-right:6px; font-size:12px; }
   .bd-chips { display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; }
   .bd-chip { flex-shrink:0; border:1px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:6px 12px; font-size:12.5px; font-weight:700; cursor:pointer; }
   .bd-chip.on { background:var(--brown-700); color:#fff; }
@@ -469,6 +469,7 @@
   .bd-ihex { font-size:11px; color:var(--muted); font-weight:500; }
   .bd-fields { grid-column:2 / 4; display:grid; grid-template-columns:1.4fr .8fr .7fr; gap:6px; }
   .bd-fields input, .bd-fields select { font-family:inherit; font-size:13px; border:1px solid var(--border); border-radius:8px; padding:7px 8px; min-width:0; width:100%; box-sizing:border-box; background:#fff; }
+  .bd-pcs { display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--muted); background:var(--tan-200); border-radius:8px; }
   .bd-x { background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer; }
   .bd-total { font-size:13px; font-weight:700; color:var(--brown-700); margin-top:10px; }
   .bd-pool-row { display:flex; align-items:center; gap:10px; padding:7px 0; border-top:1px solid var(--border); font-size:13px; }
@@ -1264,6 +1265,14 @@
       <input class="bd-in" id="libSearch" placeholder="Search name or hex" oninput="renderLibrary()">
       <select class="bd-in" id="libSrc" onchange="renderLibrary()"></select>
     </div>
+    <div class="bd-actions no-print">
+      <button class="add-secondary-btn" onclick="libPrint()">Print colours</button>
+      <button class="add-secondary-btn" onclick="libExcel()">Excel</button>
+      <button class="add-secondary-btn" id="libSelBtn" onclick="libOnlySel=!libOnlySel;renderLibrary()">Selected (0)</button>
+      <button class="add-secondary-btn" onclick="libSelectAll(true)">Select all</button>
+      <button class="add-secondary-btn" onclick="libSelectAll(false)">Clear</button>
+    </div>
+    <div class="page-sub no-print" id="libHint" style="margin:0 0 10px"></div>
     <div class="lib-grid" id="libGrid"></div>
     <div class="lib-bar no-print" id="libBar" style="display:none">
       <div class="lib-count" id="libCount"></div>
@@ -5050,9 +5059,9 @@ function bdIsOverdue(b) { return b.status === 'At dyer' && b.expectedDate && b.e
 function bdFmtDate(d) { if (!d) return '—'; const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
 function bdBadgeClass(s) { return s === 'At dyer' ? 'at' : s === 'Received' ? 'rec' : s === 'Redo' ? 'redo' : ''; }
 function bdQtyTotals(b) {
-  const t = {};
-  (b.items || []).forEach(i => { const q = parseFloat(i.qty); if (q > 0) t[i.unit || 'm'] = (t[i.unit || 'm'] || 0) + q; });
-  return Object.entries(t).map(([u, q]) => `${+q.toFixed(2)} ${u}`).join(' + ');
+  let t = 0;
+  (b.items || []).forEach(i => { const q = parseFloat(i.qty); if (q > 0) t += q; });
+  return t > 0 ? `${+t.toFixed(2)} pcs` : '';
 }
 
 function updateBatchGlance() {
@@ -5112,16 +5121,15 @@ function bdRenderItems() {
   const b = bdById(bdCurrentId); if (!b) return;
   document.getElementById('bdTitle').textContent = b.name || 'Batch';
   document.getElementById('bdCount').textContent = `(${b.items.length})`;
-  const units = ['m', 'yd', 'pcs', 'rolls'];
-  document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
+    document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
     <div class="bd-item">
       <div class="bd-sw" style="background:${i.hex}"></div>
       <div><div class="bd-iname">${n + 1}. ${escapeHtml(i.name || i.hex)}</div><div class="bd-ihex">${i.hex}</div></div>
       <button class="bd-x" onclick="bdRemoveItem('${i.id}')">&#10005;</button>
       <div class="bd-fields">
         <input placeholder="Lace design" value="${escapeHtml(i.design || '')}" oninput="bdItemField('${i.id}','design',this.value)">
-        <input placeholder="Qty" inputmode="decimal" value="${escapeHtml(String(i.qty || ''))}" oninput="bdItemField('${i.id}','qty',this.value)">
-        <select onchange="bdItemField('${i.id}','unit',this.value)">${units.map(u => `<option ${((i.unit || 'm') === u) ? 'selected' : ''}>${u}</option>`).join('')}</select>
+        <input placeholder="Qty (pcs)" inputmode="numeric" value="${escapeHtml(String(i.qty || ''))}" oninput="bdItemField('${i.id}','qty',this.value)">
+        <div class="bd-pcs">pcs</div>
       </div></div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
   const t = bdQtyTotals(b);
   document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
@@ -5185,7 +5193,7 @@ function bdPoolAll(on) { bdPoolRows.forEach(r => { if (on) bdPoolSel.add(r.hex);
 function bdPoolUpdateBtn() { const b = document.getElementById('bdaConfirm'); b.disabled = bdPoolSel.size === 0; b.textContent = bdPoolSel.size ? `Add ${bdPoolSel.size} to batch` : 'Add to batch'; }
 function bdAddItems(list) {
   const b = bdById(bdCurrentId); let n = 0;
-  list.forEach(c => { if (b.items.some(i => i.hex === c.hex)) return; b.items.push({ id: uid(), hex: c.hex, name: c.name || c.hex, design: '', qty: '', unit: 'm' }); n++; });
+  list.forEach(c => { if (b.items.some(i => i.hex === c.hex)) return; b.items.push({ id: uid(), hex: c.hex, name: c.name || c.hex, design: '', qty: '' }); n++; });
   saveBatches(); return n;
 }
 function bdConfirmAdd() {
@@ -5214,7 +5222,7 @@ function bdBuildSheetPages(b) {
         <div style="width:86px;height:50px;border-radius:6px;border:1px solid #999;background:${i.hex};flex-shrink:0"></div>
         <div style="width:210px"><div style="font-weight:700;font-size:16px;color:#2b1d12">${escapeHtml(i.name || i.hex)}</div><div style="font-size:13px;color:#6b5a45;font-family:monospace">${i.hex}</div></div>
         <div style="flex:1;font-size:15px;color:#2b1d12">${escapeHtml(i.design || '')}</div>
-        <div style="width:110px;text-align:right;font-weight:700;font-size:16px;color:#2b1d12">${i.qty ? escapeHtml(String(i.qty)) + ' ' + (i.unit || 'm') : ''}</div>
+        <div style="width:110px;text-align:right;font-weight:700;font-size:16px;color:#2b1d12">${i.qty ? escapeHtml(String(i.qty)) + ' pcs' : ''}</div>
       </div>`).join('');
     html += `<div class="sw-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative">
       ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dye Order${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
@@ -5253,7 +5261,7 @@ async function bdDyerPdf(share) {
 }
 
 /* ---------------- Colour Library ---------------- */
-let libSel = new Set(), libRows = [];
+let libSel = new Set(), libRows = [], libOnlySel = false;
 function renderLibrary() {
   const sel = document.getElementById('libSrc');
   if (!sel.options.length || sel.dataset.g !== String(groups.length)) {
@@ -5262,17 +5270,30 @@ function renderLibrary() {
     sel.dataset.g = String(groups.length); if (cur) sel.value = cur;
   }
   const q = document.getElementById('libSearch').value.trim().toLowerCase();
-  libRows = bdPoolSource(sel.value).filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
+  libRows = (libOnlySel ? bdPoolSource('all').filter(r => libSel.has(r.hex)) : bdPoolSource(sel.value)).filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
   document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map(r => `
     <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
       <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>
       <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   libUpdateBar();
 }
+function libTargets() { const r = libSel.size ? libRows.filter(x => libSel.has(x.hex)).concat(bdPoolSource('all').filter(x => libSel.has(x.hex) && !libRows.some(y => y.hex === x.hex))) : libRows; return r.map(c => ({ hex: c.hex, name: c.name || '' })); }
+function libPrint() {
+  const sw = libTargets(); if (!sw.length) { alert('No colours to print.'); return; }
+  renderPrintColoursFromSwatches(sw, libSel.size ? `${sw.length} selected colour${sw.length !== 1 ? 's' : ''}` : `${sw.length} colour${sw.length !== 1 ? 's' : ''} from Colour Library`, null);
+  printColoursReturnView = 'library';
+  showView('printcolours');
+}
+function libExcel() { downloadColoursExcel(libTargets(), libSel.size ? 'Library_Selected' : 'Library_Colours'); }
+function libSelectAll(on) { libRows.forEach(r => { if (on) libSel.add(r.hex); else libSel.delete(r.hex); }); if (!on) libSel = new Set(); renderLibrary(); }
 function libToggle(h) { if (libSel.has(h)) libSel.delete(h); else libSel.add(h); renderLibrary(); }
 function libUpdateBar() {
+  if (libOnlySel && !libSel.size) { libOnlySel = false; return renderLibrary(); }
+  const sb = document.getElementById('libSelBtn');
+  if (sb) { sb.textContent = `Selected (${libSel.size})`; sb.style.background = libOnlySel ? 'var(--brown-700)' : ''; sb.style.color = libOnlySel ? '#fff' : ''; }
   const bar = document.getElementById('libBar');
   bar.style.display = libSel.size ? 'flex' : 'none';
+  const hint = document.getElementById('libHint'); if (hint) hint.textContent = libSel.size ? `Print / Excel will use the ${libSel.size} selected colour${libSel.size !== 1 ? 's' : ''}.` : `Print / Excel will use all ${libRows.length} colours shown. Select some to print only those.`;
   document.getElementById('libCount').textContent = `${libSel.size} colour${libSel.size !== 1 ? 's' : ''} selected`;
 }
 const libNameByHex = h => { const r = bdPoolSource('all').find(x => x.hex === h); return r ? r.name : h; };
