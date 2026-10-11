@@ -442,6 +442,14 @@
     .contrast-grid { grid-template-columns: repeat(3, 1fr); }
   }
 
+  .summary-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin: 0 0 14px; }
+  .summary-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .summary-size { margin-top: 10px; font-size: 11.5px; font-weight: 600; color: var(--muted); text-align: center; }
+  .summary-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; border: none; background: var(--tan-200); border-radius: 10px; padding: 9px 2px; cursor: pointer; font-family: inherit; }
+  .summary-tile:hover { background: #e6d5b8; }
+  .summary-num { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 20px; color: var(--brown-900); line-height: 1.1; }
+  .summary-lbl { font-size: 10px; font-weight: 700; color: var(--brown-700); }
   .sw-card { position: relative; }
   .sw-remove { position: absolute; top: -2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; border: none; background: #e9dcc6; color: var(--brown-700); font-size: 11px; font-weight: 700; line-height: 22px; padding: 0; cursor: pointer; z-index: 2; }
   .sw-remove:disabled { opacity: 0.3; cursor: default; }
@@ -755,6 +763,18 @@
       <h1>Color Catalog</h1>
     </div>
     <div class="page-sub no-print">Every color you've saved — primary and secondary — in one place.</div>
+
+    <div class="summary-card no-print" id="summaryCard">
+      <div class="summary-title">At a glance</div>
+      <div class="summary-grid">
+        <button class="summary-tile" onclick="switchTab('primary')"><span class="summary-num" id="sumPrimary">0</span><span class="summary-lbl">Primary</span></button>
+        <button class="summary-tile" onclick="switchTab('secondary')"><span class="summary-num" id="sumSecondary">0</span><span class="summary-lbl">Secondary</span></button>
+        <button class="summary-tile" onclick="switchTab('groups')"><span class="summary-num" id="sumGroups">0</span><span class="summary-lbl">Groups</span></button>
+        <button class="summary-tile" onclick="switchTab('generallyused'); setGuFilter('pastel')"><span class="summary-num" id="sumPastel">0</span><span class="summary-lbl">Pastel</span></button>
+        <button class="summary-tile" onclick="switchTab('generallyused'); setGuFilter('dark')"><span class="summary-num" id="sumDark">0</span><span class="summary-lbl">Dark</span></button>
+      </div>
+      <div class="summary-size" id="sumSize">Data size: &mdash;</div>
+    </div>
 
     <div class="filter-row no-print">
       <button class="add-colour-btn" onclick="openAddNeutralColours()">+ Add Colour(s)</button>
@@ -1874,7 +1894,28 @@ let groups = []; // [{id, name, colorIds:[]}]
 
 const APP_STATE_STORAGE_KEY = 'colourCatalog_appState_v1';
 
+let summaryUpdating = false;
+function updateSummaryCard() {
+  if (summaryUpdating || !document.getElementById('sumPrimary')) return;
+  summaryUpdating = true;
+  try {
+    const gu = getOrInitGuPalette();
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('sumPrimary', catalog.length);
+    set('sumSecondary', secondaryColors.length);
+    set('sumGroups', groups.length);
+    // size of everything saved in this browser (colours, groups, Generally Used lists)
+    const bytes = new Blob([JSON.stringify({ catalog, secondaryColors, groups }), JSON.stringify(gu)]).size;
+    const mb = bytes / (1024 * 1024);
+    const sizeEl = document.getElementById('sumSize');
+    if (sizeEl) sizeEl.textContent = `Data size: ${mb < 0.01 ? '<0.01' : mb.toFixed(2)} MB (${(bytes / 1024).toFixed(1)} KB) of ~5 MB browser storage`;
+    set('sumPastel', gu.pastels.length);
+    set('sumDark', gu.darks.length);
+  } finally { summaryUpdating = false; }
+}
+
 function saveAppStateToStorage() {
+  updateSummaryCard();
   try {
     localStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify({ catalog, secondaryColors, groups }));
   } catch (e) { /* localStorage unavailable (e.g. private mode) — fail silently */ }
@@ -2419,6 +2460,7 @@ function toggleHomeSort() {
 }
 
 function renderHomeAll() {
+  updateSummaryCard();
   const naturalList = combinedColorList(); // primaries then secondaries, stable insertion order
   naturalList.forEach((item, i) => { item.naturalSrNo = i + 1; });
 
@@ -3966,6 +4008,7 @@ const GU_STORAGE_KEY = 'colourCatalog_generallyUsedPalette_v1';
 
 function saveGuPaletteToStorage() {
   if (!generallyUsedPalette) return;
+  updateSummaryCard();
   try {
     localStorage.setItem(GU_STORAGE_KEY, JSON.stringify(generallyUsedPalette));
   } catch (e) { /* localStorage unavailable (e.g. private mode) — fail silently */ }
