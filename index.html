@@ -755,6 +755,7 @@
     font-family: 'Playfair Display', Georgia, serif; font-weight: 800;
     font-size: clamp(22px, 7vw, 32px); color: var(--brown-900); line-height: 1.1; word-break: break-word;
   }
+  .sw-title-compact { font-family:'Playfair Display', Georgia, serif; font-weight:700; font-size:20px; color:var(--brown-900); margin-bottom:8px; letter-spacing:.5px; }
   .sw-title h1 span { color: var(--danger); }
   .sw-sub { text-align: center; font-size: 12px; letter-spacing: 1px; font-weight: 600; color: var(--muted); margin-bottom: 18px; }
 
@@ -3260,8 +3261,19 @@ function safePdfFilename(name) {
 async function buildPdfFromPages(pagesContainerId) {
   const container = document.getElementById(pagesContainerId);
   if (!container) return null;
-  const pages = Array.from(container.querySelectorAll('.sw-page, .pc-page'));
+  let pages = Array.from(container.querySelectorAll('.sw-page, .pc-page'));
   if (pages.length === 0) return null;
+
+  // Catalog pages: render on an A4-proportioned 794px-wide stage so the layout (and print size)
+  // is identical on a phone and a desktop, instead of the narrow on-screen width.
+  let pcStage = null;
+  if (pages[0].classList.contains('pc-page')) {
+    pcStage = document.createElement('div');
+    pcStage.style.cssText = 'position:absolute;left:-10000px;top:0;width:794px;';
+    pages.forEach(p => { const c = p.cloneNode(true); c.style.width = '794px'; c.style.boxSizing = 'border-box'; pcStage.appendChild(c); });
+    document.body.appendChild(pcStage);
+    pages = Array.from(pcStage.querySelectorAll('.pc-page'));
+  }
 
   await ensurePdfLibs();
   const { jsPDF } = window.jspdf;
@@ -3290,6 +3302,7 @@ async function buildPdfFromPages(pagesContainerId) {
     if (i > 0) pdf.addPage();
     pdf.addImage(imgData, 'JPEG', x, 0, w, h);
   }
+  if (pcStage) pcStage.remove();
   return pdf;
 }
 
@@ -3586,7 +3599,7 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
   swSource = source || null;
   swCurrentSwatches = swatches.slice();
   swCurrentLabel = label;
-  const PER_PAGE = 16;
+  const PER_PAGE = 20;
   const pages = [];
   for (let i = 0; i < swatches.length; i += PER_PAGE) pages.push(swatches.slice(i, i + PER_PAGE));
   if (pages.length === 0) pages.push([]);
@@ -3614,10 +3627,7 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
 
     return `
       <div class="sw-board sw-page">
-        <div class="sw-title">
-          <div class="eyebrow">THE BEST</div>
-          <h1>COLOR <span>SWATCHES</span></h1>
-        </div>
+        <div class="sw-title sw-title-compact">Colour Swatches</div>
         <div class="sw-grid">${cardsHtml || '<div class="empty-state">No colors to show.</div>'}</div>
         <div class="sw-page-num no-print">Page ${pi + 1} of ${totalPages}</div>
       </div>
