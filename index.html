@@ -761,28 +761,38 @@
 
   .sw-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px 6px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px 4px;
   }
   .sw-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
   .sw-srno { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 10px; color: var(--brown-700); margin-bottom: 4px; }
-  .sw-dot { width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); flex-shrink: 0; }
-  .sw-hex { margin-top: 7px; font-weight: 700; font-size: 9.5px; color: var(--brown-900); white-space: nowrap; }
+  .sw-dot { width: 38px; height: 38px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); flex-shrink: 0; }
+  .sw-hex { margin-top: 7px; font-weight: 700; font-size: 8.5px; color: var(--brown-900); white-space: nowrap; }
   .sw-name { font-size: 8.5px; color: var(--muted); margin-top: 1px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 
   @media (min-width: 460px) {
     .sw-grid { gap: 20px 12px; }
     .sw-srno { font-size: 12px; margin-bottom: 5px; }
-    .sw-dot { width: 56px; height: 56px; }
-    .sw-hex { font-size: 11.5px; margin-top: 8px; }
-    .sw-name { font-size: 10.5px; }
+    .sw-dot { width: 52px; height: 52px; }
+    .sw-hex { font-size: 11px; margin-top: 8px; }
+    .sw-name { font-size: 10px; }
   }
+
+  /* PDF stage: swatch sheets drawn edge-to-edge on an A4-proportioned page */
+  .sw-pdf { width:794px !important; height:1123px !important; box-sizing:border-box; border:none !important; border-radius:0 !important; margin:0 !important; padding:56px 44px 40px !important; display:flex; flex-direction:column; background:#FCFAF7; }
+  .sw-pdf .sw-title-compact { font-size:34px; margin-bottom:6px; }
+  .sw-pdf .sw-grid { flex:1; align-content:space-evenly; grid-template-columns:repeat(5,1fr); gap:0 10px; }
+  .sw-pdf .sw-srno { font-size:16px; margin-bottom:8px; }
+  .sw-pdf .sw-dot { width:98px; height:98px; }
+  .sw-pdf .sw-hex { font-size:17px; margin-top:12px; }
+  .sw-pdf .sw-name { font-size:14px; margin-top:3px; }
+  .sw-pdf .sw-page-num { display:block !important; margin-top:8px; font-size:13px; }
 
   @media print {
     .sw-board { border: none; border-radius: 0; padding: 0; }
     .sw-page { margin-bottom: 0; break-after: page; }
     .sw-page:last-child { break-after: auto; }
-    .sw-grid { grid-template-columns: repeat(4, 1fr); gap: 20px 12px; }
+    .sw-grid { grid-template-columns: repeat(5, 1fr); gap: 20px 12px; }
     .sw-srno { font-size: 12px; margin-bottom: 5px; }
     .sw-dot { width: 56px; height: 56px; }
     .sw-hex { font-size: 11.5px; margin-top: 8px; }
@@ -3267,12 +3277,13 @@ async function buildPdfFromPages(pagesContainerId) {
   // Catalog pages: render on an A4-proportioned 794px-wide stage so the layout (and print size)
   // is identical on a phone and a desktop, instead of the narrow on-screen width.
   let pcStage = null;
-  if (pages[0].classList.contains('pc-page')) {
+  {
+    const isSw = pages[0].classList.contains('sw-page');
     pcStage = document.createElement('div');
     pcStage.style.cssText = 'position:absolute;left:-10000px;top:0;width:794px;';
-    pages.forEach(p => { const c = p.cloneNode(true); c.style.width = '794px'; c.style.boxSizing = 'border-box'; pcStage.appendChild(c); });
+    pages.forEach(p => { const c = p.cloneNode(true); if (isSw) c.classList.add('sw-pdf'); else { c.style.width = '794px'; c.style.boxSizing = 'border-box'; } pcStage.appendChild(c); });
     document.body.appendChild(pcStage);
-    pages = Array.from(pcStage.querySelectorAll('.pc-page'));
+    pages = Array.from(pcStage.querySelectorAll(isSw ? '.sw-page' : '.pc-page'));
   }
 
   await ensurePdfLibs();
