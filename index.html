@@ -767,8 +767,8 @@
   .sw-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
   .sw-srno { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 10px; color: var(--brown-700); margin-bottom: 4px; }
   .sw-dot { width: 38px; height: 38px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); flex-shrink: 0; }
-  .sw-hex { margin-top: 7px; font-weight: 700; font-size: 8.5px; color: var(--brown-900); white-space: nowrap; }
-  .sw-name { font-size: 8.5px; color: var(--muted); margin-top: 1px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .sw-hex { margin-top: 7px; font-weight: 700; font-size: 8.5px; color: #000; white-space: nowrap; }
+  .sw-name { font-size: 8.5px; color: #000; margin-top: 1px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 
   @media (min-width: 460px) {
     .sw-grid { gap: 20px 12px; }
@@ -780,7 +780,8 @@
 
   /* PDF stage: swatch sheets drawn edge-to-edge on an A4-proportioned page */
   .sw-pdf { width:794px !important; height:1123px !important; box-sizing:border-box; border:none !important; border-radius:0 !important; margin:0 !important; padding:56px 44px 40px !important; display:flex; flex-direction:column; background:#FCFAF7; }
-  .sw-pdf .sw-title-compact { font-size:34px; margin-bottom:6px; }
+  .sw-pdf .sw-title { margin-bottom:6px; }
+  .sw-pdf .sw-title h1 { font-size:46px; }
   .sw-pdf .sw-grid { flex:1; align-content:space-evenly; grid-template-columns:repeat(5,1fr); gap:0 10px; }
   .sw-pdf .sw-srno { font-size:16px; margin-bottom:8px; }
   .sw-pdf .sw-dot { width:98px; height:98px; }
@@ -3638,7 +3639,7 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
 
     return `
       <div class="sw-board sw-page">
-        <div class="sw-title sw-title-compact">Colour Swatches</div>
+        <div class="sw-title"><h1>COLOUR <span>SWATCHES</span></h1></div>
         <div class="sw-grid">${cardsHtml || '<div class="empty-state">No colors to show.</div>'}</div>
         <div class="sw-page-num no-print">Page ${pi + 1} of ${totalPages}</div>
       </div>
