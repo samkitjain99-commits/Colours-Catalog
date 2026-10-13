@@ -447,6 +447,8 @@
   /* ---------- Dye batches ---------- */
   .bd-topbtns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 8px; }
   .bd-topbtns .save-btn, .bd-topbtns .add-secondary-btn { margin:0; width:100%; padding:12px 8px; font-size:13.5px; }
+  .bd-namedate { display:grid; grid-template-columns:1.5fr 1fr; gap:8px; align-items:start; }
+  .bd-namedate .bd-in { margin:0 0 10px; min-width:0; }
   .bd-in { display:block; width:100%; font-family:inherit; font-size:14px; border:1px solid var(--border); border-radius:9px; padding:9px 10px; background:#fff; color:var(--brown-900); margin:6px 0 10px; box-sizing:border-box; }
   .builder label { display:block; font-size:12px; color:var(--muted); font-weight:600; }
   .bd-two { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -471,6 +473,9 @@
   .bd-ihex { font-size:11px; color:var(--muted); font-weight:500; }
   .bd-fields { grid-column:2 / 4; display:grid; grid-template-columns:1.4fr .8fr .7fr; gap:6px; }
   .bd-fields input, .bd-fields select { font-family:inherit; font-size:13px; border:1px solid var(--border); border-radius:8px; padding:7px 8px; min-width:0; width:100%; box-sizing:border-box; background:#fff; }
+  .bd-fl { font-size:10.5px !important; font-weight:600; color:var(--muted); min-width:0; }
+  .bd-fl input { margin-top:2px; }
+  .bd-ltot { grid-column:2 / 4; font-size:12px; color:var(--brown-700); min-height:0; }
   .bd-pcs { display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--muted); background:var(--tan-200); border-radius:8px; }
   .bd-x { background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer; }
   .bd-total { font-size:13px; font-weight:700; color:var(--brown-700); margin-top:10px; }
@@ -1342,18 +1347,17 @@
       <h1 id="bdTitle">Batch</h1>
     </div>
     <div class="bd-topbtns no-print">
-      <button class="save-btn" onclick="bdPrintColours()">Print colours</button>
-      <button class="save-btn" onclick="bdPreview()">Print with qty</button>
+      <button class="save-btn" onclick="bdPrintColours()">Print Colour Catalog</button>
+      <button class="save-btn" onclick="bdPreview()">Dyer sheet</button>
       <button class="add-secondary-btn" onclick="bdDuplicate()">Duplicate</button>
       <button class="add-secondary-btn" onclick="bdDelete()" style="color:var(--danger);">Delete</button>
     </div>
-    <div class="page-sub no-print" style="margin:0 0 12px"><b>Print colours</b> = for the dyer (swatch, hex, name — no qty). <b>Print with qty</b> = for us (colour, design and pcs sent).</div>
+    <div class="page-sub no-print" style="margin:0 0 12px"><b>Print Colour Catalog</b> = swatches with hex and name, no quantities. <b>Dyer sheet</b> = colour, design, pcs, mtr and total mtr.</div>
     <div class="builder no-print">
-      <div class="section-label">Batch details</div>
-      <input class="bd-in" id="bdName" placeholder="Batch name (e.g. Diwali order 1)" oninput="bdField('name',this.value)">
-      <label>Date
+      <div class="bd-namedate">
+        <input class="bd-in" id="bdName" placeholder="Batch name" oninput="bdField('name',this.value)">
         <input class="bd-in" type="date" id="bdSent" onchange="bdField('sentDate',this.value)">
-      </label>
+      </div>
       <textarea class="bd-in" id="bdNotes" rows="2" placeholder="Notes for the dyer (optional)" oninput="bdField('notes',this.value)"></textarea>
     </div>
     <div class="builder no-print">
@@ -1361,7 +1365,8 @@
       <div class="bd-actions">
         <button class="add-colour-btn" onclick="bdOpenAdd()">+ Add colours</button>
         <button class="add-secondary-btn" onclick="bdFillAll('design')">Design for all</button>
-        <button class="add-secondary-btn" onclick="bdFillAll('qty')">Qty for all</button>
+        <button class="add-secondary-btn" onclick="bdFillAll('qty')">Pcs for all</button>
+        <button class="add-secondary-btn" onclick="bdFillAll('mtr')">Mtr for all</button>
       </div>
       <div id="bdItems"></div>
       <div class="bd-total" id="bdTotal"></div>
@@ -1371,7 +1376,7 @@
   <div class="view" id="view-batchPreview">
     <div class="screen-header no-print">
       <button class="back-btn" onclick="bdPvClose()">&#10005;</button>
-      <h1>Qty &amp; design sheet</h1>
+      <h1>Dyer sheet</h1>
     </div>
     <div class="pc-toolbar no-print" style="flex-wrap:wrap">
       <button class="pc-print-btn" id="bdPvPdfBtn" onclick="bdPvSave()">&#11015; Save PDF</button>
@@ -1386,8 +1391,17 @@
       <button class="back-btn" onclick="showView('batchDetail')">&#10005;</button>
       <h1>Add colours</h1>
     </div>
-    <div class="builder no-print">
-      <div class="section-label">Type a hex code</div>
+    <div class="bd-two no-print">
+      <input class="bd-in" id="bdaSearch" placeholder="Search name or hex" oninput="bdRenderPool()">
+      <select class="bd-in" id="bdaSrc" onchange="bdRenderPool()"></select>
+    </div>
+    <div class="bd-actions no-print">
+      <button class="add-secondary-btn" onclick="bdPoolAll(true)">Select all</button>
+      <button class="add-secondary-btn" onclick="bdPoolAll(false)">Clear</button>
+      <button class="add-secondary-btn" id="bdaFavBtn" onclick="bdaFav=!bdaFav;bdRenderPool()">&#9733; Favourites</button>
+      <button class="add-secondary-btn" onclick="document.getElementById('bdaManual').style.display=document.getElementById('bdaManual').style.display==='none'?'block':'none'">+ Type hex</button>
+    </div>
+    <div class="builder no-print" id="bdaManual" style="display:none;margin-bottom:12px">
       <div class="bd-two">
         <input class="bd-in" id="bdaHex" placeholder="#C2185B">
         <input class="bd-in" id="bdaName" placeholder="Name (optional)">
@@ -1395,16 +1409,10 @@
       <button class="add-secondary-btn" style="width:100%" onclick="bdAddManual()">Add this colour</button>
       <div class="form-msg" id="bdaMsg"></div>
     </div>
-    <div class="builder no-print">
-      <div class="section-label">Pick from your colours</div>
-      <input class="bd-in" id="bdaSearch" placeholder="Search name or hex" oninput="bdRenderPool()">
-      <select class="bd-in" id="bdaSrc" onchange="bdRenderPool()"></select>
-      <div class="bd-actions">
-        <button class="add-secondary-btn" onclick="bdPoolAll(true)">Select all shown</button>
-        <button class="add-secondary-btn" onclick="bdPoolAll(false)">Clear</button>
-      </div>
-      <div id="bdaPool"></div>
-      <button class="save-btn" id="bdaConfirm" onclick="bdConfirmAdd()" disabled>Add to batch</button>
+    <div class="lib-grid" id="bdaPool"></div>
+    <div class="lib-bar no-print" id="bdaBar" style="display:none">
+      <div class="lib-count" id="bdaCount"></div>
+      <button class="lib-pill" onclick="bdConfirmAdd()">Add to batch</button>
     </div>
   </div>
 
@@ -5121,10 +5129,11 @@ function bdToday() { return new Date().toISOString().slice(0, 10); }
 function bdIsOverdue(b) { return b.status === 'At dyer' && b.expectedDate && b.expectedDate < bdToday(); }
 function bdFmtDate(d) { if (!d) return '—'; const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
 function bdBadgeClass(s) { return s === 'At dyer' ? 'at' : s === 'Received' ? 'rec' : s === 'Redo' ? 'redo' : ''; }
+function bdLineMtr(i) { const q = parseFloat(i.qty), m = parseFloat(i.mtr); return (q > 0 && m > 0) ? +(q * m).toFixed(2) : 0; }
 function bdQtyTotals(b) {
-  let t = 0;
-  (b.items || []).forEach(i => { const q = parseFloat(i.qty); if (q > 0) t += q; });
-  return t > 0 ? `${+t.toFixed(2)} pcs` : '';
+  let t = 0, m = 0;
+  (b.items || []).forEach(i => { const q = parseFloat(i.qty); if (q > 0) t += q; m += bdLineMtr(i); });
+  return [t > 0 ? `${+t.toFixed(2)} pcs` : '', m > 0 ? `${+m.toFixed(2)} mtr` : ''].filter(Boolean).join(' · ');
 }
 
 function updateBatchGlance() {
@@ -5176,22 +5185,26 @@ function bdRenderItems() {
       <div><div class="bd-iname">${n + 1}. ${escapeHtml(i.name || i.hex)}</div><div class="bd-ihex">${i.hex}</div></div>
       <button class="bd-x" onclick="bdRemoveItem('${i.id}')">&#10005;</button>
       <div class="bd-fields">
-        <input placeholder="Lace design" value="${escapeHtml(i.design || '')}" oninput="bdItemField('${i.id}','design',this.value)">
-        <input placeholder="Qty (pcs)" inputmode="numeric" value="${escapeHtml(String(i.qty || ''))}" oninput="bdItemField('${i.id}','qty',this.value)">
-        <div class="bd-pcs">pcs</div>
-      </div></div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
+        <label class="bd-fl">Design<input placeholder="Lace design" value="${escapeHtml(i.design || '')}" oninput="bdItemField('${i.id}','design',this.value)"></label>
+        <label class="bd-fl">Pcs<input placeholder="0" inputmode="decimal" value="${escapeHtml(String(i.qty || ''))}" oninput="bdItemField('${i.id}','qty',this.value)"></label>
+        <label class="bd-fl">Mtr / pc<input placeholder="0" inputmode="decimal" value="${escapeHtml(String(i.mtr || ''))}" oninput="bdItemField('${i.id}','mtr',this.value)"></label>
+      </div>
+      <div class="bd-ltot" id="ltot-${i.id}">${bdLineMtr(i) ? `${i.qty} pcs × ${i.mtr} mtr = <b>${bdLineMtr(i)} mtr</b>` : ''}</div></div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
   const t = bdQtyTotals(b);
   document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
 }
 function bdItemField(id, k, v) {
   const b = bdById(bdCurrentId); const i = b && b.items.find(x => x.id === id); if (!i) return;
   i[k] = v; saveBatches();
-  if (k !== 'design') { const t = bdQtyTotals(b); document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : ''; }
+  if (k !== 'design') {
+    const t = bdQtyTotals(b); document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
+    const lt = document.getElementById('ltot-' + id); if (lt) lt.innerHTML = bdLineMtr(i) ? `${i.qty} pcs × ${i.mtr} mtr = <b>${bdLineMtr(i)} mtr</b>` : '';
+  }
 }
 function bdRemoveItem(id) { const b = bdById(bdCurrentId); b.items = b.items.filter(i => i.id !== id); saveBatches(); bdRenderItems(); }
 function bdFillAll(k) {
   const b = bdById(bdCurrentId); if (!b || !b.items.length) return;
-  const v = prompt(k === 'design' ? 'Lace design for ALL colours in this batch:' : 'Quantity for ALL colours in this batch:');
+  const v = prompt(k === 'design' ? 'Lace design for ALL colours in this batch:' : k === 'mtr' ? 'Metres per piece for ALL colours in this batch:' : 'Number of pieces for ALL colours in this batch:');
   if (v === null) return;
   b.items.forEach(i => { i[k] = v.trim(); }); saveBatches(); bdRenderItems();
 }
@@ -5209,7 +5222,8 @@ function bdDelete() {
 
 /* add colours */
 function bdOpenAdd() {
-  bdPoolSel = new Set();
+  bdPoolSel = new Set(); bdaFav = false;
+  document.getElementById('bdaManual').style.display = 'none';
   const sel = document.getElementById('bdaSrc');
   sel.innerHTML = `<option value="all">All colours</option><option value="primary">Primary</option><option value="secondary">Secondary</option><option value="pastel">Generally Used – Pastel</option><option value="dark">Generally Used – Dark</option>` +
     groups.map(g => `<option value="g:${g.id}">Group: ${escapeHtml(g.name)}</option>`).join('');
@@ -5230,23 +5244,32 @@ function bdPoolSource(srcArg) {
   const seen = new Set();
   return rows.filter(r => { const h = (r.hex || '').toUpperCase(); if (!h || seen.has(h)) return false; seen.add(h); r.hex = h; return true; });
 }
+let bdaFav = false;
 function bdRenderPool() {
   const q = document.getElementById('bdaSearch').value.trim().toLowerCase();
-  bdPoolRows = bdPoolSource().filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
-  document.getElementById('bdaPool').innerHTML = bdPoolRows.length ? bdPoolRows.map(r =>
-    `<label class="bd-pool-row"><input type="checkbox" ${bdPoolSel.has(r.hex) ? 'checked' : ''} onchange="bdPoolToggle('${r.hex}',this.checked)"><span class="bd-sw" style="background:${r.hex};width:26px;height:26px"></span><span><b>${escapeHtml(r.name || r.hex)}</b><br><span class="bd-ihex">${r.hex}</span></span></label>`).join('') : `<div class="empty-state">No colours match.</div>`;
+  const src = bdaFav ? bdPoolSource('all').filter(r => libFavs.has(r.hex)) : bdPoolSource();
+  bdPoolRows = src.filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
+  const b = bdById(bdCurrentId), inBatch = new Set(b ? b.items.map(i => i.hex.toUpperCase()) : []);
+  const fb = document.getElementById('bdaFavBtn'); if (fb) { fb.style.background = bdaFav ? 'var(--brown-700)' : ''; fb.style.color = bdaFav ? '#fff' : ''; }
+  document.getElementById('bdaPool').innerHTML = bdPoolRows.length ? bdPoolRows.map(r => `
+    <button class="lib-card ${bdPoolSel.has(r.hex) ? 'on' : ''}" onclick="bdPoolToggle('${r.hex}')" ${inBatch.has(r.hex) ? 'style="opacity:.5"' : ''}>
+      <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
+      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${inBatch.has(r.hex) ? 'Already in batch' : r.hex}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   bdPoolUpdateBtn();
 }
-function bdPoolToggle(h, on) { if (on) bdPoolSel.add(h); else bdPoolSel.delete(h); bdPoolUpdateBtn(); }
-function bdPoolAll(on) { bdPoolRows.forEach(r => { if (on) bdPoolSel.add(r.hex); else bdPoolSel.delete(r.hex); }); bdRenderPool(); }
-function bdPoolUpdateBtn() { const b = document.getElementById('bdaConfirm'); b.disabled = bdPoolSel.size === 0; b.textContent = bdPoolSel.size ? `Add ${bdPoolSel.size} to batch` : 'Add to batch'; }
+function bdPoolToggle(h) { if (bdPoolSel.has(h)) bdPoolSel.delete(h); else bdPoolSel.add(h); bdRenderPool(); }
+function bdPoolAll(on) { if (on) bdPoolRows.forEach(r => bdPoolSel.add(r.hex)); else bdPoolSel = new Set(); bdRenderPool(); }
+function bdPoolUpdateBtn() {
+  const bar = document.getElementById('bdaBar'); bar.style.display = bdPoolSel.size ? 'flex' : 'none';
+  document.getElementById('bdaCount').textContent = `${bdPoolSel.size} colour${bdPoolSel.size !== 1 ? 's' : ''} selected`;
+}
 function bdAddItems(list) {
   const b = bdById(bdCurrentId); let n = 0;
   list.forEach(c => { if (b.items.some(i => i.hex === c.hex)) return; b.items.push({ id: uid(), hex: c.hex, name: c.name || c.hex, design: '', qty: '' }); n++; });
   saveBatches(); return n;
 }
 function bdConfirmAdd() {
-  const all = bdPoolSource().filter(r => bdPoolSel.has(r.hex));
+  const all = bdPoolSource('all').filter(r => bdPoolSel.has(r.hex));
   bdAddItems(all); bdRenderItems(); showView('batchDetail');
 }
 function bdAddManual() {
@@ -5261,27 +5284,40 @@ function bdAddManual() {
 
 /* dyer sheet PDF (rendered off-screen at A4 proportions so it is crisp and identical on every device) */
 function bdBuildSheetPages(b) {
-  const ROWS = 12, items = b.items, pagesN = Math.max(1, Math.ceil(items.length / ROWS));
+  const ROWS = 11, items = b.items, pagesN = Math.max(1, Math.ceil(items.length / ROWS));
   const tot = bdQtyTotals(b);
+  let totPcs = 0, totMtr = 0;
+  items.forEach(i => { const q = parseFloat(i.qty); if (q > 0) totPcs += q; totMtr += bdLineMtr(i); });
+  const fmt = n => n ? String(+n.toFixed(2)) : '';
+  const cell = (w, txt, bold) => `<div style="width:${w}px;text-align:right;font-size:16px;${bold ? 'font-weight:700;' : ''}color:#000">${txt}</div>`;
   let html = '';
   for (let p = 0; p < pagesN; p++) {
+    const last = p === pagesN - 1;
     const rows = items.slice(p * ROWS, p * ROWS + ROWS).map((i, k) => `
-      <div style="display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid #d8cdb8;height:68px;box-sizing:border-box">
-        <div style="width:30px;font-weight:700;color:#7a6a55;font-size:15px">${p * ROWS + k + 1}</div>
-        <div style="width:86px;height:50px;border-radius:6px;border:1px solid #999;background:${i.hex};flex-shrink:0"></div>
-        <div style="width:210px"><div style="font-weight:700;font-size:16px;color:#2b1d12">${escapeHtml(i.name || i.hex)}</div><div style="font-size:13px;color:#6b5a45;font-family:monospace">${i.hex}</div></div>
-        <div style="flex:1;font-size:15px;color:#2b1d12">${escapeHtml(i.design || '')}</div>
-        <div style="width:110px;text-align:right;font-weight:700;font-size:16px;color:#2b1d12">${i.qty ? escapeHtml(String(i.qty)) + ' pcs' : ''}</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #d8cdb8;height:68px;box-sizing:border-box">
+        <div style="width:26px;font-weight:700;color:#7a6a55;font-size:15px">${p * ROWS + k + 1}</div>
+        <div style="width:74px;height:46px;border-radius:6px;border:1px solid #999;background:${i.hex};flex-shrink:0"></div>
+        <div style="width:168px"><div style="font-weight:700;font-size:16px;color:#000">${escapeHtml(i.name || i.hex)}</div><div style="font-size:13px;color:#000;font-family:monospace">${i.hex}</div></div>
+        <div style="flex:1;font-size:15px;color:#000">${escapeHtml(i.design || '')}</div>
+        ${cell(54, i.qty ? escapeHtml(String(i.qty)) : '', true)}
+        ${cell(64, i.mtr ? escapeHtml(String(i.mtr)) : '')}
+        ${cell(78, fmt(bdLineMtr(i)), true)}
       </div>`).join('');
+    const totalRow = last ? `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:2px solid #2b1d12;height:56px;box-sizing:border-box">
+        <div style="flex:1;font-weight:700;font-size:16px;color:#000;text-align:right">TOTAL</div>
+        ${cell(54, fmt(totPcs), true)}${cell(64, '')}${cell(78, fmt(totMtr), true)}
+      </div>` : '';
+    const th = (w, t, al) => `<div style="width:${w}px;text-align:${al || 'right'}">${t}</div>`;
     html += `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative">
-      ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dye Order${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
+      ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
       <div style="display:flex;gap:30px;margin:14px 0 6px;font-size:14px;color:#2b1d12;flex-wrap:wrap">
         <div><span style="color:#7a6a55">Date:</span> <b>${bdFmtDate(b.sentDate)}</b></div>
         <div><span style="color:#7a6a55">Colours:</span> <b>${items.length}</b>${tot ? ` &nbsp; <span style="color:#7a6a55">Total:</span> <b>${tot}</b>` : ''}</div></div>
       ${b.notes ? `<div style="margin:8px 0;padding:10px 12px;background:#f4ecdc;border-radius:8px;font-size:14px;color:#2b1d12;white-space:pre-wrap">${escapeHtml(b.notes)}</div>` : ''}`
-      : `<div style="font-size:16px;font-weight:700;color:#7a6a55">Dye Order${b.name ? ' — ' + escapeHtml(b.name) : ''} (continued)</div>`}
-      <div style="display:flex;gap:14px;margin-top:16px;padding-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="width:30px">#</div><div style="width:86px">Shade</div><div style="width:210px">Colour</div><div style="flex:1">Lace design</div><div style="width:110px;text-align:right">Quantity</div></div>
-      ${rows}
+      : `<div style="font-size:16px;font-weight:700;color:#7a6a55">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''} (continued)</div>`}
+      <div style="display:flex;gap:12px;margin-top:16px;padding-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="width:26px">#</div><div style="width:74px">Shade</div><div style="width:168px">Colour</div><div style="flex:1">Lace design</div>${th(54, 'Pcs')}${th(64, 'Mtr/pc')}${th(78, 'Total mtr')}</div>
+      ${rows}${totalRow}
       <div style="position:absolute;left:44px;right:44px;bottom:30px;display:flex;justify-content:space-between;font-size:11px;color:#8a7a65"><span>Shade codes are screen hex values — please match against the physical swatch supplied.</span><span>Page ${p + 1} / ${pagesN}</span></div>
     </div>`;
   }
@@ -5329,7 +5365,7 @@ async function bdMakePdfFile(b) {
   try {
     stage.innerHTML = bdBuildSheetPages(b);
     const pdf = await buildPdfFromPages('bdPdfStage');
-    const fname = safePdfFilename('Dye Order - ' + (b.name || 'batch'));
+    const fname = safePdfFilename('Dyer Sheet - ' + (b.name || 'batch'));
     return { pdf, fname, file: new File([pdf.output('blob')], fname, { type: 'application/pdf' }) };
   } finally { stage.innerHTML = ''; }
 }
