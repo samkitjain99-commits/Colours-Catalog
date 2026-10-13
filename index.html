@@ -483,6 +483,7 @@
   .lib-nm { font-size:11.5px; font-weight:700; color:var(--brown-900); margin-top:5px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .lib-hx { font-size:10.5px; color:var(--muted); }
   .lib-open { position:absolute; top:10px; left:10px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(255,255,255,.85); color:var(--brown-700); font-size:16px; line-height:1; font-weight:700; cursor:pointer; padding:0; }
+  .lib-star { position:absolute; top:9px; left:9px; color:#FFC400; font-size:18px; line-height:1; text-shadow:0 0 2px #000, 0 0 2px #000, 0 0 3px #000; }
   .lib-tick { position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%; background:var(--brown-700); color:#fff; font-size:12px; display:none; align-items:center; justify-content:center; }
   .lib-card.on .lib-tick { display:flex; }
   .lib-bar { position:fixed; left:0; right:0; bottom:18px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:50; pointer-events:none; }
@@ -1288,6 +1289,10 @@
       <button class="add-secondary-btn" id="libSelBtn" onclick="libOnlySel=!libOnlySel;renderLibrary()">Selected (0)</button>
       <button class="add-secondary-btn" onclick="libSelectAll(true)">Select all</button>
       <button class="add-secondary-btn" onclick="libSelectAll(false)">Clear</button>
+    </div>
+    <div class="bd-actions no-print">
+      <button class="add-secondary-btn" id="libFavAddBtn" onclick="libFavToggleSelected()">&#9734; Add to favourites</button>
+      <button class="add-secondary-btn" id="libFavBtn" onclick="libOnlyFav=!libOnlyFav;if(libOnlyFav)libOnlySel=false;renderLibrary()">&#9733; Favourites (0)</button>
     </div>
     <div class="page-sub no-print" id="libHint" style="margin:0 0 10px"></div>
     <div class="lib-grid" id="libGrid"></div>
@@ -5025,7 +5030,7 @@ function saveNewSecondaryColours() {
 let pendingRestoreData = null;
 
 function exportBackup() {
-  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches };
+  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches, favourites: [...libFavs] };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -5078,6 +5083,7 @@ function performRestore() {
     if (!entry.secondaryIds) entry.secondaryIds = [];
   });
 
+  if (Array.isArray(pendingRestoreData.favourites)) { libFavs = new Set(pendingRestoreData.favourites.map(h => String(h).toUpperCase())); saveFavs(); }
   if (Array.isArray(pendingRestoreData.batches)) { batches = pendingRestoreData.batches; saveBatches(); }
   selectedSet = new Set();
   groupFilter = '';
@@ -5310,7 +5316,17 @@ async function bdDyerPdf(share) {
 }
 
 /* ---------------- Colour Library ---------------- */
-let libSel = new Set(), libRows = [], libOnlySel = false;
+let libSel = new Set(), libRows = [], libOnlySel = false, libOnlyFav = false;
+const FAV_KEY = 'colourCatalog_favourites_v1';
+let libFavs = new Set();
+try { const r = localStorage.getItem(FAV_KEY); if (r) JSON.parse(r).forEach(h => libFavs.add(String(h).toUpperCase())); } catch (e) {}
+function saveFavs() { try { localStorage.setItem(FAV_KEY, JSON.stringify([...libFavs])); } catch (e) {} }
+function libFavToggleSelected() {
+  if (!libSel.size) { alert('Select some colours first, then add them to favourites.'); return; }
+  const sel = [...libSel].map(h => h.toUpperCase());
+  if (sel.every(h => libFavs.has(h))) sel.forEach(h => libFavs.delete(h)); else sel.forEach(h => libFavs.add(h));
+  saveFavs(); renderLibrary();
+}
 function renderLibrary() {
   const sel = document.getElementById('libSrc');
   if (!sel.options.length || sel.dataset.g !== String(groups.length)) {
@@ -5319,10 +5335,10 @@ function renderLibrary() {
     sel.dataset.g = String(groups.length); if (cur) sel.value = cur;
   }
   const q = document.getElementById('libSearch').value.trim().toLowerCase();
-  libRows = (libOnlySel ? bdPoolSource('all').filter(r => libSel.has(r.hex)) : bdPoolSource(sel.value)).filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
+  libRows = (libOnlyFav ? bdPoolSource('all').filter(r => libFavs.has(r.hex)) : libOnlySel ? bdPoolSource('all').filter(r => libSel.has(r.hex)) : bdPoolSource(sel.value)).filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
   document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map(r => `
     <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
-      <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>
+      <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
       <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   libUpdateBar();
 }
@@ -5371,8 +5387,9 @@ function libEditSave() {
     secondaryColors.forEach(sc => { if (same(sc.hex)) { sc.hex = e.hex; if (e.name) sc.name = e.name; touched++; } });
     [...gu.pastels, ...gu.darks].forEach(c => { if (same(c.hex)) { c.hex = e.hex; if (e.name) c.name = e.name; touched++; } });
     if (libSel.delete(e.old)) libSel.add(e.hex);
+    if (libFavs.delete(e.old)) libFavs.add(e.hex);
   });
-  saveAppStateToStorage(); saveGuPaletteToStorage();
+  saveFavs(); saveAppStateToStorage(); saveGuPaletteToStorage();
   refreshAllListsAfterReorder();
   if (typeof renderGenerallyUsed === 'function') renderGenerallyUsed();
   showView('library'); renderLibrary();
@@ -5380,6 +5397,10 @@ function libEditSave() {
 function libToggle(h) { if (libSel.has(h)) libSel.delete(h); else libSel.add(h); renderLibrary(); }
 function libUpdateBar() {
   if (libOnlySel && !libSel.size) { libOnlySel = false; return renderLibrary(); }
+  const fb = document.getElementById('libFavBtn');
+  if (fb) { fb.textContent = `\u2605 Favourites (${libFavs.size})`; fb.style.background = libOnlyFav ? 'var(--brown-700)' : ''; fb.style.color = libOnlyFav ? '#fff' : ''; }
+  const fa = document.getElementById('libFavAddBtn');
+  if (fa) { const allFav = libSel.size > 0 && [...libSel].every(h => libFavs.has(h.toUpperCase())); fa.textContent = allFav ? '\u2605 Remove from favourites' : '\u2606 Add to favourites'; }
   const sb = document.getElementById('libSelBtn');
   if (sb) { sb.textContent = `Selected (${libSel.size})`; sb.style.background = libOnlySel ? 'var(--brown-700)' : ''; sb.style.color = libOnlySel ? '#fff' : ''; }
   const bar = document.getElementById('libBar');
