@@ -505,7 +505,11 @@
   .bd-ltot { grid-column:2 / 4; font-size:13px; color:var(--brown-700); background:var(--tan-200); border-radius:8px; padding:6px 10px; }
   .bd-pcs { display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--muted); background:var(--tan-200); border-radius:8px; }
   .bd-x { background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer; }
-  .bd-total { font-size:13px; font-weight:700; color:var(--brown-700); margin-top:10px; }
+  .bd-total { display:none; position:sticky; bottom:10px; z-index:5; margin-top:12px; gap:10px; padding:10px 12px; background:var(--brown-700); color:#fff; border-radius:14px; box-shadow:0 4px 14px rgba(43,29,18,.35); }
+  .bd-total.on { display:flex; }
+  .bd-total div { flex:1; text-align:center; }
+  .bd-total small { display:block; font-size:10px; letter-spacing:.8px; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .bd-total b { font-size:20px; font-weight:700; }
   .bd-pool-row { display:flex; align-items:center; gap:10px; padding:7px 0; border-top:1px solid var(--border); font-size:13px; }
   .bd-glance { margin-top:10px; padding:10px 12px; border-radius:10px; background:var(--tan-200); font-size:13px; font-weight:700; color:var(--brown-700); cursor:pointer; }
   .bd-glance.warn { background:#F6D9D3; color:var(--danger); }
@@ -1073,7 +1077,7 @@
         <div class="empty-state">No colors in this group yet.</div>
       </div>
     </div>
-    <div class="page-sub" style="margin-top:10px">Tap colours to select. To reorder, open Print colours — move or sort there and the group order updates.</div>
+    <div class="page-sub" style="margin-top:10px">Tap colours to select. To reorder, open Print Colour Swatch — move or sort there and the group order updates.</div>
   </div>
 
   <!-- ============ ADD TO GROUP VIEW ============ -->
@@ -1144,7 +1148,7 @@
   <div class="view" id="view-printcolours">
     <div class="screen-header no-print">
       <button class="back-btn" onclick="showView(printColoursReturnView)">&#10005;</button>
-      <h1>Print Colours</h1>
+      <h1>Print Colour Swatch</h1>
     </div>
     <div class="pc-toolbar no-print">
       <div class="pc-count" id="swCount"></div>
@@ -1322,7 +1326,7 @@
       <select class="bd-in" id="libSrc" onchange="renderLibrary()"></select>
     </div>
     <div class="bd-actions no-print">
-      <button class="add-secondary-btn" onclick="libPrint()">Print colours</button>
+      <button class="add-secondary-btn" onclick="libPrint()">Print Colour Swatch</button>
       <button class="add-secondary-btn" onclick="libExcel()">Excel</button>
       <button class="add-secondary-btn" onclick="libEditOpen()">Edit</button>
       <button class="add-secondary-btn" id="libSelBtn" onclick="libOnlySel=!libOnlySel;renderLibrary()">Selected (0)</button>
@@ -1379,12 +1383,12 @@
       <h1 id="bdTitle">Batch</h1>
     </div>
     <div class="bd-topbtns no-print">
-      <button class="save-btn" onclick="bdPrintColours()">Print Colour Catalog</button>
+      <button class="save-btn" onclick="bdPrintColours()">Print Colour Swatch</button>
       <button class="save-btn" onclick="bdPreview()">Dyer sheet</button>
       <button class="add-secondary-btn" onclick="bdDuplicate()">Duplicate</button>
       <button class="add-secondary-btn" onclick="bdDelete()" style="color:var(--danger);">Delete</button>
     </div>
-    <div class="page-sub no-print" style="margin:0 0 12px"><b>Print Colour Catalog</b> = swatches with hex and name, no quantities. <b>Dyer sheet</b> = colour, design, pcs, mtr and total mtr.</div>
+    <div class="page-sub no-print" style="margin:0 0 12px"><b>Print Colour Swatch</b> = swatches with hex and name, no quantities. <b>Dyer sheet</b> = colour, design, pcs, mtr and total mtr.</div>
     <div class="builder no-print">
       <div class="bd-namedate">
         <label>Batch details<input class="bd-in" id="bdName" placeholder="Batch name" oninput="bdField('name',this.value)"></label>
@@ -1551,7 +1555,7 @@
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="text-btn addgroup-btn" id="guGroupBtn" onclick="addSelectedGeneralToGroup()">Add to group</button>
-        <button class="text-btn printcolours-btn" id="guPrintBtn" onclick="printSelectedGeneralItems()">Print colours</button>
+        <button class="text-btn printcolours-btn" id="guPrintBtn" onclick="printSelectedGeneralItems()">Print Colour Swatch</button>
         <button class="text-btn" id="guExcelBtn" style="text-decoration:underline; font-weight:700;" onclick="downloadSelectedGeneralExcel()">Download Excel</button>
         <button class="text-btn clear-all-btn" id="guClearSelBtn" style="margin-left:auto; display:inline;" onclick="clearGuSelection()">Clear all</button>
       </div>
@@ -2689,12 +2693,12 @@ function renderToolbarActions() {
     el.innerHTML = `
       <button class="text-btn addgroup-btn" onclick="openAddToGroup()">Add to group (${selectedSet.size})</button>
       <button class="text-btn preview-btn" onclick="openPreviewForSelection()">Prepare catalog (${selectedSet.size})</button>
-      <button class="text-btn printcolours-btn" onclick="openPrintColoursForSelection()">Print colours (${selectedSet.size})</button>
+      <button class="text-btn printcolours-btn" onclick="openPrintColoursForSelection()">Print Colour Swatch (${selectedSet.size})</button>
     `;
   } else {
     el.innerHTML = `
       <button class="text-btn preview-btn" onclick="openPreviewForSelection()">Prepare catalog</button>
-      <button class="text-btn printcolours-btn" onclick="openPrintColoursForSelection()">Print colours</button>
+      <button class="text-btn printcolours-btn" onclick="openPrintColoursForSelection()">Print Colour Swatch</button>
       <button class="text-btn clear-all-btn" onclick="clearCatalog()">Clear all</button>
     `;
   }
@@ -2799,7 +2803,7 @@ function updateHomeToolbar() {
   const actionsEl = document.getElementById('homeToolbarActions');
   if (actionsEl) {
     const addGroupBtn = n > 0 ? `<button class="text-btn addgroup-btn" onclick="openAddToGroupFromHome()">Add to group (${n})</button>` : '';
-    actionsEl.innerHTML = addGroupBtn + `<button class="text-btn printcolours-btn" onclick="openPrintColoursForHomeSelection()">Print colours${n > 0 ? ` (${n})` : ''}</button>`;
+    actionsEl.innerHTML = addGroupBtn + `<button class="text-btn printcolours-btn" onclick="openPrintColoursForHomeSelection()">Print Colour Swatch${n > 0 ? ` (${n})` : ''}</button>`;
   }
   const chk = document.getElementById('homeSelectAllChk');
   if (chk) {
@@ -3199,14 +3203,14 @@ function updateGroupDetailToolbar() {
     actionsEl.innerHTML = `
       <button class="text-btn addgroup-btn" onclick="addGroupSelectionToOtherGroup()">Add to another group (${n})</button>
       <button class="text-btn preview-btn" onclick="openPreviewForGroup()">Prepare catalog (${n})</button>
-      <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print colours (${n})</button>
+      <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print Colour Swatch (${n})</button>
       <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadGroupExcel()">Download Excel (${n})</button>
       <button class="text-btn" style="font-weight:700; text-decoration:underline; color:var(--danger);" onclick="clearGroupDetailSelection()">Clear selection</button>
     `;
   } else {
     actionsEl.innerHTML = `
       <button class="text-btn preview-btn" onclick="openPreviewForGroup()">Prepare catalog</button>
-      <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print colours</button>
+      <button class="text-btn printcolours-btn" onclick="openPrintColoursForGroup()">Print Colour Swatch</button>
       <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadGroupExcel()">Download Excel</button>
     `;
   }
@@ -4018,7 +4022,7 @@ function toggleScSelectAll(checked) {
 function updateScToolbar() {
   const n = scSelectedSet.size;
   const actionsEl = document.getElementById('scToolbarActions');
-  const printBtn = `<button class="text-btn printcolours-btn" onclick="openPrintColoursForSecondaryPool()">Print colours${n > 0 ? ` (${n})` : ''}</button>`;
+  const printBtn = `<button class="text-btn printcolours-btn" onclick="openPrintColoursForSecondaryPool()">Print Colour Swatch${n > 0 ? ` (${n})` : ''}</button>`;
   const tagBtn = n > 0 ? `<button class="text-btn addgroup-btn" onclick="openTagSecondariesToPrimary()">Tag to primary (${n})</button>` : '';
   actionsEl.innerHTML = tagBtn + printBtn;
   const delBtn = document.getElementById('scBulkDeleteBtn');
@@ -4638,7 +4642,7 @@ function updateGuToolbar() {
   const printBtn = document.getElementById('guPrintBtn');
   if (primaryBtn) primaryBtn.textContent = `Add to Primary${n > 0 ? ` (${n})` : ''}`;
   if (secondaryBtn) secondaryBtn.textContent = `Add to Secondary${n > 0 ? ` (${n})` : ''}`;
-  if (printBtn) printBtn.textContent = `Print colours${n > 0 ? ` (${n})` : ''}`;
+  if (printBtn) printBtn.textContent = `Print Colour Swatch${n > 0 ? ` (${n})` : ''}`;
   const groupBtn = document.getElementById('guGroupBtn');
   if (groupBtn) groupBtn.textContent = `Add to group${n > 0 ? ` (${n})` : ''}`;
   const excelBtn = document.getElementById('guExcelBtn');
@@ -4780,7 +4784,7 @@ function renderStagedSelBar() {
       </label>
       ${n > 0 ? `
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center;">
-        <button class="text-btn printcolours-btn" onclick="printSelectedStaged()">Print colours (${n})</button>
+        <button class="text-btn printcolours-btn" onclick="printSelectedStaged()">Print Colour Swatch (${n})</button>
         <button class="text-btn" style="font-weight:700; text-decoration:underline;" onclick="downloadStagedExcel()">Download Excel (${n})</button>
         <button class="text-btn clear-all-btn" style="margin-left:auto; display:inline;" onclick="clearStagedSelection()">Clear all selected (${n})</button>
       </div>` : ''}
@@ -5183,6 +5187,12 @@ function bdLineText(i) {
   if (t.pcs) return `Total: <b>${t.pcs} pcs</b>`;
   return '<span style="color:var(--muted)">Total: —</span>';
 }
+function bdShowTotal(b) {
+  let p = 0, m = 0; (b.items || []).forEach(i => { const x = bdItemTotals(i); p += x.pcs; m += x.mtr; });
+  const el = document.getElementById('bdTotal'); if (!el) return;
+  el.classList.toggle('on', p > 0 || m > 0);
+  el.innerHTML = `<div><small>Total pcs</small><b>${+p.toFixed(2)}</b></div><div><small>Total mtr</small><b>${+m.toFixed(2)}</b></div>`;
+}
 function bdQtyTotals(b) {
   let t = 0, m = 0;
   (b.items || []).forEach(i => { const x = bdItemTotals(i); t += x.pcs; m += x.mtr; });
@@ -5254,7 +5264,7 @@ function bdRenderItems() {
       <div class="bd-lines">${i.lines.map((l, k) => bdLineHtml(i, l, k)).join('')}</div>
       ${i.lines.length > 1 ? `<div class="bd-ltot" id="ltot-${i.id}">${bdLineText(i)}</div>` : ''}</div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
   const t = bdQtyTotals(b);
-  document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
+  bdShowTotal(b);
   bdSel = new Set([...bdSel].filter(id => b.items.some(i => i.id === id)));
   bdRenderBulk();
   const bar = document.getElementById('bdSelBar'), rm = document.getElementById('bdRmBtn'), all = document.getElementById('bdSelAll');
@@ -5270,7 +5280,7 @@ function bdLineField(id, lid, k, v) {
   const b = bdById(bdCurrentId); const i = b && b.items.find(x => x.id === id); const l = i && i.lines.find(x => x.id === lid); if (!l) return;
   l[k] = v; saveBatches();
   const lt = document.getElementById('lt-' + lid); if (lt) lt.innerHTML = bdLineTotalHtml(l);
-  const t = bdQtyTotals(b); document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
+  const t = bdQtyTotals(b); bdShowTotal(b);
   const x = document.getElementById('ltot-' + id); if (x) x.innerHTML = bdLineText(i);
 }
 function bdAddLine(id) {
@@ -5422,24 +5432,26 @@ function bdBuildSheetPages(b) {
   }));
   const sizes = [...sizeMap.entries()].sort((a, c) => c[0] - a[0]);
   const summaryH = sizes.length ? 62 + 30 * sizes.length : 0;
-  const cap0 = 780 - (b.notes ? 70 : 0), capN = 860, totalH = 56 + summaryH;
+  const cap0 = 780 - (b.notes ? 70 : 0), capN = 860, totalH = 56, sumNeed = summaryH + 34;
   const pages = [[]]; let used = 0, cap = cap0;
   items.forEach((i, idx) => {
     const h = heightOf(i);
     if (used + h > cap && pages[pages.length - 1].length) { pages.push([]); used = 0; cap = capN; }
     pages[pages.length - 1].push({ i, idx, h }); used += h;
   });
-  if (used + totalH > cap) pages.push([]);
+  if (used + totalH + sumNeed > cap) pages.push([]);
   const cell = (w, txt, bold) => `<div style="width:${w}px;text-align:right;font-size:15px;${bold ? 'font-weight:700;' : ''}color:#000;height:28px;line-height:28px">${txt}</div>`;
   const th = (w, t) => `<div style="width:${w}px;text-align:right">${t}</div>`;
   let html = '';
   pages.forEach((pg, p) => {
     const last = p === pages.length - 1;
+    const sumHead = (w1, t1, w2, t2, w3, t3) => `<div style="display:flex;flex-shrink:0">${th(w1, t1)}${th(w2, t2)}${th(w3, t3)}</div>`;
     const summaryHtml = sizes.length ? `
-      <div style="margin-top:22px">
+      <div style="margin-top:26px">
         <div style="font-size:13px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase;margin-bottom:6px">Size-wise summary</div>
-        <div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #999;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="flex:1">Size (mtr per pc)</div><div style="width:90px;text-align:right">Total pcs</div><div style="width:110px;text-align:right">Total mtr</div></div>
-        ${sizes.map(([m, e]) => `<div style="display:flex;gap:12px;align-items:center;height:30px;border-bottom:1px solid #e3d9c6;font-size:15px;color:#000"><div style="flex:1;font-weight:700">${m ? fmt(m) + ' mtr' : 'Size not set'}</div><div style="width:90px;text-align:right;font-weight:700">${fmt(e.pcs)}</div><div style="width:110px;text-align:right;font-weight:700">${e.mtr ? fmt(e.mtr) : ''}</div></div>`).join('')}
+        <div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #999;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="flex:1">Size (mtr per pc)</div>${sumHead(54, 'Pcs', 64, '', 78, 'Total mtr')}</div>
+        ${sizes.map(([m, e]) => `<div style="display:flex;gap:12px;align-items:center;height:30px;border-bottom:1px solid #e3d9c6;font-size:15px;color:#000"><div style="flex:1;font-weight:700">${m ? fmt(m) + ' mtr' : 'Size not set'}</div><div style="display:flex;flex-shrink:0">${cell(54, fmt(e.pcs), true)}${cell(64, '')}${cell(78, e.mtr ? fmt(e.mtr) : '', true)}</div></div>`).join('')}
+        <div style="display:flex;gap:12px;align-items:center;height:34px;border-top:2px solid #2b1d12;font-size:15px;color:#000"><div style="flex:1;font-weight:700;text-align:right">TOTAL</div><div style="display:flex;flex-shrink:0">${cell(54, fmt(sizes.reduce((a, [, e]) => a + e.pcs, 0)), true)}${cell(64, '')}${cell(78, fmt(sizes.reduce((a, [, e]) => a + e.mtr, 0)), true)}</div></div>
       </div>` : '';
     const rows = pg.map(({ i, idx, h }) => {
       const n = i.lines.length, x = bdItemTotals(i);
@@ -5457,7 +5469,7 @@ function bdBuildSheetPages(b) {
     const totalRow = last ? `
       <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:2px solid #2b1d12;height:${totalH}px;box-sizing:border-box">
         <div style="flex:1;font-weight:700;font-size:16px;color:#000;text-align:right">TOTAL</div>
-        ${cell(54, fmt(totPcs), true)}${cell(64, '')}${cell(78, fmt(totMtr), true)}
+        <div style="display:flex;flex-shrink:0">${cell(54, fmt(totPcs), true)}${cell(64, '')}${cell(78, fmt(totMtr), true)}</div>
       </div>` : '';
     html += `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative;overflow:hidden">
       ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
@@ -5466,7 +5478,7 @@ function bdBuildSheetPages(b) {
         <div><span style="color:#7a6a55">Colours:</span> <b>${items.length}</b>${tot ? ` &nbsp; <span style="color:#7a6a55">Total:</span> <b>${tot}</b>` : ''}</div></div>
       ${b.notes ? `<div style="margin:8px 0;padding:10px 12px;background:#f4ecdc;border-radius:8px;font-size:14px;color:#2b1d12;white-space:pre-wrap">${escapeHtml(b.notes)}</div>` : ''}`
       : `<div style="font-size:16px;font-weight:700;color:#7a6a55">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''} (continued)</div>`}
-      <div style="display:flex;gap:12px;margin-top:16px;padding-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="width:26px">#</div><div style="width:74px">Shade</div><div style="width:168px">Colour</div><div style="flex:1">Lace design</div>${th(54, 'Pcs')}${th(64, 'Mtr/pc')}${th(78, 'Total mtr')}</div>
+      <div style="display:flex;gap:12px;margin-top:16px;padding-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="width:26px">#</div><div style="width:74px">Shade</div><div style="width:168px">Colour</div><div style="flex:1">Lace design</div>${sumHead(54, 'Pcs', 64, 'Mtr/pc', 78, 'Total mtr')}</div>
       ${rows}${totalRow}${last ? summaryHtml : ''}
       <div style="position:absolute;left:44px;right:44px;bottom:30px;display:flex;justify-content:space-between;font-size:11px;color:#8a7a65"><span>Shade codes are screen hex values — please match against the physical swatch supplied.</span><span>Page ${p + 1} / ${pages.length}</span></div>
     </div>`;
