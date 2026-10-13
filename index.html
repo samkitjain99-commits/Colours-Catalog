@@ -447,6 +447,7 @@
   /* ---------- Dye batches ---------- */
   .bd-topbtns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 8px; }
   .bd-topbtns .save-btn, .bd-topbtns .add-secondary-btn { margin:0; width:100%; padding:12px 8px; font-size:13.5px; }
+  @media (max-width:900px) { input:not([type=checkbox]):not([type=radio]):not([type=color]), select, textarea { font-size:16px !important; } }
   .bd-namedate { display:grid; grid-template-columns:1.5fr 1fr; gap:8px; align-items:start; }
   .bd-namedate label { min-width:0; }
   .bd-namedate .bd-in { margin:4px 0 10px; min-width:0; max-width:100%; }
@@ -474,7 +475,13 @@
   .bd-iname { font-size:13px; font-weight:700; color:var(--brown-900); }
   .bd-ihex { font-size:11px; color:var(--muted); font-weight:500; }
   .bd-selrow { grid-template-columns:26px 34px 1fr auto; }
-  .bd-selrow .bd-fields, .bd-selrow .bd-ltot { grid-column:2 / 5; }
+  .bd-selrow .bd-fields1, .bd-selrow .bd-lines, .bd-selrow .bd-ltot { grid-column:2 / 5; }
+  .bd-line { display:grid; grid-template-columns:1fr 1fr 1.1fr 26px; gap:6px; align-items:end; margin-bottom:6px; }
+  .bd-line input { width:100%; box-sizing:border-box; }
+  .bd-lt { font-size:13px; color:var(--brown-700); padding-bottom:10px; white-space:nowrap; }
+  .bd-addsize { background:none; border:1px dashed var(--brown-600, #8b5e3c); color:var(--brown-700); border-radius:8px; padding:7px 10px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; width:100%; margin:2px 0 4px; }
+  .bd-fields1 input, .bd-line input { font-family:inherit; border:1px solid var(--border); border-radius:8px; padding:7px 8px; background:#fff; min-width:0; }
+  .bd-fields1 input { width:100%; box-sizing:border-box; }
   .bd-chk { width:20px; height:20px; accent-color:var(--brown-700); }
   .bd-selbar { display:flex; align-items:center; gap:10px; padding:6px 0 10px; font-size:13px; font-weight:600; color:var(--brown-700); }
   .bd-selbar .bd-rm { margin-left:auto; background:var(--danger); color:#fff; border:none; border-radius:9px; padding:8px 12px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
@@ -5117,7 +5124,7 @@ function performRestore() {
   });
 
   if (Array.isArray(pendingRestoreData.favourites)) { libFavs = new Set(pendingRestoreData.favourites.map(h => String(h).toUpperCase())); saveFavs(); }
-  if (Array.isArray(pendingRestoreData.batches)) { batches = pendingRestoreData.batches; saveBatches(); }
+  if (Array.isArray(pendingRestoreData.batches)) { batches = pendingRestoreData.batches; bdMigrate(); saveBatches(); }
   selectedSet = new Set();
   groupFilter = '';
   renderCatalog();
@@ -5135,6 +5142,7 @@ function performRestore() {
 const BATCH_KEY = 'colourCatalog_batches_v1';
 const BD_STATUSES = ['To send', 'At dyer', 'Received', 'Redo'];
 try { const r = localStorage.getItem(BATCH_KEY); if (r) { const p = JSON.parse(r); if (Array.isArray(p)) batches = p; } } catch (e) {}
+// (bdMigrate() is called once helper functions are defined, below)
 let bdCurrentId = null, bdFilter = 'Active', bdPoolSel = new Set(), bdPoolRows = [];
 
 function saveBatches() {
@@ -5146,16 +5154,27 @@ function bdToday() { return new Date().toISOString().slice(0, 10); }
 function bdIsOverdue(b) { return b.status === 'At dyer' && b.expectedDate && b.expectedDate < bdToday(); }
 function bdFmtDate(d) { if (!d) return '—'; const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
 function bdBadgeClass(s) { return s === 'At dyer' ? 'at' : s === 'Received' ? 'rec' : s === 'Redo' ? 'redo' : ''; }
+function bdMigrate() {
+  (batches || []).forEach(b => (b.items || []).forEach(i => {
+    if (!Array.isArray(i.lines)) { i.lines = [{ id: uid(), qty: i.qty || '', mtr: i.mtr || '' }]; delete i.qty; delete i.mtr; }
+    if (!i.lines.length) i.lines.push({ id: uid(), qty: '', mtr: '' });
+  }));
+}
+function bdLineMtr(l) { const q = parseFloat(l.qty), m = parseFloat(l.mtr); return (q > 0 && m > 0) ? +(q * m).toFixed(2) : 0; }
+function bdItemTotals(i) {
+  let pcs = 0, mtr = 0;
+  (i.lines || []).forEach(l => { const q = parseFloat(l.qty); if (q > 0) pcs += q; mtr += bdLineMtr(l); });
+  return { pcs: +pcs.toFixed(2), mtr: +mtr.toFixed(2) };
+}
 function bdLineText(i) {
-  const q = parseFloat(i.qty), m = parseFloat(i.mtr), t = bdLineMtr(i);
-  if (t) return `Total: ${q} pcs × ${m} mtr = <b>${t} mtr</b>`;
-  if (q > 0) return `Total: <b>${q} pcs</b>`;
+  const t = bdItemTotals(i);
+  if (t.pcs && t.mtr) return `Total: <b>${t.pcs} pcs · ${t.mtr} mtr</b>`;
+  if (t.pcs) return `Total: <b>${t.pcs} pcs</b>`;
   return '<span style="color:var(--muted)">Total: —</span>';
 }
-function bdLineMtr(i) { const q = parseFloat(i.qty), m = parseFloat(i.mtr); return (q > 0 && m > 0) ? +(q * m).toFixed(2) : 0; }
 function bdQtyTotals(b) {
   let t = 0, m = 0;
-  (b.items || []).forEach(i => { const q = parseFloat(i.qty); if (q > 0) t += q; m += bdLineMtr(i); });
+  (b.items || []).forEach(i => { const x = bdItemTotals(i); t += x.pcs; m += x.mtr; });
   return [t > 0 ? `${+t.toFixed(2)} pcs` : '', m > 0 ? `${+m.toFixed(2)} mtr` : ''].filter(Boolean).join(' · ');
 }
 
@@ -5198,21 +5217,28 @@ function bdField(k, v) {
   document.getElementById('bdTitle').textContent = b.name || 'Batch';
   saveBatches();
 }
+function bdLineHtml(i, l) {
+  const only = i.lines.length === 1;
+  return `<div class="bd-line">
+      <label class="bd-fl">Pcs<input placeholder="0" inputmode="decimal" value="${escapeHtml(String(l.qty || ''))}" oninput="bdLineField('${i.id}','${l.id}','qty',this.value)"></label>
+      <label class="bd-fl">Mtr / pc<input placeholder="0" inputmode="decimal" value="${escapeHtml(String(l.mtr || ''))}" oninput="bdLineField('${i.id}','${l.id}','mtr',this.value)"></label>
+      <div class="bd-lt" id="lt-${l.id}">${bdLineMtr(l) ? '= <b>' + bdLineMtr(l) + ' mtr</b>' : ''}</div>
+      ${only ? '<span></span>' : `<button class="bd-x" onclick="bdRemoveLine('${i.id}','${l.id}')" title="Remove this size">&#10005;</button>`}
+    </div>`;
+}
 function bdRenderItems() {
   const b = bdById(bdCurrentId); if (!b) return;
   document.getElementById('bdTitle').textContent = b.name || 'Batch';
   document.getElementById('bdCount').textContent = `(${b.items.length})`;
-    document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
+  document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
     <div class="bd-item bd-selrow">
       <input type="checkbox" class="bd-chk" ${bdSel.has(i.id) ? 'checked' : ''} onchange="bdToggleSel('${i.id}')">
       <div class="bd-sw" style="background:${i.hex}"></div>
       <div><div class="bd-iname">${n + 1}. ${escapeHtml(i.name || i.hex)}</div><div class="bd-ihex">${i.hex}</div></div>
       <button class="bd-x" onclick="bdRemoveItem('${i.id}')">&#10005;</button>
-      <div class="bd-fields">
-        <label class="bd-fl">Design<input placeholder="Lace design" value="${escapeHtml(i.design || '')}" oninput="bdItemField('${i.id}','design',this.value)"></label>
-        <label class="bd-fl">Pcs<input placeholder="0" inputmode="decimal" value="${escapeHtml(String(i.qty || ''))}" oninput="bdItemField('${i.id}','qty',this.value)"></label>
-        <label class="bd-fl">Mtr / pc<input placeholder="0" inputmode="decimal" value="${escapeHtml(String(i.mtr || ''))}" oninput="bdItemField('${i.id}','mtr',this.value)"></label>
-      </div>
+      <div class="bd-fields1"><label class="bd-fl">Design<input placeholder="Lace design" value="${escapeHtml(i.design || '')}" oninput="bdItemField('${i.id}','design',this.value)"></label></div>
+      <div class="bd-lines">${i.lines.map(l => bdLineHtml(i, l)).join('')}
+        <button class="bd-addsize" onclick="bdAddLine('${i.id}')">+ Add another size</button></div>
       <div class="bd-ltot" id="ltot-${i.id}">${bdLineText(i)}</div></div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
   const t = bdQtyTotals(b);
   document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
@@ -5225,10 +5251,21 @@ function bdRenderItems() {
 function bdItemField(id, k, v) {
   const b = bdById(bdCurrentId); const i = b && b.items.find(x => x.id === id); if (!i) return;
   i[k] = v; saveBatches();
-  if (k !== 'design') {
-    const t = bdQtyTotals(b); document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
-    const lt = document.getElementById('ltot-' + id); if (lt) lt.innerHTML = bdLineText(i);
-  }
+}
+function bdLineField(id, lid, k, v) {
+  const b = bdById(bdCurrentId); const i = b && b.items.find(x => x.id === id); const l = i && i.lines.find(x => x.id === lid); if (!l) return;
+  l[k] = v; saveBatches();
+  const lt = document.getElementById('lt-' + lid); if (lt) lt.innerHTML = bdLineMtr(l) ? '= <b>' + bdLineMtr(l) + ' mtr</b>' : '';
+  const t = bdQtyTotals(b); document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
+  const x = document.getElementById('ltot-' + id); if (x) x.innerHTML = bdLineText(i);
+}
+function bdAddLine(id) {
+  const b = bdById(bdCurrentId); const i = b && b.items.find(x => x.id === id); if (!i) return;
+  i.lines.push({ id: uid(), qty: '', mtr: '' }); saveBatches(); bdRenderItems();
+}
+function bdRemoveLine(id, lid) {
+  const b = bdById(bdCurrentId); const i = b && b.items.find(x => x.id === id); if (!i || i.lines.length < 2) return;
+  i.lines = i.lines.filter(l => l.id !== lid); saveBatches(); bdRenderItems();
 }
 let bdSel = new Set();
 function bdToggleSel(id) { if (bdSel.has(id)) bdSel.delete(id); else bdSel.add(id); bdRenderItems(); }
@@ -5242,13 +5279,14 @@ function bdFillAll(k, inputId) {
   const b = bdById(bdCurrentId); if (!b || !b.items.length) return;
   const el = document.getElementById(inputId); const v = el ? el.value.trim() : '';
   if (!v) { if (el) el.focus(); return; }
-  b.items.forEach(i => { i[k] = v; }); saveBatches(); bdRenderItems();
+  b.items.forEach(i => { if (k === 'design') i.design = v; else i.lines[0][k] = v; });
+  saveBatches(); bdRenderItems();
 }
 function bdDuplicate() {
   const b = bdById(bdCurrentId); if (!b) return;
   const c = JSON.parse(JSON.stringify(b));
   c.id = uid(); c.name = (b.name || 'Batch') + ' (copy)'; c.sentDate = bdToday();
-  c.items.forEach(i => { i.id = uid(); });
+  c.items.forEach(i => { i.id = uid(); (i.lines || []).forEach(l => { l.id = uid(); }); });
   batches.unshift(c); saveBatches(); bdOpen(c.id);
 }
 function bdDelete() {
@@ -5302,7 +5340,7 @@ function bdPoolUpdateBtn() {
 function bdAddItems(list) {
   const b = bdById(bdCurrentId); let n = 0;
   const fresh = [];
-  list.forEach(c => { if (b.items.some(i => i.hex === c.hex) || fresh.some(i => i.hex === c.hex)) return; fresh.push({ id: uid(), hex: c.hex, name: c.name || c.hex, design: '', qty: '', mtr: '' }); n++; });
+  list.forEach(c => { if (b.items.some(i => i.hex === c.hex) || fresh.some(i => i.hex === c.hex)) return; fresh.push({ id: uid(), hex: c.hex, name: c.name || c.hex, design: '', lines: [{ id: uid(), qty: '', mtr: '' }] }); n++; });
   b.items = fresh.concat(b.items);
   saveBatches(); return n;
 }
@@ -5322,32 +5360,43 @@ function bdAddManual() {
 
 /* dyer sheet PDF (rendered off-screen at A4 proportions so it is crisp and identical on every device) */
 function bdBuildSheetPages(b) {
-  const ROWS = 11, items = b.items, pagesN = Math.max(1, Math.ceil(items.length / ROWS));
-  const tot = bdQtyTotals(b);
+  const items = b.items, tot = bdQtyTotals(b);
+  const fmt = n => n ? String(+(+n).toFixed(2)) : '';
   let totPcs = 0, totMtr = 0;
-  items.forEach(i => { const q = parseFloat(i.qty); if (q > 0) totPcs += q; totMtr += bdLineMtr(i); });
-  const fmt = n => n ? String(+n.toFixed(2)) : '';
-  const cell = (w, txt, bold) => `<div style="width:${w}px;text-align:right;font-size:16px;${bold ? 'font-weight:700;' : ''}color:#000">${txt}</div>`;
+  items.forEach(i => { const x = bdItemTotals(i); totPcs += x.pcs; totMtr += x.mtr; });
+  const heightOf = i => { const n = i.lines.length; return Math.max(68, 28 * (n + (n > 1 ? 1 : 0)) + 22); };
+  const cap0 = 780 - (b.notes ? 70 : 0), capN = 860, totalH = 56;
+  const pages = [[]]; let used = 0, cap = cap0;
+  items.forEach((i, idx) => {
+    const h = heightOf(i);
+    if (used + h > cap && pages[pages.length - 1].length) { pages.push([]); used = 0; cap = capN; }
+    pages[pages.length - 1].push({ i, idx, h }); used += h;
+  });
+  if (used + totalH > cap) pages.push([]);
+  const cell = (w, txt, bold) => `<div style="width:${w}px;text-align:right;font-size:15px;${bold ? 'font-weight:700;' : ''}color:#000;height:28px;line-height:28px">${txt}</div>`;
+  const th = (w, t) => `<div style="width:${w}px;text-align:right">${t}</div>`;
   let html = '';
-  for (let p = 0; p < pagesN; p++) {
-    const last = p === pagesN - 1;
-    const rows = items.slice(p * ROWS, p * ROWS + ROWS).map((i, k) => `
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #d8cdb8;height:68px;box-sizing:border-box">
-        <div style="width:26px;font-weight:700;color:#7a6a55;font-size:15px">${p * ROWS + k + 1}</div>
+  pages.forEach((pg, p) => {
+    const last = p === pages.length - 1;
+    const rows = pg.map(({ i, idx, h }) => {
+      const n = i.lines.length, x = bdItemTotals(i);
+      const lines = i.lines.map(l => `<div style="display:flex">${cell(54, l.qty ? escapeHtml(String(l.qty)) : '', n === 1)}${cell(64, l.mtr ? escapeHtml(String(l.mtr)) : '')}${cell(78, fmt(bdLineMtr(l)), n === 1)}</div>`).join('')
+        + (n > 1 ? `<div style="display:flex;border-top:1px solid #999">${cell(54, fmt(x.pcs), true)}${cell(64, '')}${cell(78, fmt(x.mtr), true)}</div>` : '');
+      return `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #d8cdb8;min-height:${h}px;box-sizing:border-box">
+        <div style="width:26px;font-weight:700;color:#7a6a55;font-size:15px">${idx + 1}</div>
         <div style="width:74px;height:46px;border-radius:6px;border:1px solid #999;background:${i.hex};flex-shrink:0"></div>
         <div style="width:168px"><div style="font-weight:700;font-size:16px;color:#000">${escapeHtml(i.name || i.hex)}</div><div style="font-size:13px;color:#000;font-family:monospace">${i.hex}</div></div>
         <div style="flex:1;font-size:15px;color:#000">${escapeHtml(i.design || '')}</div>
-        ${cell(54, i.qty ? escapeHtml(String(i.qty)) : '', true)}
-        ${cell(64, i.mtr ? escapeHtml(String(i.mtr)) : '')}
-        ${cell(78, fmt(bdLineMtr(i)), true)}
-      </div>`).join('');
+        <div>${lines}</div>
+      </div>`;
+    }).join('');
     const totalRow = last ? `
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:2px solid #2b1d12;height:56px;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:2px solid #2b1d12;height:${totalH}px;box-sizing:border-box">
         <div style="flex:1;font-weight:700;font-size:16px;color:#000;text-align:right">TOTAL</div>
         ${cell(54, fmt(totPcs), true)}${cell(64, '')}${cell(78, fmt(totMtr), true)}
       </div>` : '';
-    const th = (w, t, al) => `<div style="width:${w}px;text-align:${al || 'right'}">${t}</div>`;
-    html += `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative">
+    html += `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative;overflow:hidden">
       ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
       <div style="display:flex;gap:30px;margin:14px 0 6px;font-size:14px;color:#2b1d12;flex-wrap:wrap">
         <div><span style="color:#7a6a55">Date:</span> <b>${bdFmtDate(b.sentDate)}</b></div>
@@ -5356,9 +5405,9 @@ function bdBuildSheetPages(b) {
       : `<div style="font-size:16px;font-weight:700;color:#7a6a55">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''} (continued)</div>`}
       <div style="display:flex;gap:12px;margin-top:16px;padding-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="width:26px">#</div><div style="width:74px">Shade</div><div style="width:168px">Colour</div><div style="flex:1">Lace design</div>${th(54, 'Pcs')}${th(64, 'Mtr/pc')}${th(78, 'Total mtr')}</div>
       ${rows}${totalRow}
-      <div style="position:absolute;left:44px;right:44px;bottom:30px;display:flex;justify-content:space-between;font-size:11px;color:#8a7a65"><span>Shade codes are screen hex values — please match against the physical swatch supplied.</span><span>Page ${p + 1} / ${pagesN}</span></div>
+      <div style="position:absolute;left:44px;right:44px;bottom:30px;display:flex;justify-content:space-between;font-size:11px;color:#8a7a65"><span>Shade codes are screen hex values — please match against the physical swatch supplied.</span><span>Page ${p + 1} / ${pages.length}</span></div>
     </div>`;
-  }
+  });
   return html;
 }
 function bdPrintColours() {
@@ -5546,6 +5595,7 @@ function libDoAdd(id) {
   bdOpen(id);
 }
 
+bdMigrate();
 resetBuilderForm();
 renderCatalog();
 updateBatchGlance();
