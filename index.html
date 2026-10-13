@@ -5421,7 +5421,7 @@ function bdBuildSheetPages(b) {
   const fmt = n => n ? String(+(+n).toFixed(2)) : '';
   let totPcs = 0, totMtr = 0;
   items.forEach(i => { const x = bdItemTotals(i); totPcs += x.pcs; totMtr += x.mtr; });
-  const heightOf = i => { const n = i.lines.length; return Math.max(68, 28 * (n + (n > 1 ? 1 : 0)) + 22); };
+  const heightOf = i => { const n = i.lines.length; return Math.max(68, 28 * (n + (n > 1 ? 1 : 0)) + 22) + 1; };
   // size-wise summary: group every line by metres-per-piece
   const sizeMap = new Map();
   items.forEach(i => i.lines.forEach(l => {
@@ -5430,9 +5430,9 @@ function bdBuildSheetPages(b) {
     const e = sizeMap.get(key) || { pcs: 0, mtr: 0, n: 0 };
     e.pcs += q; e.mtr += bdLineMtr(l); e.n++; sizeMap.set(key, e);
   }));
-  const sizes = [...sizeMap.entries()].sort((a, c) => c[0] - a[0]);
+  const sizes = [...sizeMap.entries()].sort((a, c) => (c[0] || -1) - (a[0] || -1));
   const summaryH = sizes.length ? 62 + 30 * sizes.length : 0;
-  const cap0 = 780 - (b.notes ? 70 : 0), capN = 860, totalH = 56, sumNeed = summaryH + 34;
+  const cap0 = 890 - (b.notes ? 70 : 0), capN = 940, totalH = 56, sumNeed = summaryH + 34;
   const pages = [[]]; let used = 0, cap = cap0;
   items.forEach((i, idx) => {
     const h = heightOf(i);
@@ -5440,7 +5440,7 @@ function bdBuildSheetPages(b) {
     pages[pages.length - 1].push({ i, idx, h }); used += h;
   });
   if (used + totalH + sumNeed > cap) pages.push([]);
-  const cell = (w, txt, bold) => `<div style="width:${w}px;text-align:right;font-size:15px;${bold ? 'font-weight:700;' : ''}color:#000;height:28px;line-height:28px">${txt}</div>`;
+  const cell = (w, txt, bold) => `<div style="width:${w}px;display:flex;justify-content:flex-end;white-space:nowrap;font-size:15px;${bold ? 'font-weight:700;' : ''}color:#000;height:28px;line-height:28px">${txt}</div>`;
   const th = (w, t) => `<div style="width:${w}px;text-align:right">${t}</div>`;
   let html = '';
   pages.forEach((pg, p) => {
@@ -5450,18 +5450,18 @@ function bdBuildSheetPages(b) {
       <div style="margin-top:26px">
         <div style="font-size:13px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase;margin-bottom:6px">Size-wise summary</div>
         <div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #999;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="flex:1">Size (mtr per pc)</div>${sumHead(54, 'Pcs', 64, '', 78, 'Total mtr')}</div>
-        ${sizes.map(([m, e]) => `<div style="display:flex;gap:12px;align-items:center;height:30px;border-bottom:1px solid #e3d9c6;font-size:15px;color:#000"><div style="flex:1;font-weight:700">${m ? fmt(m) + ' mtr' : 'Size not set'}</div><div style="display:flex;flex-shrink:0">${cell(54, fmt(e.pcs), true)}${cell(64, '')}${cell(78, e.mtr ? fmt(e.mtr) : '', true)}</div></div>`).join('')}
+        ${sizes.map(([m, e]) => `<div style="display:flex;gap:12px;align-items:center;height:30px;border-bottom:1px solid #e3d9c6;font-size:15px;color:#000"><div style="flex:1;font-weight:700">${m ? fmt(m) + ' mtr' : 'Pcs only (no mtr)'}</div><div style="display:flex;flex-shrink:0">${cell(54, fmt(e.pcs), true)}${cell(64, '')}${cell(78, e.mtr ? fmt(e.mtr) : '-', true)}</div></div>`).join('')}
         <div style="display:flex;gap:12px;align-items:center;height:34px;border-top:2px solid #2b1d12;font-size:15px;color:#000"><div style="flex:1;font-weight:700;text-align:right">TOTAL</div><div style="display:flex;flex-shrink:0">${cell(54, fmt(sizes.reduce((a, [, e]) => a + e.pcs, 0)), true)}${cell(64, '')}${cell(78, fmt(sizes.reduce((a, [, e]) => a + e.mtr, 0)), true)}</div></div>
       </div>` : '';
     const rows = pg.map(({ i, idx, h }) => {
-      const n = i.lines.length, x = bdItemTotals(i);
-      const lines = i.lines.map(l => `<div style="display:flex">${cell(54, l.qty ? escapeHtml(String(l.qty)) : '', n === 1)}${cell(64, l.mtr ? escapeHtml(String(l.mtr)) : '')}${cell(78, fmt(bdLineMtr(l)), n === 1)}</div>`).join('')
-        + (n > 1 ? `<div style="display:flex;border-top:1px solid #999">${cell(54, fmt(x.pcs), true)}${cell(64, '')}${cell(78, fmt(x.mtr), true)}</div>` : '');
+      const n = i.lines.length, x = bdItemTotals(i); const po = i.lines.reduce((t, l) => t + (parseFloat(l.qty) > 0 && !(parseFloat(l.mtr) > 0) ? parseFloat(l.qty) : 0), 0);
+      const lines = i.lines.map(l => `<div style="display:flex">${cell(54, l.qty ? escapeHtml(String(l.qty)) : '', n === 1)}${cell(64, l.mtr ? escapeHtml(String(l.mtr)) : (l.qty ? '-' : ''))}${cell(78, bdLineMtr(l) ? fmt(bdLineMtr(l)) : (parseFloat(l.qty) > 0 ? fmt(parseFloat(l.qty)) + ' pcs' : ''), n === 1)}</div>`).join('')
+        + (n > 1 ? `<div style="display:flex;border-top:1px solid #999">${cell(54, fmt(x.pcs), true)}${cell(64, '')}${cell(78, [x.mtr ? fmt(x.mtr) : '', po ? fmt(po) + ' pcs' : ''].filter(Boolean).join(' + '), true)}</div>` : '');
       return `
       <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #d8cdb8;min-height:${h}px;box-sizing:border-box">
         <div style="width:26px;font-weight:700;color:#7a6a55;font-size:15px">${idx + 1}</div>
         <div style="width:74px;height:46px;border-radius:6px;border:1px solid #999;background:${i.hex};flex-shrink:0"></div>
-        <div style="width:168px"><div style="font-weight:700;font-size:16px;color:#000">${escapeHtml(i.name || i.hex)}</div><div style="font-size:13px;color:#000;font-family:monospace">${i.hex}</div></div>
+        <div style="width:225px"><div style="font-weight:700;font-size:16px;color:#000">${escapeHtml(i.name || i.hex)}</div><div style="font-size:13px;color:#000;font-family:monospace">${i.hex}</div></div>
         <div style="flex:1;font-size:15px;color:#000">${escapeHtml(i.design || '')}</div>
         <div>${lines}</div>
       </div>`;
@@ -5478,7 +5478,7 @@ function bdBuildSheetPages(b) {
         <div><span style="color:#7a6a55">Colours:</span> <b>${items.length}</b>${tot ? ` &nbsp; <span style="color:#7a6a55">Total:</span> <b>${tot}</b>` : ''}</div></div>
       ${b.notes ? `<div style="margin:8px 0;padding:10px 12px;background:#f4ecdc;border-radius:8px;font-size:14px;color:#2b1d12;white-space:pre-wrap">${escapeHtml(b.notes)}</div>` : ''}`
       : `<div style="font-size:16px;font-weight:700;color:#7a6a55">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''} (continued)</div>`}
-      <div style="display:flex;gap:12px;margin-top:16px;padding-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="width:26px">#</div><div style="width:74px">Shade</div><div style="width:168px">Colour</div><div style="flex:1">Lace design</div>${sumHead(54, 'Pcs', 64, 'Mtr/pc', 78, 'Total mtr')}</div>
+      <div style="display:flex;gap:12px;margin-top:16px;padding-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase"><div style="width:26px">#</div><div style="width:74px">Shade</div><div style="width:225px">Colour</div><div style="flex:1">Lace design</div>${sumHead(54, 'Pcs', 64, 'Mtr/pc', 78, 'Total mtr')}</div>
       ${rows}${totalRow}${last ? summaryHtml : ''}
       <div style="position:absolute;left:44px;right:44px;bottom:30px;display:flex;justify-content:space-between;font-size:11px;color:#8a7a65"><span>Shade codes are screen hex values — please match against the physical swatch supplied.</span><span>Page ${p + 1} / ${pages.length}</span></div>
     </div>`;
