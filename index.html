@@ -445,6 +445,8 @@
   .summary-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin: 0 0 14px; }
   .summary-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   /* ---------- Dye batches ---------- */
+  .bd-topbtns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 8px; }
+  .bd-topbtns .save-btn, .bd-topbtns .add-secondary-btn { margin:0; width:100%; padding:12px 8px; font-size:13.5px; }
   .bd-in { display:block; width:100%; font-family:inherit; font-size:14px; border:1px solid var(--border); border-radius:9px; padding:9px 10px; background:#fff; color:var(--brown-900); margin:6px 0 10px; box-sizing:border-box; }
   .builder label { display:block; font-size:12px; color:var(--muted); font-weight:600; }
   .bd-two { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -1074,7 +1076,7 @@
     <div class="pc-toolbar no-print">
       <div class="pc-count" id="pcCount"></div>
       <button class="pc-print-btn" id="pcSavePdfBtn" onclick="doSavePdf('pc', 'Color Combinations')">&#11015; Save PDF</button>
-      <button class="pc-print-btn" id="pcSharePdfBtn" style="background:#1FA855;" onclick="sharePdf('pc', 'Color Combinations')">&#128172; Share on WhatsApp</button>
+      <button class="pc-print-btn" id="pcSharePdfBtn" style="background:#1FA855;" onclick="sharePdf('pc', 'Color Combinations')">&#128172; Share</button>
     </div>
 
     <div id="pcPages"></div>
@@ -1112,7 +1114,7 @@
       <div class="pc-count" id="swCount"></div>
       <button class="pc-print-btn" id="swSavePdfBtn" onclick="doSavePdf('sw', 'Color Swatches')">&#11015; Save PDF</button>
       <button class="pc-print-btn" style="background:var(--brown-500, #8b5e3c);" onclick="downloadPreviewExcel()">&#128196; Excel</button>
-      <button class="pc-print-btn" id="swSharePdfBtn" style="background:#1FA855;flex-basis:100%;" onclick="sharePdf('sw', 'Color Swatches')">&#128172; Share on WhatsApp</button>
+      <button class="pc-print-btn" id="swSharePdfBtn" style="background:#1FA855;flex-basis:100%;" onclick="sharePdf('sw', 'Color Swatches')">&#128172; Share</button>
     </div>
     <div class="gu-filter-row no-print" style="margin:0 0 12px;">
       <button class="gu-filter-btn" onclick="sortPreviewByLightness('light-dark')">&#9728; Light &rarr; Dark</button>
@@ -1339,6 +1341,13 @@
       <button class="back-btn" onclick="switchTab('batches')">&#10005;</button>
       <h1 id="bdTitle">Batch</h1>
     </div>
+    <div class="bd-topbtns no-print">
+      <button class="save-btn" onclick="bdPrintColours()">Print colours</button>
+      <button class="save-btn" onclick="bdPreview()">Print with qty</button>
+      <button class="add-secondary-btn" onclick="bdDuplicate()">Duplicate</button>
+      <button class="add-secondary-btn" onclick="bdDelete()" style="color:var(--danger);">Delete</button>
+    </div>
+    <div class="page-sub no-print" style="margin:0 0 12px"><b>Print colours</b> = for the dyer (swatch, hex, name — no qty). <b>Print with qty</b> = for us (colour, design and pcs sent).</div>
     <div class="builder no-print">
       <div class="section-label">Batch details</div>
       <input class="bd-in" id="bdName" placeholder="Batch name (e.g. Diwali order 1)" oninput="bdField('name',this.value)">
@@ -1357,15 +1366,6 @@
       <div id="bdItems"></div>
       <div class="bd-total" id="bdTotal"></div>
     </div>
-    <div class="builder no-print">
-      <div class="section-label">Print</div>
-      <button class="save-btn" onclick="bdPrintColours()">Print colours — for the dyer</button>
-      <div class="page-sub" style="margin:6px 0 12px">Swatches with hex and name only. No quantities.</div>
-      <button class="save-btn" onclick="bdPreview()">Print with qty &amp; design — for us</button>
-      <div class="page-sub" style="margin:6px 0 4px">Our record: colour, lace design and how many pcs are sent.</div>
-      <button class="add-secondary-btn" onclick="bdDuplicate()" style="margin-top:10px;width:100%;">Duplicate batch</button>
-      <button class="add-secondary-btn" onclick="bdDelete()" style="margin-top:10px;width:100%;color:var(--danger);">Delete batch</button>
-    </div>
   </div>
 
   <div class="view" id="view-batchPreview">
@@ -1375,7 +1375,7 @@
     </div>
     <div class="pc-toolbar no-print" style="flex-wrap:wrap">
       <button class="pc-print-btn" id="bdPvPdfBtn" onclick="bdPvSave()">&#11015; Save PDF</button>
-      <button class="pc-print-btn" id="bdPvShareBtn" style="background:#1FA855;" onclick="bdPvShare()">&#128172; Share on WhatsApp</button>
+      <button class="pc-print-btn" id="bdPvShareBtn" style="background:#1FA855;" onclick="bdPvShare()">&#128172; Share</button>
       <button class="pc-print-btn" style="background:var(--tan-200);color:var(--brown-700);" onclick="bdPvClose()">Cancel</button>
     </div>
     <div id="bdPvPages"></div>
@@ -3334,7 +3334,7 @@ async function buildPdfFromPages(pagesContainerId) {
 let sharePdfCache = null; // { key, file } — lets a second tap share instantly (phones only allow sharing right after a tap)
 async function sharePdf(which, filenameBase) {
   const btn = document.getElementById(which === 'pc' ? 'pcSharePdfBtn' : 'swSharePdfBtn');
-  const label = '&#128172; Share on WhatsApp';
+  const label = '&#128172; Share';
   const container = document.getElementById(which === 'pc' ? 'pcPages' : 'swPages');
   if (!container) return;
   const key = which + '|' + container.innerHTML;
@@ -5321,7 +5321,7 @@ function bdPreview() {
   });
   bdPvFile = null; bdPvKey = bdCurrentId + Date.now();
   const key = bdPvKey;
-  const sb = document.getElementById('bdPvShareBtn'); sb.innerHTML = '&#128172; Share on WhatsApp';
+  const sb = document.getElementById('bdPvShareBtn'); sb.innerHTML = '&#128172; Share';
   bdPvPromise = bdMakePdfFile(b).then(f => { if (key === bdPvKey) bdPvFile = f; return f; }).catch(e => { console.error(e); return null; });
 }
 async function bdMakePdfFile(b) {
@@ -5341,7 +5341,7 @@ async function bdPvSave() {
   finally { btn.disabled = false; btn.innerHTML = old; }
 }
 async function bdPvShare() {
-  const btn = document.getElementById('bdPvShareBtn'), label = '&#128172; Share on WhatsApp';
+  const btn = document.getElementById('bdPvShareBtn'), label = '&#128172; Share';
   const doShare = async r => {
     if (navigator.canShare && navigator.canShare({ files: [r.file] })) { await navigator.share({ files: [r.file], title: r.fname }); }
     else { r.pdf.save(r.fname); alert('Sharing files is not supported in this browser, so the PDF was downloaded. Open WhatsApp and attach it from your downloads.'); }
