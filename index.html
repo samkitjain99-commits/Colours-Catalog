@@ -448,7 +448,7 @@
   .bd-topbtns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 8px; }
   .bd-topbtns .save-btn, .bd-topbtns .add-secondary-btn { margin:0; width:100%; padding:12px 8px; font-size:13.5px; }
   @media (max-width:900px) { input:not([type=checkbox]):not([type=radio]):not([type=color]), select, textarea { font-size:16px !important; } }
-  .bd-namedate { display:grid; grid-template-columns:1.5fr 1fr; gap:8px; align-items:start; }
+  .bd-namedate { display:grid; grid-template-columns:58px minmax(0,1fr) 116px; gap:6px; align-items:start; }
   .bd-namedate label { min-width:0; }
   .bd-namedate .bd-in { margin:4px 0 10px; min-width:0; max-width:100%; }
   input[type=date].bd-in { -webkit-appearance:none; appearance:none; min-height:42px; text-align:left; }
@@ -1391,8 +1391,9 @@
     <div class="page-sub no-print" style="margin:0 0 12px"><b>Print Colour Swatch</b> = swatches with hex and name, no quantities. <b>Dyer sheet</b> = colour, design, pcs, mtr and total mtr.</div>
     <div class="builder no-print">
       <div class="bd-namedate">
+        <label>Batch No.<input class="bd-in" id="bdNo" placeholder="No." autocomplete="off" style="padding-left:8px;padding-right:4px;text-align:center" oninput="bdField('no',this.value)"></label>
         <label>Batch details<input class="bd-in" id="bdName" placeholder="Batch name" oninput="bdField('name',this.value)"></label>
-        <label>Date<input class="bd-in" type="date" id="bdSent" onchange="bdField('sentDate',this.value)"></label>
+        <label>Date<input class="bd-in" type="date" id="bdSent" style="padding-left:8px;padding-right:6px" onchange="bdField('sentDate',this.value)"></label>
       </div>
       <textarea class="bd-in" id="bdNotes" rows="2" placeholder="Notes for the dyer (optional)" oninput="bdField('notes',this.value)"></textarea>
     </div>
@@ -5169,7 +5170,14 @@ function bdToday() { return new Date().toISOString().slice(0, 10); }
 function bdIsOverdue(b) { return b.status === 'At dyer' && b.expectedDate && b.expectedDate < bdToday(); }
 function bdFmtDate(d) { if (!d) return '—'; const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
 function bdBadgeClass(s) { return s === 'At dyer' ? 'at' : s === 'Received' ? 'rec' : s === 'Redo' ? 'redo' : ''; }
+function bdNextNo() {
+  let mx = 0;
+  (batches || []).forEach(b => { const n = parseInt(String(b.no || '').replace(/\D+/g, ' ').trim().split(' ').pop(), 10); if (n > mx) mx = n; });
+  return String(mx + 1);
+}
 function bdMigrate() {
+  // older batches without a number: number them oldest-first (list is stored newest-first)
+  for (let k = (batches || []).length - 1; k >= 0; k--) if (!batches[k].no) batches[k].no = bdNextNo();
   (batches || []).forEach(b => (b.items || []).forEach(i => {
     if (!Array.isArray(i.lines)) { i.lines = [{ id: uid(), qty: i.qty || '', mtr: i.mtr || '' }]; delete i.qty; delete i.mtr; }
     if (!i.lines.length) i.lines.push({ id: uid(), qty: '', mtr: '' });
@@ -5214,18 +5222,19 @@ function renderBatches() {
   box.innerHTML = list.map(b => {
     const dots = (b.items || []).slice(0, 40).map(i => `<span class="bd-dot" style="background:${i.hex}"></span>`).join('');
     return `<div class="bd-card" onclick="bdOpen('${b.id}')">
-      <div class="bd-row1"><span class="bd-name">${escapeHtml(b.name || 'Untitled batch')}</span><span class="bd-badge">${bdFmtDate(b.sentDate)}</span></div>
+      <div class="bd-row1"><span class="bd-name">${b.no ? '#' + escapeHtml(String(b.no)) + ' · ' : ''}${escapeHtml(b.name || 'Untitled batch')}</span><span class="bd-badge">${bdFmtDate(b.sentDate)}</span></div>
       <div class="bd-meta">${(b.items || []).length} colour${(b.items || []).length !== 1 ? 's' : ''}${bdQtyTotals(b) ? ' · ' + bdQtyTotals(b) : ''}</div>
       <div class="bd-dots">${dots}</div></div>`;
   }).join('');
 }
 
 function bdNew() {
-  const b = { id: uid(), name: '', sentDate: bdToday(), notes: '', items: [] };
+  const b = { id: uid(), no: bdNextNo(), name: '', sentDate: bdToday(), notes: '', items: [] };
   batches.unshift(b); saveBatches(); bdOpen(b.id);
 }
 function bdOpen(id) {
   bdCurrentId = id; bdSel = new Set(); const b = bdById(id); if (!b) return;
+  document.getElementById('bdNo').value = b.no || '';
   document.getElementById('bdName').value = b.name || '';
   document.getElementById('bdSent').value = b.sentDate || '';
   document.getElementById('bdNotes').value = b.notes || '';
@@ -5342,7 +5351,7 @@ function bdFillAll(k, inputId) {
 function bdDuplicate() {
   const b = bdById(bdCurrentId); if (!b) return;
   const c = JSON.parse(JSON.stringify(b));
-  c.id = uid(); c.name = (b.name || 'Batch') + ' (copy)'; c.sentDate = bdToday();
+  c.id = uid(); c.no = bdNextNo(); c.name = (b.name || 'Batch') + ' (copy)'; c.sentDate = bdToday();
   c.items.forEach(i => { i.id = uid(); (i.lines || []).forEach(l => { l.id = uid(); }); });
   batches.unshift(c); saveBatches(); bdOpen(c.id);
 }
@@ -5481,6 +5490,7 @@ function bdBuildSheetPages(b) {
     html += `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative;overflow:hidden">
       ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
       <div style="display:flex;gap:30px;margin:14px 0 6px;font-size:14px;color:#2b1d12;flex-wrap:wrap">
+        ${b.no ? `<div><span style="color:#7a6a55">Batch No:</span> <b>${escapeHtml(String(b.no))}</b></div>` : ''}
         <div><span style="color:#7a6a55">Date:</span> <b>${bdFmtDate(b.sentDate)}</b></div>
         <div><span style="color:#7a6a55">Colours:</span> <b>${items.length}</b>${tot ? ` &nbsp; <span style="color:#7a6a55">Total:</span> <b>${tot}</b>` : ''}</div></div>
       ${b.notes ? `<div style="margin:8px 0;padding:10px 12px;background:#f4ecdc;border-radius:8px;font-size:14px;color:#2b1d12;white-space:pre-wrap">${escapeHtml(b.notes)}</div>` : ''}`
@@ -5669,7 +5679,7 @@ function libAddToBatch() {
 function libCloseModal() { document.getElementById('libModal').style.display = 'none'; }
 function libDoAdd(id) {
   libCloseModal();
-  if (id === 'new') { const b = { id: uid(), name: '', sentDate: bdToday(), notes: '', items: [] }; batches.unshift(b); id = b.id; }
+  if (id === 'new') { const b = { id: uid(), no: bdNextNo(), name: '', sentDate: bdToday(), notes: '', items: [] }; batches.unshift(b); id = b.id; }
   bdCurrentId = id;
   const list = bdPoolSource('all').filter(r => libSel.has(r.hex));
   const n = bdAddItems(list);
