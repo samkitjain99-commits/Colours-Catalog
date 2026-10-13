@@ -1329,9 +1329,8 @@
       <span class="header-icon">&#129525;</span>
       <h1>Dye Batches</h1>
     </div>
-    <div class="page-sub no-print">Each batch is one dispatch to the dyer — colours, lace design, quantity and status.</div>
+    <div class="page-sub no-print">Each batch is one set of colours to send for dyeing — with lace design and quantity.</div>
     <div class="filter-row no-print"><button class="add-colour-btn" onclick="bdNew()">+ New Batch</button></div>
-    <div class="bd-chips no-print" id="bdChips"></div>
     <div id="bdList"></div>
   </div>
 
@@ -1343,15 +1342,8 @@
     <div class="builder no-print">
       <div class="section-label">Batch details</div>
       <input class="bd-in" id="bdName" placeholder="Batch name (e.g. Diwali order 1)" oninput="bdField('name',this.value)">
-      <input class="bd-in" id="bdDyer" placeholder="Dyer / vendor" oninput="bdField('dyer',this.value)">
-      <div class="bd-two">
-        <label>Date sent<input class="bd-in" type="date" id="bdSent" onchange="bdField('sentDate',this.value)"></label>
-        <label>Expected back<input class="bd-in" type="date" id="bdExp" onchange="bdField('expectedDate',this.value)"></label>
-      </div>
-      <label>Status
-        <select class="bd-in" id="bdStatus" onchange="bdField('status',this.value)">
-          <option>To send</option><option>At dyer</option><option>Received</option><option>Redo</option>
-        </select>
+      <label>Date
+        <input class="bd-in" type="date" id="bdSent" onchange="bdField('sentDate',this.value)">
       </label>
       <textarea class="bd-in" id="bdNotes" rows="2" placeholder="Notes for the dyer (optional)" oninput="bdField('notes',this.value)"></textarea>
     </div>
@@ -1366,11 +1358,27 @@
       <div class="bd-total" id="bdTotal"></div>
     </div>
     <div class="builder no-print">
-      <button class="save-btn" id="bdPdfBtn" onclick="bdDyerPdf(false)">Download dyer sheet (PDF)</button>
-      <button class="add-secondary-btn" id="bdShareBtn" onclick="bdDyerPdf(true)" style="margin-top:10px;width:100%;">Share dyer sheet (WhatsApp etc.)</button>
+      <div class="section-label">Print</div>
+      <button class="save-btn" onclick="bdPrintColours()">Print colours — for the dyer</button>
+      <div class="page-sub" style="margin:6px 0 12px">Swatches with hex and name only. No quantities.</div>
+      <button class="save-btn" onclick="bdPreview()">Print with qty &amp; design — for us</button>
+      <div class="page-sub" style="margin:6px 0 4px">Our record: colour, lace design and how many pcs are sent.</div>
       <button class="add-secondary-btn" onclick="bdDuplicate()" style="margin-top:10px;width:100%;">Duplicate batch</button>
       <button class="add-secondary-btn" onclick="bdDelete()" style="margin-top:10px;width:100%;color:var(--danger);">Delete batch</button>
     </div>
+  </div>
+
+  <div class="view" id="view-batchPreview">
+    <div class="screen-header no-print">
+      <button class="back-btn" onclick="bdPvClose()">&#10005;</button>
+      <h1>Qty &amp; design sheet</h1>
+    </div>
+    <div class="pc-toolbar no-print" style="flex-wrap:wrap">
+      <button class="pc-print-btn" id="bdPvPdfBtn" onclick="bdPvSave()">&#11015; Save PDF</button>
+      <button class="pc-print-btn" id="bdPvShareBtn" style="background:#1FA855;" onclick="bdPvShare()">&#128172; Share on WhatsApp</button>
+      <button class="pc-print-btn" style="background:var(--tan-200);color:var(--brown-700);" onclick="bdPvClose()">Cancel</button>
+    </div>
+    <div id="bdPvPages"></div>
   </div>
 
   <div class="view" id="view-batchAdd">
@@ -2286,7 +2294,7 @@ const VIEW_TO_TAB = {
   generallyused: 'generallyused',
   backup: 'backup',
   library: 'library',
-  batches: 'batches', batchDetail: 'batches', batchAdd: 'batches'
+  batches: 'batches', batchDetail: 'batches', batchAdd: 'batches', batchPreview: 'batches'
 };
 
 function showView(name) {
@@ -5122,53 +5130,39 @@ function bdQtyTotals(b) {
 function updateBatchGlance() {
   const el = document.getElementById('bdGlance');
   if (!el) return;
-  const at = batches.filter(b => b.status === 'At dyer');
-  const over = at.filter(bdIsOverdue);
   if (!batches.length) { el.style.display = 'none'; return; }
-  el.style.display = 'block';
-  el.className = 'bd-glance' + (over.length ? ' warn' : '');
-  el.textContent = `At dyer: ${at.length} batch${at.length !== 1 ? 'es' : ''}` + (over.length ? ` · ${over.length} overdue` : '') + '  ›';
+  el.style.display = 'block'; el.className = 'bd-glance';
+  el.textContent = `Dye batches: ${batches.length}  ›`;
 }
 
 function renderBatches() {
-  const filters = ['Active', ...BD_STATUSES, 'All'];
-  document.getElementById('bdChips').innerHTML = filters.map(f =>
-    `<button class="bd-chip ${bdFilter === f ? 'on' : ''}" onclick="bdFilter='${f}';renderBatches()">${f}</button>`).join('');
-  let list = batches.filter(b => bdFilter === 'All' ? true : bdFilter === 'Active' ? (b.status === 'To send' || b.status === 'At dyer' || b.status === 'Redo') : b.status === bdFilter);
-  list = list.slice().sort((a, b) => (bdIsOverdue(b) - bdIsOverdue(a)) || ((a.expectedDate || '9') < (b.expectedDate || '9') ? -1 : 1));
+  const list = batches.slice().sort((a, b) => (b.sentDate || '') < (a.sentDate || '') ? -1 : 1);
   const box = document.getElementById('bdList');
-  if (!list.length) { box.innerHTML = `<div class="empty-state">No batches here.<br>Tap "+ New Batch" to create one.</div>`; return; }
+  if (!list.length) { box.innerHTML = `<div class="empty-state">No batches yet.<br>Tap "+ New Batch" to create one.</div>`; return; }
   box.innerHTML = list.map(b => {
-    const od = bdIsOverdue(b);
     const dots = (b.items || []).slice(0, 40).map(i => `<span class="bd-dot" style="background:${i.hex}"></span>`).join('');
-    return `<div class="bd-card ${od ? 'overdue' : ''}" onclick="bdOpen('${b.id}')">
-      <div class="bd-row1"><span class="bd-name">${escapeHtml(b.name || 'Untitled batch')}</span><span class="bd-badge ${bdBadgeClass(b.status)}">${od ? 'Overdue · ' : ''}${b.status}</span></div>
-      <div class="bd-meta">${escapeHtml(b.dyer || 'No dyer set')} · Sent ${bdFmtDate(b.sentDate)} · Due ${bdFmtDate(b.expectedDate)}</div>
+    return `<div class="bd-card" onclick="bdOpen('${b.id}')">
+      <div class="bd-row1"><span class="bd-name">${escapeHtml(b.name || 'Untitled batch')}</span><span class="bd-badge">${bdFmtDate(b.sentDate)}</span></div>
       <div class="bd-meta">${(b.items || []).length} colour${(b.items || []).length !== 1 ? 's' : ''}${bdQtyTotals(b) ? ' · ' + bdQtyTotals(b) : ''}</div>
       <div class="bd-dots">${dots}</div></div>`;
   }).join('');
 }
 
 function bdNew() {
-  const b = { id: uid(), name: '', dyer: '', sentDate: bdToday(), expectedDate: '', status: 'To send', notes: '', items: [] };
+  const b = { id: uid(), name: '', sentDate: bdToday(), notes: '', items: [] };
   batches.unshift(b); saveBatches(); bdOpen(b.id);
 }
 function bdOpen(id) {
   bdCurrentId = id; const b = bdById(id); if (!b) return;
   document.getElementById('bdName').value = b.name || '';
-  document.getElementById('bdDyer').value = b.dyer || '';
   document.getElementById('bdSent').value = b.sentDate || '';
-  document.getElementById('bdExp').value = b.expectedDate || '';
-  document.getElementById('bdStatus').value = b.status;
   document.getElementById('bdNotes').value = b.notes || '';
-  document.getElementById('bdShareBtn').style.display = (navigator.canShare && navigator.share) ? '' : 'none';
   bdRenderItems();
   showView('batchDetail');
 }
 function bdField(k, v) {
   const b = bdById(bdCurrentId); if (!b) return;
   b[k] = v;
-  if (k === 'status' && v === 'At dyer' && !b.sentDate) { b.sentDate = bdToday(); document.getElementById('bdSent').value = b.sentDate; }
   document.getElementById('bdTitle').textContent = b.name || 'Batch';
   saveBatches();
 }
@@ -5204,7 +5198,7 @@ function bdFillAll(k) {
 function bdDuplicate() {
   const b = bdById(bdCurrentId); if (!b) return;
   const c = JSON.parse(JSON.stringify(b));
-  c.id = uid(); c.name = (b.name || 'Batch') + ' (copy)'; c.status = 'To send'; c.sentDate = bdToday(); c.expectedDate = '';
+  c.id = uid(); c.name = (b.name || 'Batch') + ' (copy)'; c.sentDate = bdToday();
   c.items.forEach(i => { i.id = uid(); });
   batches.unshift(c); saveBatches(); bdOpen(c.id);
 }
@@ -5279,12 +5273,10 @@ function bdBuildSheetPages(b) {
         <div style="flex:1;font-size:15px;color:#2b1d12">${escapeHtml(i.design || '')}</div>
         <div style="width:110px;text-align:right;font-weight:700;font-size:16px;color:#2b1d12">${i.qty ? escapeHtml(String(i.qty)) + ' pcs' : ''}</div>
       </div>`).join('');
-    html += `<div class="sw-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative">
+    html += `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative">
       ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dye Order${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
       <div style="display:flex;gap:30px;margin:14px 0 6px;font-size:14px;color:#2b1d12;flex-wrap:wrap">
-        <div><span style="color:#7a6a55">Dyer:</span> <b>${escapeHtml(b.dyer || '—')}</b></div>
-        <div><span style="color:#7a6a55">Date sent:</span> <b>${bdFmtDate(b.sentDate)}</b></div>
-        <div><span style="color:#7a6a55">Needed by:</span> <b>${bdFmtDate(b.expectedDate)}</b></div>
+        <div><span style="color:#7a6a55">Date:</span> <b>${bdFmtDate(b.sentDate)}</b></div>
         <div><span style="color:#7a6a55">Colours:</span> <b>${items.length}</b>${tot ? ` &nbsp; <span style="color:#7a6a55">Total:</span> <b>${tot}</b>` : ''}</div></div>
       ${b.notes ? `<div style="margin:8px 0;padding:10px 12px;background:#f4ecdc;border-radius:8px;font-size:14px;color:#2b1d12;white-space:pre-wrap">${escapeHtml(b.notes)}</div>` : ''}`
       : `<div style="font-size:16px;font-weight:700;color:#7a6a55">Dye Order${b.name ? ' — ' + escapeHtml(b.name) : ''} (continued)</div>`}
@@ -5295,24 +5287,77 @@ function bdBuildSheetPages(b) {
   }
   return html;
 }
-async function bdDyerPdf(share) {
+function bdPrintColours() {
   const b = bdById(bdCurrentId); if (!b) return;
   if (!b.items.length) { alert('Add at least one colour first.'); return; }
-  const btn = document.getElementById(share ? 'bdShareBtn' : 'bdPdfBtn'); const old = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Generating…';
+  const id = b.id;
+  renderPrintColoursFromSwatches(b.items.map(i => ({ hex: i.hex, name: i.name || '' })), `${b.items.length} colour${b.items.length !== 1 ? 's' : ''} in "${b.name || 'this batch'}"`, {
+    targets: [{ arr: () => { const x = bdById(id); return x ? x.items : null; }, hexOf: i => i.hex }],
+    refresh: () => { saveBatches(); if (bdCurrentId === id) bdRenderItems(); }
+  });
+  printColoursReturnView = 'batchDetail';
+  showView('printcolours');
+}
+let bdPvFile = null, bdPvPromise = null, bdPvKey = '';
+function bdPvClose() { bdPvFile = null; bdPvPromise = null; showView('batchDetail'); }
+function bdPvStage() {
   let stage = document.getElementById('bdPdfStage');
   if (!stage) { stage = document.createElement('div'); stage.id = 'bdPdfStage'; stage.style.cssText = 'position:absolute;left:-10000px;top:0;width:794px;'; document.body.appendChild(stage); }
+  return stage;
+}
+function bdPreview() {
+  const b = bdById(bdCurrentId); if (!b) return;
+  if (!b.items.length) { alert('Add at least one colour first.'); return; }
+  showView('batchPreview');
+  const box = document.getElementById('bdPvPages');
+  const w = Math.min(box.clientWidth || 360, 794), sc = w / 794;
+  const tmp = document.createElement('div'); tmp.innerHTML = bdBuildSheetPages(b);
+  box.innerHTML = '';
+  Array.from(tmp.children).forEach(pg => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `width:${w}px;height:${1123 * sc}px;overflow:hidden;margin:0 auto 14px;border:1px solid var(--border);border-radius:6px;background:#fff;`;
+    pg.style.transformOrigin = 'top left'; pg.style.transform = `scale(${sc})`;
+    wrap.appendChild(pg); box.appendChild(wrap);
+  });
+  bdPvFile = null; bdPvKey = bdCurrentId + Date.now();
+  const key = bdPvKey;
+  const sb = document.getElementById('bdPvShareBtn'); sb.innerHTML = '&#128172; Share on WhatsApp';
+  bdPvPromise = bdMakePdfFile(b).then(f => { if (key === bdPvKey) bdPvFile = f; return f; }).catch(e => { console.error(e); return null; });
+}
+async function bdMakePdfFile(b) {
+  const stage = bdPvStage();
   try {
     stage.innerHTML = bdBuildSheetPages(b);
     const pdf = await buildPdfFromPages('bdPdfStage');
     const fname = safePdfFilename('Dye Order - ' + (b.name || 'batch'));
-    if (share && navigator.canShare) {
-      const file = new File([pdf.output('blob')], fname, { type: 'application/pdf' });
-      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: b.name || 'Dye order' }); return; }
-    }
-    pdf.save(fname);
-  } catch (e) { if (e && e.name !== 'AbortError') { console.error(e); alert('Could not generate the PDF. Please try again.'); } }
-  finally { stage.innerHTML = ''; btn.disabled = false; btn.textContent = old; }
+    return { pdf, fname, file: new File([pdf.output('blob')], fname, { type: 'application/pdf' }) };
+  } finally { stage.innerHTML = ''; }
+}
+async function bdPvSave() {
+  const btn = document.getElementById('bdPvPdfBtn'), old = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = 'Generating…';
+  try { const r = bdPvFile || await bdPvPromise; if (!r) throw new Error('pdf'); r.pdf.save(r.fname); }
+  catch (e) { alert('Could not generate the PDF. Please try again.'); }
+  finally { btn.disabled = false; btn.innerHTML = old; }
+}
+async function bdPvShare() {
+  const btn = document.getElementById('bdPvShareBtn'), label = '&#128172; Share on WhatsApp';
+  const doShare = async r => {
+    if (navigator.canShare && navigator.canShare({ files: [r.file] })) { await navigator.share({ files: [r.file], title: r.fname }); }
+    else { r.pdf.save(r.fname); alert('Sharing files is not supported in this browser, so the PDF was downloaded. Open WhatsApp and attach it from your downloads.'); }
+  };
+  try {
+    if (bdPvFile) { await doShare(bdPvFile); return; }
+    btn.disabled = true; btn.innerHTML = 'Preparing PDF…';
+    const r = await bdPvPromise; btn.disabled = false;
+    if (!r) throw new Error('pdf');
+    try { await doShare(r); btn.innerHTML = label; }
+    catch (e) { if (e && e.name === 'AbortError') btn.innerHTML = label; else btn.innerHTML = '&#9989; PDF ready — tap to share'; }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    btn.disabled = false; btn.innerHTML = label;
+    alert('Could not share the PDF (' + ((e && (e.name || e.message)) || 'error') + '). Use Save PDF instead.');
+  }
 }
 
 /* ---------------- Colour Library ---------------- */
@@ -5411,15 +5456,15 @@ function libUpdateBar() {
 const libNameByHex = h => { const r = bdPoolSource('all').find(x => x.hex === h); return r ? r.name : h; };
 function libAddToBatch() {
   if (!libSel.size) return;
-  const open = batches.filter(b => b.status !== 'Received');
+  const open = batches;
   document.getElementById('libBatchList').innerHTML = `<button class="bd-pick" onclick="libDoAdd('new')">+ New batch</button>` +
-    open.map(b => `<button class="bd-pick" onclick="libDoAdd('${b.id}')"><span>${escapeHtml(b.name || 'Untitled batch')}</span><span style="color:var(--muted);font-weight:600">${b.status} · ${b.items.length}</span></button>`).join('');
+    open.map(b => `<button class="bd-pick" onclick="libDoAdd('${b.id}')"><span>${escapeHtml(b.name || 'Untitled batch')}</span><span style="color:var(--muted);font-weight:600">${bdFmtDate(b.sentDate)} · ${b.items.length}</span></button>`).join('');
   document.getElementById('libModal').style.display = 'flex';
 }
 function libCloseModal() { document.getElementById('libModal').style.display = 'none'; }
 function libDoAdd(id) {
   libCloseModal();
-  if (id === 'new') { const b = { id: uid(), name: '', dyer: '', sentDate: bdToday(), expectedDate: '', status: 'To send', notes: '', items: [] }; batches.unshift(b); id = b.id; }
+  if (id === 'new') { const b = { id: uid(), name: '', sentDate: bdToday(), notes: '', items: [] }; batches.unshift(b); id = b.id; }
   bdCurrentId = id;
   const list = bdPoolSource('all').filter(r => libSel.has(r.hex));
   const n = bdAddItems(list);
