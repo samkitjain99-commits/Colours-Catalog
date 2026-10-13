@@ -448,7 +448,9 @@
   .bd-topbtns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 8px; }
   .bd-topbtns .save-btn, .bd-topbtns .add-secondary-btn { margin:0; width:100%; padding:12px 8px; font-size:13.5px; }
   .bd-namedate { display:grid; grid-template-columns:1.5fr 1fr; gap:8px; align-items:start; }
-  .bd-namedate .bd-in { margin:0 0 10px; min-width:0; }
+  .bd-namedate label { min-width:0; }
+  .bd-namedate .bd-in { margin:4px 0 10px; min-width:0; max-width:100%; }
+  input[type=date].bd-in { -webkit-appearance:none; appearance:none; min-height:42px; text-align:left; }
   .bd-in { display:block; width:100%; font-family:inherit; font-size:14px; border:1px solid var(--border); border-radius:9px; padding:9px 10px; background:#fff; color:var(--brown-900); margin:6px 0 10px; box-sizing:border-box; }
   .builder label { display:block; font-size:12px; color:var(--muted); font-weight:600; }
   .bd-two { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -471,11 +473,20 @@
   .bd-sw { width:34px; height:34px; border-radius:8px; border:1px solid rgba(0,0,0,.18); }
   .bd-iname { font-size:13px; font-weight:700; color:var(--brown-900); }
   .bd-ihex { font-size:11px; color:var(--muted); font-weight:500; }
+  .bd-selrow { grid-template-columns:26px 34px 1fr auto; }
+  .bd-selrow .bd-fields, .bd-selrow .bd-ltot { grid-column:2 / 5; }
+  .bd-chk { width:20px; height:20px; accent-color:var(--brown-700); }
+  .bd-selbar { display:flex; align-items:center; gap:10px; padding:6px 0 10px; font-size:13px; font-weight:600; color:var(--brown-700); }
+  .bd-selbar .bd-rm { margin-left:auto; background:var(--danger); color:#fff; border:none; border-radius:9px; padding:8px 12px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
   .bd-fields { grid-column:2 / 4; display:grid; grid-template-columns:1.4fr .8fr .7fr; gap:6px; }
   .bd-fields input, .bd-fields select { font-family:inherit; font-size:13px; border:1px solid var(--border); border-radius:8px; padding:7px 8px; min-width:0; width:100%; box-sizing:border-box; background:#fff; }
   .bd-fl { font-size:10.5px !important; font-weight:600; color:var(--muted); min-width:0; }
   .bd-fl input { margin-top:2px; }
-  .bd-ltot { grid-column:2 / 4; font-size:12px; color:var(--brown-700); min-height:0; }
+  .bd-applyrow { display:grid; grid-template-columns:1.4fr .8fr .8fr; gap:6px; padding:8px 0 12px; }
+  .bd-apply label { font-size:10.5px !important; font-weight:600; }
+  .bd-apply .bd-in { margin:2px 0 6px; padding:8px; font-size:13px; }
+  .bd-apply .add-secondary-btn { width:100%; padding:8px 2px; font-size:11px; }
+  .bd-ltot { grid-column:2 / 4; font-size:13px; color:var(--brown-700); background:var(--tan-200); border-radius:8px; padding:6px 10px; }
   .bd-pcs { display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--muted); background:var(--tan-200); border-radius:8px; }
   .bd-x { background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer; }
   .bd-total { font-size:13px; font-weight:700; color:var(--brown-700); margin-top:10px; }
@@ -1355,8 +1366,8 @@
     <div class="page-sub no-print" style="margin:0 0 12px"><b>Print Colour Catalog</b> = swatches with hex and name, no quantities. <b>Dyer sheet</b> = colour, design, pcs, mtr and total mtr.</div>
     <div class="builder no-print">
       <div class="bd-namedate">
-        <input class="bd-in" id="bdName" placeholder="Batch name" oninput="bdField('name',this.value)">
-        <input class="bd-in" type="date" id="bdSent" onchange="bdField('sentDate',this.value)">
+        <label>Batch details<input class="bd-in" id="bdName" placeholder="Batch name" oninput="bdField('name',this.value)"></label>
+        <label>Date<input class="bd-in" type="date" id="bdSent" onchange="bdField('sentDate',this.value)"></label>
       </div>
       <textarea class="bd-in" id="bdNotes" rows="2" placeholder="Notes for the dyer (optional)" oninput="bdField('notes',this.value)"></textarea>
     </div>
@@ -1364,9 +1375,15 @@
       <div class="section-label">Colours in this batch <span id="bdCount"></span></div>
       <div class="bd-actions">
         <button class="add-colour-btn" onclick="bdOpenAdd()">+ Add colours</button>
-        <button class="add-secondary-btn" onclick="bdFillAll('design')">Design for all</button>
-        <button class="add-secondary-btn" onclick="bdFillAll('qty')">Pcs for all</button>
-        <button class="add-secondary-btn" onclick="bdFillAll('mtr')">Mtr for all</button>
+      </div>
+      <div class="bd-applyrow">
+        <div class="bd-apply"><label>Design — all<input class="bd-in" id="bdAllDesign" placeholder="Lace design"></label><button class="add-secondary-btn" onclick="bdFillAll('design','bdAllDesign')">Apply to all</button></div>
+        <div class="bd-apply"><label>Pcs — all<input class="bd-in" id="bdAllQty" inputmode="decimal" placeholder="0"></label><button class="add-secondary-btn" onclick="bdFillAll('qty','bdAllQty')">Apply to all</button></div>
+        <div class="bd-apply"><label>Mtr / pc — all<input class="bd-in" id="bdAllMtr" inputmode="decimal" placeholder="0"></label><button class="add-secondary-btn" onclick="bdFillAll('mtr','bdAllMtr')">Apply to all</button></div>
+      </div>
+      <div class="bd-selbar" id="bdSelBar" style="display:none">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:0"><input type="checkbox" class="bd-chk" id="bdSelAll" onchange="bdSelAllToggle(this.checked)"> Select all</label>
+        <button class="bd-rm" id="bdRmBtn" onclick="bdRemoveSelected()" style="display:none"></button>
       </div>
       <div id="bdItems"></div>
       <div class="bd-total" id="bdTotal"></div>
@@ -5129,6 +5146,12 @@ function bdToday() { return new Date().toISOString().slice(0, 10); }
 function bdIsOverdue(b) { return b.status === 'At dyer' && b.expectedDate && b.expectedDate < bdToday(); }
 function bdFmtDate(d) { if (!d) return '—'; const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
 function bdBadgeClass(s) { return s === 'At dyer' ? 'at' : s === 'Received' ? 'rec' : s === 'Redo' ? 'redo' : ''; }
+function bdLineText(i) {
+  const q = parseFloat(i.qty), m = parseFloat(i.mtr), t = bdLineMtr(i);
+  if (t) return `Total: ${q} pcs × ${m} mtr = <b>${t} mtr</b>`;
+  if (q > 0) return `Total: <b>${q} pcs</b>`;
+  return '<span style="color:var(--muted)">Total: —</span>';
+}
 function bdLineMtr(i) { const q = parseFloat(i.qty), m = parseFloat(i.mtr); return (q > 0 && m > 0) ? +(q * m).toFixed(2) : 0; }
 function bdQtyTotals(b) {
   let t = 0, m = 0;
@@ -5162,7 +5185,7 @@ function bdNew() {
   batches.unshift(b); saveBatches(); bdOpen(b.id);
 }
 function bdOpen(id) {
-  bdCurrentId = id; const b = bdById(id); if (!b) return;
+  bdCurrentId = id; bdSel = new Set(); const b = bdById(id); if (!b) return;
   document.getElementById('bdName').value = b.name || '';
   document.getElementById('bdSent').value = b.sentDate || '';
   document.getElementById('bdNotes').value = b.notes || '';
@@ -5180,7 +5203,8 @@ function bdRenderItems() {
   document.getElementById('bdTitle').textContent = b.name || 'Batch';
   document.getElementById('bdCount').textContent = `(${b.items.length})`;
     document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
-    <div class="bd-item">
+    <div class="bd-item bd-selrow">
+      <input type="checkbox" class="bd-chk" ${bdSel.has(i.id) ? 'checked' : ''} onchange="bdToggleSel('${i.id}')">
       <div class="bd-sw" style="background:${i.hex}"></div>
       <div><div class="bd-iname">${n + 1}. ${escapeHtml(i.name || i.hex)}</div><div class="bd-ihex">${i.hex}</div></div>
       <button class="bd-x" onclick="bdRemoveItem('${i.id}')">&#10005;</button>
@@ -5189,24 +5213,36 @@ function bdRenderItems() {
         <label class="bd-fl">Pcs<input placeholder="0" inputmode="decimal" value="${escapeHtml(String(i.qty || ''))}" oninput="bdItemField('${i.id}','qty',this.value)"></label>
         <label class="bd-fl">Mtr / pc<input placeholder="0" inputmode="decimal" value="${escapeHtml(String(i.mtr || ''))}" oninput="bdItemField('${i.id}','mtr',this.value)"></label>
       </div>
-      <div class="bd-ltot" id="ltot-${i.id}">${bdLineMtr(i) ? `${i.qty} pcs × ${i.mtr} mtr = <b>${bdLineMtr(i)} mtr</b>` : ''}</div></div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
+      <div class="bd-ltot" id="ltot-${i.id}">${bdLineText(i)}</div></div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
   const t = bdQtyTotals(b);
   document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
+  bdSel = new Set([...bdSel].filter(id => b.items.some(i => i.id === id)));
+  const bar = document.getElementById('bdSelBar'), rm = document.getElementById('bdRmBtn'), all = document.getElementById('bdSelAll');
+  bar.style.display = b.items.length ? 'flex' : 'none';
+  rm.style.display = bdSel.size ? 'block' : 'none'; rm.textContent = `Remove selected (${bdSel.size})`;
+  all.checked = b.items.length > 0 && bdSel.size === b.items.length; all.indeterminate = bdSel.size > 0 && bdSel.size < b.items.length;
 }
 function bdItemField(id, k, v) {
   const b = bdById(bdCurrentId); const i = b && b.items.find(x => x.id === id); if (!i) return;
   i[k] = v; saveBatches();
   if (k !== 'design') {
     const t = bdQtyTotals(b); document.getElementById('bdTotal').textContent = t ? `Total: ${t}` : '';
-    const lt = document.getElementById('ltot-' + id); if (lt) lt.innerHTML = bdLineMtr(i) ? `${i.qty} pcs × ${i.mtr} mtr = <b>${bdLineMtr(i)} mtr</b>` : '';
+    const lt = document.getElementById('ltot-' + id); if (lt) lt.innerHTML = bdLineText(i);
   }
 }
-function bdRemoveItem(id) { const b = bdById(bdCurrentId); b.items = b.items.filter(i => i.id !== id); saveBatches(); bdRenderItems(); }
-function bdFillAll(k) {
+let bdSel = new Set();
+function bdToggleSel(id) { if (bdSel.has(id)) bdSel.delete(id); else bdSel.add(id); bdRenderItems(); }
+function bdSelAllToggle(on) { const b = bdById(bdCurrentId); bdSel = on ? new Set(b.items.map(i => i.id)) : new Set(); bdRenderItems(); }
+function bdRemoveSelected() {
+  const b = bdById(bdCurrentId); if (!b || !bdSel.size) return;
+  b.items = b.items.filter(i => !bdSel.has(i.id)); bdSel = new Set(); saveBatches(); bdRenderItems();
+}
+function bdRemoveItem(id) { bdSel.delete(id); const b = bdById(bdCurrentId); b.items = b.items.filter(i => i.id !== id); saveBatches(); bdRenderItems(); }
+function bdFillAll(k, inputId) {
   const b = bdById(bdCurrentId); if (!b || !b.items.length) return;
-  const v = prompt(k === 'design' ? 'Lace design for ALL colours in this batch:' : k === 'mtr' ? 'Metres per piece for ALL colours in this batch:' : 'Number of pieces for ALL colours in this batch:');
-  if (v === null) return;
-  b.items.forEach(i => { i[k] = v.trim(); }); saveBatches(); bdRenderItems();
+  const el = document.getElementById(inputId); const v = el ? el.value.trim() : '';
+  if (!v) { if (el) el.focus(); return; }
+  b.items.forEach(i => { i[k] = v; }); saveBatches(); bdRenderItems();
 }
 function bdDuplicate() {
   const b = bdById(bdCurrentId); if (!b) return;
@@ -5265,7 +5301,9 @@ function bdPoolUpdateBtn() {
 }
 function bdAddItems(list) {
   const b = bdById(bdCurrentId); let n = 0;
-  list.forEach(c => { if (b.items.some(i => i.hex === c.hex)) return; b.items.push({ id: uid(), hex: c.hex, name: c.name || c.hex, design: '', qty: '' }); n++; });
+  const fresh = [];
+  list.forEach(c => { if (b.items.some(i => i.hex === c.hex) || fresh.some(i => i.hex === c.hex)) return; fresh.push({ id: uid(), hex: c.hex, name: c.name || c.hex, design: '', qty: '', mtr: '' }); n++; });
+  b.items = fresh.concat(b.items);
   saveBatches(); return n;
 }
 function bdConfirmAdd() {
