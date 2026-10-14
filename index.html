@@ -1416,7 +1416,7 @@
     <div class="page-sub no-print">How much of each colour has been sent for dyeing, across all batches.</div>
     <div class="builder no-print">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <select class="bd-in" id="baPeriod" onchange="baRender()"><option value="all">All time</option><option value="fy" id="baFyOpt">Current FY</option><option value="lfy" id="baLfyOpt">Last FY</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="year">This year</option></select>
+        <select class="bd-in" id="baPeriod" onchange="baRender()"><option value="all">All time</option><option value="last5">Last 5 batches</option><option value="tm" id="baTmOpt">This month</option><option value="lm" id="baLmOpt">Last month</option><option value="fy" id="baFyOpt">Current FY</option><option value="lfy" id="baLfyOpt">Last FY</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="year">This year</option></select>
         <select class="bd-in" id="baSort" onchange="baRender()"><option value="mtr">Most metres</option><option value="pcs">Most pcs</option><option value="times">Most batches</option><option value="recent">Recently dyed</option><option value="name">Name A–Z</option></select>
       </div>
       <div class="ba-wrap" id="baWrap">
@@ -5571,6 +5571,9 @@ function baFyRange(back) {
   return { from: y + '-04-01', to: (y + 1) + '-03-31', label: `FY ${y}-${String(y + 1).slice(2)}` };
 }
 function baOpen() {
+  const mn = d => d.toLocaleString('en-GB', { month: 'short', year: 'numeric' }), nw = new Date();
+  document.getElementById('baTmOpt').textContent = 'This month (' + mn(nw) + ')';
+  document.getElementById('baLmOpt').textContent = 'Last month (' + mn(new Date(nw.getFullYear(), nw.getMonth() - 1, 1)) + ')';
   document.getElementById('baFyOpt').textContent = 'Current FY (' + baFyRange(0).label.slice(3) + ')';
   document.getElementById('baLfyOpt').textContent = 'Last FY (' + baFyRange(1).label.slice(3) + ')';
   baOpenHex = null; baSel = new Set(); baColSel = new Map(); document.getElementById('baPanel').style.display = 'none'; showView('batchAnalytics'); baRender(); }
@@ -5607,7 +5610,12 @@ function baRender() {
   const per = document.getElementById('baPeriod').value, sort = document.getElementById('baSort').value;
   const q = document.getElementById('baSearch').value.trim().toLowerCase();
   const now = new Date(); let from = '', to = '';
-  if (per === 'fy' || per === 'lfy') { const r = baFyRange(per === 'fy' ? 0 : 1); from = r.from; to = r.to; } else
+  const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  let lastIds = null;
+  if (per === 'last5') lastIds = new Set(baSortedBatches().slice(0, 5).map(b => b.id));
+  else if (per === 'tm') { from = ymd(new Date(now.getFullYear(), now.getMonth(), 1)); to = ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0)); }
+  else if (per === 'lm') { from = ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1)); to = ymd(new Date(now.getFullYear(), now.getMonth(), 0)); }
+  else if (per === 'fy' || per === 'lfy') { const r = baFyRange(per === 'fy' ? 0 : 1); from = r.from; to = r.to; } else
   if (per === 'year') from = now.getFullYear() + '-01-01';
   else if (per !== 'all') { const d = new Date(now.getTime() - (+per) * 864e5); from = d.toISOString().slice(0, 10); }
   document.getElementById('baBtnTxt').textContent = baSel.size ? (baSel.size === 1 ? (() => { const x = bdById([...baSel][0]); return x ? (x.no ? '#' + x.no + ' · ' : '') + (x.name || 'Untitled') : '1 batch'; })() : baSel.size + ' batches selected') : 'All Batches';
@@ -5616,6 +5624,7 @@ function baRender() {
     if (from && (b.sentDate || '') < from) return;
     if (to && (b.sentDate || '') > to) return;
     if (baSel.size && !baSel.has(b.id)) return;
+    if (lastIds && !lastIds.has(b.id)) return;
     nb++;
     (b.items || []).forEach(i => {
       const hex = String(i.hex).toUpperCase(), x = bdItemTotals(i);
