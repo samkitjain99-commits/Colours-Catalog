@@ -478,6 +478,13 @@
   .ba-brow input { width:22px !important; height:22px; flex-shrink:0; margin:0 !important; accent-color:var(--brown-700); }
   .ba-brow .n { font-weight:700; color:var(--brown-900); } .ba-brow .d { margin-left:auto; color:var(--muted); font-size:12.5px; white-space:nowrap; }
   .ba-done { width:100%; border:0; border-top:1px solid var(--tan-200); background:#fff; padding:13px; font-family:inherit; font-size:16px; font-weight:700; color:var(--brown-700); cursor:pointer; }
+  .ba-selrow { display:flex; align-items:center; gap:14px; margin:0 0 8px; font-size:13px; font-weight:700; color:var(--brown-700); }
+  .ba-selrow a { cursor:pointer; text-decoration:underline; } .ba-selrow span { margin-left:auto; color:var(--muted); font-weight:600; }
+  .ba-cb { width:22px; height:22px; flex-shrink:0; accent-color:var(--brown-700); margin:0; }
+  .ba-card.sel { border-color:var(--brown-700); box-shadow:0 0 0 1px var(--brown-700); }
+  .ba-actbar { position:sticky; bottom:10px; z-index:40; display:flex; gap:8px; margin-top:12px; padding:8px; background:var(--brown-700); border-radius:14px; box-shadow:0 4px 14px rgba(43,29,18,.35); }
+  .ba-actbar button { flex:1; border:0; border-radius:10px; padding:12px 6px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; background:#fff; color:var(--brown-700); }
+  .ba-actbar button + button { background:var(--tan-200); }
   .ba-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:0 0 12px; }
   .ba-kpi { background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 4px; text-align:center; }
   .ba-kpi b { display:block; font-size:17px; color:var(--brown-900); } .ba-kpi small { font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); font-weight:600; }
@@ -1424,7 +1431,12 @@
       <input class="bd-in" id="baSearch" placeholder="Search colour name or hex" oninput="baRender()" style="margin-top:8px">
     </div>
     <div class="ba-kpis" id="baKpis"></div>
+    <div class="ba-selrow" id="baSelRow"></div>
     <div id="baList"></div>
+    <div class="ba-actbar" id="baActBar" style="display:none">
+      <button onclick="baPrintSel()">Print Colour Swatch <span id="baActN1"></span></button>
+      <button onclick="baNewBatchSel()">New batch <span id="baActN2"></span></button>
+    </div>
   </div>
 
   <div class="view" id="view-batchDetail">
@@ -5553,7 +5565,7 @@ function bdBuildSheetPages(b) {
   return html;
 }
 /* ---------- Dye analytics ---------- */
-let baOpenHex = null, baSel = new Set();
+let baOpenHex = null, baSel = new Set(), baColSel = new Map(), baVisible = [];
 function baFyRange(back) {
   const n = new Date(), y = (n.getMonth() >= 3 ? n.getFullYear() : n.getFullYear() - 1) - back;   // Indian FY: 1 Apr – 31 Mar
   return { from: y + '-04-01', to: (y + 1) + '-03-31', label: `FY ${y}-${String(y + 1).slice(2)}` };
@@ -5561,7 +5573,7 @@ function baFyRange(back) {
 function baOpen() {
   document.getElementById('baFyOpt').textContent = 'Current FY (' + baFyRange(0).label.slice(3) + ')';
   document.getElementById('baLfyOpt').textContent = 'Last FY (' + baFyRange(1).label.slice(3) + ')';
-  baOpenHex = null; baSel = new Set(); document.getElementById('baPanel').style.display = 'none'; showView('batchAnalytics'); baRender(); }
+  baOpenHex = null; baSel = new Set(); baColSel = new Map(); document.getElementById('baPanel').style.display = 'none'; showView('batchAnalytics'); baRender(); }
 function baSortedBatches() {
   return (batches || []).slice().sort((a, b) => (b.sentDate || '') < (a.sentDate || '') ? -1 : (b.sentDate || '') > (a.sentDate || '') ? 1 : (parseInt(b.no, 10) || 0) - (parseInt(a.no, 10) || 0));
 }
@@ -5575,6 +5587,21 @@ function baRenderPanel() {
 function baPick(id) { baSel.has(id) ? baSel.delete(id) : baSel.add(id); baRender(); }
 function baSelAll() { baSel = new Set((batches || []).map(b => b.id)); baRenderPanel(); baRender(); }
 function baSelClear() { baSel = new Set(); baRenderPanel(); baRender(); }
+function baColPick(hex, name) { baColSel.has(hex) ? baColSel.delete(hex) : baColSel.set(hex, name); baRender(); }
+function baColAll() { baVisible.forEach(e => baColSel.set(e.hex, e.name || e.hex)); baRender(); }
+function baColClear() { baColSel = new Map(); baRender(); }
+function baSelSwatches() { return [...baColSel.entries()].map(([hex, name]) => ({ hex, name })); }
+function baPrintSel() {
+  const sw = baSelSwatches(); if (!sw.length) return;
+  renderPrintColoursFromSwatches(sw, `${sw.length} selected colour${sw.length !== 1 ? 's' : ''} from Dye Analytics`, null);
+  printColoursReturnView = 'batchAnalytics';
+  showView('printcolours');
+}
+function baNewBatchSel() {
+  const sw = baSelSwatches(); if (!sw.length) return;
+  const b = { id: uid(), no: bdNextNo(), name: '', sentDate: bdToday(), notes: '', items: [] };
+  batches.unshift(b); bdCurrentId = b.id; bdAddItems(sw); saveBatches(); baColSel = new Map(); bdOpen(b.id);
+}
 function baToggle(hex) { baOpenHex = baOpenHex === hex ? null : hex; baRender(); }
 function baRender() {
   const per = document.getElementById('baPeriod').value, sort = document.getElementById('baSort').value;
@@ -5607,12 +5634,18 @@ function baRender() {
   rows.sort((a, b) => sort === 'pcs' ? b.pcs - a.pcs : sort === 'times' ? b.bs.size - a.bs.size || b.mtr - a.mtr : sort === 'recent' ? (b.last < a.last ? -1 : 1) : sort === 'name' ? (a.name || '').localeCompare(b.name || '') : b.mtr - a.mtr || b.pcs - a.pcs);
   document.getElementById('baKpis').innerHTML = [[nb, 'Batches'], [map.size, 'Colours'], [+tp.toFixed(2), 'Pcs'], [+tm.toFixed(2), 'Mtr']].map(([v, l]) => `<div class="ba-kpi"><b>${v}</b><small>${l}</small></div>`).join('');
   const top = Math.max(1, ...rows.map(e => sort === 'pcs' ? e.pcs : e.mtr || 0));
+  baVisible = rows;
+  const n = baColSel.size;
+  document.getElementById('baSelRow').innerHTML = rows.length ? `<a onclick="baColAll()">Select all</a><a onclick="baColClear()">Clear</a><span>${n ? n + ' selected' : 'Tick colours to print or start a batch'}</span>` : '';
+  document.getElementById('baActBar').style.display = n ? 'flex' : 'none';
+  document.getElementById('baActN1').textContent = '(' + n + ')'; document.getElementById('baActN2').textContent = '(' + n + ')';
   document.getElementById('baList').innerHTML = rows.length ? rows.map(e => {
     const open = baOpenHex === e.hex, w = Math.round(100 * (sort === 'pcs' ? e.pcs : e.mtr) / top);
     const det = open ? `<div class="ba-det"><h4>By size</h4>${[...e.sizes.entries()].sort((a, c) => c[0] - a[0]).map(([m, z]) => `<div class="r"><span>${m ? m + ' mtr' : 'Pcs only'}</span><span><b>${+z.pcs.toFixed(2)}</b> pcs${z.mtr ? ' · <b>' + +z.mtr.toFixed(2) + '</b> mtr' : ''}</span></div>`).join('')}
       <h4>Batches (${e.bs.size})</h4>${[...e.bs.values()].sort((a, c) => (c.b.sentDate || '') < (a.b.sentDate || '') ? -1 : 1).map(r => `<div class="r" onclick="event.stopPropagation();bdOpen('${r.b.id}')"><span>${r.b.no ? '#' + escapeHtml(String(r.b.no)) + ' · ' : ''}${escapeHtml(r.b.name || 'Untitled')} <span style="color:var(--muted)">${bdFmtDate(r.b.sentDate)}</span></span><span><b>${+r.pcs.toFixed(2)}</b> pcs${r.mtr ? ' · <b>' + +r.mtr.toFixed(2) + '</b> mtr' : ''}</span></div>`).join('')}
       ${e.designs.size ? `<h4>Lace designs</h4><div>${[...e.designs].map(escapeHtml).join(', ')}</div>` : ''}</div>` : '';
-    return `<div class="ba-card" onclick="baToggle('${e.hex}')"><div class="ba-top"><div class="ba-sw" style="background:${e.hex}"></div><div class="ba-nm">${escapeHtml(e.name || e.hex)}<small>${e.hex} · ${e.bs.size} batch${e.bs.size !== 1 ? 'es' : ''}${e.last ? ' · last ' + bdFmtDate(e.last) : ''}</small></div><div class="ba-num"><b>${+e.pcs.toFixed(2)}</b> pcs<br>${e.mtr ? '<b>' + +e.mtr.toFixed(2) + '</b> mtr' : '—'}</div></div><div class="ba-bar"><i style="width:${w}%"></i></div>${det}</div>`;
+    const on = baColSel.has(e.hex);
+    return `<div class="ba-card${on ? ' sel' : ''}" onclick="baToggle('${e.hex}')"><div class="ba-top"><input type="checkbox" class="ba-cb" ${on ? 'checked' : ''} onclick="event.stopPropagation()" onchange="baColPick('${e.hex}', '${escapeHtml((e.name || e.hex).replace(/'/g, ''))}')"><div class="ba-sw" style="background:${e.hex}"></div><div class="ba-nm">${escapeHtml(e.name || e.hex)}<small>${e.hex} · ${e.bs.size} batch${e.bs.size !== 1 ? 'es' : ''}${e.last ? ' · last ' + bdFmtDate(e.last) : ''}</small></div><div class="ba-num"><b>${+e.pcs.toFixed(2)}</b> pcs<br>${e.mtr ? '<b>' + +e.mtr.toFixed(2) + '</b> mtr' : '—'}</div></div><div class="ba-bar"><i style="width:${w}%"></i></div>${det}</div>`;
   }).join('') : `<div class="empty-state">No dyed quantities yet for this period.</div>`;
 }
 function bdPrintColours() {
