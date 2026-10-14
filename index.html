@@ -466,12 +466,18 @@
   .bd-row1 { display:flex; justify-content:space-between; align-items:center; gap:8px; }
   .bd-name { font-weight:700; color:var(--brown-900); font-size:14.5px; }
   .bd-meta { font-size:12px; color:var(--muted); margin-top:4px; }
-  .ba-bsel { width:100%; margin-top:8px; text-align:left; background:#fff; border:1.5px solid var(--border); border-radius:10px; padding:11px 12px; font-family:inherit; font-size:14px; font-weight:700; color:var(--brown-900); cursor:pointer; }
-  .ba-panel { margin-top:6px; border:1px solid var(--border); border-radius:10px; background:#fff; max-height:300px; overflow:auto; }
-  .ba-ptop { position:sticky; top:0; background:var(--tan-200); display:flex; gap:14px; padding:8px 12px; font-size:12.5px; font-weight:700; }
-  .ba-ptop a { color:var(--brown-700); cursor:pointer; text-decoration:underline; }
-  .ba-brow { display:flex !important; align-items:center; gap:10px !important; margin:0 !important; padding:9px 12px; border-top:1px solid var(--tan-200); font-size:13.5px; cursor:pointer; }
-  .ba-brow input { width:18px !important; height:18px; flex-shrink:0; margin:0 !important; } .ba-brow .n { font-weight:700; min-width:34px; color:var(--brown-900); } .ba-brow .d { margin-left:auto; color:var(--muted); font-size:12px; white-space:nowrap; }
+  .ba-wrap { position:relative; margin-top:8px; }
+  .ba-bsel { width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; text-align:left; background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:11px 12px; font-family:inherit; font-size:15px; font-weight:600; color:var(--brown-900); cursor:pointer; }
+  .ba-bsel span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ba-panel { position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:50; background:#fff; border:1px solid var(--border); border-radius:14px; box-shadow:0 10px 30px rgba(43,29,18,.22); overflow:hidden; }
+  .ba-ptop { display:flex; justify-content:space-between; padding:13px 16px; font-size:14px; font-weight:700; border-bottom:1px solid var(--tan-200); }
+  .ba-ptop a { color:var(--brown-700); cursor:pointer; }
+  .ba-psearch { margin:10px 12px 4px !important; width:calc(100% - 24px) !important; }
+  .ba-plist { max-height:min(46vh,330px); overflow:auto; }
+  .ba-brow { display:flex !important; align-items:center; gap:12px !important; margin:0 !important; padding:11px 16px; font-size:15px; cursor:pointer; }
+  .ba-brow input { width:22px !important; height:22px; flex-shrink:0; margin:0 !important; accent-color:var(--brown-700); }
+  .ba-brow .n { font-weight:700; color:var(--brown-900); } .ba-brow .d { margin-left:auto; color:var(--muted); font-size:12.5px; white-space:nowrap; }
+  .ba-done { width:100%; border:0; border-top:1px solid var(--tan-200); background:#fff; padding:13px; font-family:inherit; font-size:16px; font-weight:700; color:var(--brown-700); cursor:pointer; }
   .ba-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:0 0 12px; }
   .ba-kpi { background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 4px; text-align:center; }
   .ba-kpi b { display:block; font-size:17px; color:var(--brown-900); } .ba-kpi small { font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); font-weight:600; }
@@ -1390,13 +1396,14 @@
       <h1>Dye Batches</h1>
     </div>
     <div class="page-sub no-print">Each batch is one set of colours to send for dyeing — with lace design and quantity.</div>
-    <div class="filter-row no-print" style="gap:8px"><button class="add-colour-btn" onclick="bdNew()">+ New Batch</button><button class="add-secondary-btn" onclick="baOpen()" style="flex:0 0 auto">📊 Analytics</button></div>
+    <div class="filter-row no-print" style="gap:8px"><button class="add-colour-btn" onclick="bdNew()">+ New Batch</button><button class="add-secondary-btn" onclick="baOpen()" aria-label="Analytics" title="Analytics" style="flex:0 0 auto;width:52px;align-self:stretch;margin:0;padding:0;font-size:22px;line-height:1">📊</button></div>
     <div id="bdList"></div>
   </div>
 
   <div class="view" id="view-batchAnalytics">
     <div class="screen-header no-print">
       <button class="back-btn" onclick="switchTab('batches')">&#10005;</button>
+      <span class="header-icon">&#128202;</span>
       <h1>Dye Analytics</h1>
     </div>
     <div class="page-sub no-print">How much of each colour has been sent for dyeing, across all batches.</div>
@@ -1405,8 +1412,15 @@
         <select class="bd-in" id="baPeriod" onchange="baRender()"><option value="all">All time</option><option value="fy" id="baFyOpt">Current FY</option><option value="lfy" id="baLfyOpt">Last FY</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="year">This year</option></select>
         <select class="bd-in" id="baSort" onchange="baRender()"><option value="mtr">Most metres</option><option value="pcs">Most pcs</option><option value="times">Most batches</option><option value="recent">Recently dyed</option><option value="name">Name A–Z</option></select>
       </div>
-      <button class="ba-bsel" id="baBtn" onclick="baTogglePanel()">Batches: All ▾</button>
-      <div class="ba-panel" id="baPanel" style="display:none"></div>
+      <div class="ba-wrap" id="baWrap">
+        <button class="ba-bsel" id="baBtn" onclick="baTogglePanel()"><span id="baBtnTxt">All Batches</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="ba-panel" id="baPanel" style="display:none">
+          <div class="ba-ptop"><a onclick="baSelAll()">Select all</a><a onclick="baSelClear()">Clear (show all)</a></div>
+          <input class="bd-in ba-psearch" id="baPSearch" placeholder="Search batch no. or name..." oninput="baRenderPanel()">
+          <div class="ba-plist" id="baPList"></div>
+          <button class="ba-done" onclick="baTogglePanel()">Done</button>
+        </div>
+      </div>
       <input class="bd-in" id="baSearch" placeholder="Search colour name or hex" oninput="baRender()" style="margin-top:8px">
     </div>
     <div class="ba-kpis" id="baKpis"></div>
@@ -5551,10 +5565,12 @@ function baOpen() {
 function baSortedBatches() {
   return (batches || []).slice().sort((a, b) => (b.sentDate || '') < (a.sentDate || '') ? -1 : (b.sentDate || '') > (a.sentDate || '') ? 1 : (parseInt(b.no, 10) || 0) - (parseInt(a.no, 10) || 0));
 }
-function baTogglePanel() { const p = document.getElementById('baPanel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; baRenderPanel(); }
+function baTogglePanel() { const p = document.getElementById('baPanel'); const open = p.style.display === 'none'; p.style.display = open ? 'block' : 'none'; if (open) { document.getElementById('baPSearch').value = ''; baRenderPanel(); } }
+document.addEventListener('click', e => { const w = document.getElementById('baWrap'), p = document.getElementById('baPanel'); if (w && p && p.style.display !== 'none' && !w.contains(e.target)) p.style.display = 'none'; });
 function baRenderPanel() {
-  const p = document.getElementById('baPanel'), list = baSortedBatches();
-  p.innerHTML = `<div class="ba-ptop"><a onclick="baSelAll()">Select all</a><a onclick="baSelClear()">Clear</a></div>` + (list.length ? list.map(b => `<label class="ba-brow"><input type="checkbox" ${baSel.has(b.id) ? 'checked' : ''} onchange="baPick('${b.id}')"><span class="n">${b.no ? '#' + escapeHtml(String(b.no)) : '–'}</span><span>${escapeHtml(b.name || 'Untitled')}</span><span class="d">${bdFmtDate(b.sentDate)}</span></label>`).join('') : '<div class="empty-state">No batches yet.</div>');
+  const q = (document.getElementById('baPSearch').value || '').trim().toLowerCase().replace(/^#/, '');
+  const list = baSortedBatches().filter(b => !q || String(b.no || '').toLowerCase().includes(q) || (b.name || '').toLowerCase().includes(q) || bdFmtDate(b.sentDate).toLowerCase().includes(q));
+  document.getElementById('baPList').innerHTML = list.length ? list.map(b => `<label class="ba-brow"><input type="checkbox" ${baSel.has(b.id) ? 'checked' : ''} onchange="baPick('${b.id}')"><span class="n">${b.no ? '#' + escapeHtml(String(b.no)) : '–'}</span><span>${escapeHtml(b.name || 'Untitled')}</span><span class="d">${bdFmtDate(b.sentDate)}</span></label>`).join('') : '<div class="empty-state" style="padding:16px">No matching batches.</div>';
 }
 function baPick(id) { baSel.has(id) ? baSel.delete(id) : baSel.add(id); baRender(); }
 function baSelAll() { baSel = new Set((batches || []).map(b => b.id)); baRenderPanel(); baRender(); }
@@ -5567,9 +5583,7 @@ function baRender() {
   if (per === 'fy' || per === 'lfy') { const r = baFyRange(per === 'fy' ? 0 : 1); from = r.from; to = r.to; } else
   if (per === 'year') from = now.getFullYear() + '-01-01';
   else if (per !== 'all') { const d = new Date(now.getTime() - (+per) * 864e5); from = d.toISOString().slice(0, 10); }
-  const bb = document.getElementById('baBtn');
-  bb.textContent = baSel.size ? 'Batches: ' + (baSel.size === 1 ? (() => { const x = bdById([...baSel][0]); return x ? (x.no ? '#' + x.no + ' ' : '') + (x.name || '') : '1 selected'; })() : baSel.size + ' selected') + ' ▾' : 'Batches: All ▾';
-  if (document.getElementById('baPanel').style.display !== 'none') baRenderPanel();
+  document.getElementById('baBtnTxt').textContent = baSel.size ? (baSel.size === 1 ? (() => { const x = bdById([...baSel][0]); return x ? (x.no ? '#' + x.no + ' · ' : '') + (x.name || 'Untitled') : '1 batch'; })() : baSel.size + ' batches selected') : 'All Batches';
   const map = new Map(); let nb = 0, tp = 0, tm = 0;
   (batches || []).forEach(b => {
     if (from && (b.sentDate || '') < from) return;
