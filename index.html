@@ -485,6 +485,10 @@
   .ba-actbar { position:sticky; bottom:10px; z-index:40; display:flex; gap:8px; margin-top:12px; padding:8px; background:var(--brown-700); border-radius:14px; box-shadow:0 4px 14px rgba(43,29,18,.35); }
   .ba-actbar button { flex:1; border:0; border-radius:10px; padding:12px 6px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; background:#fff; color:var(--brown-700); }
   .ba-actbar button + button { background:var(--tan-200); }
+  .ba-chips { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+  .ba-chips button { border:1.5px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:9px 6px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer; line-height:1.2; }
+  .ba-chips button small { display:block; font-size:10.5px; font-weight:600; color:var(--muted); }
+  .ba-chips button.on { background:var(--brown-700); border-color:var(--brown-700); color:#fff; } .ba-chips button.on small { color:#f0e2cc; }
   .ba-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:0 0 12px; }
   .ba-kpi { background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 4px; text-align:center; }
   .ba-kpi b { display:block; font-size:17px; color:var(--brown-900); } .ba-kpi small { font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); font-weight:600; }
@@ -1416,7 +1420,7 @@
     <div class="page-sub no-print">How much of each colour has been sent for dyeing, across all batches.</div>
     <div class="builder no-print">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <select class="bd-in" id="baPeriod" onchange="baRender()"><option value="all">All time</option><option value="last5">Last 5 batches</option><option value="tm" id="baTmOpt">This month</option><option value="lm" id="baLmOpt">Last month</option><option value="fy" id="baFyOpt">Current FY</option><option value="lfy" id="baLfyOpt">Last FY</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="year">This year</option></select>
+        <select class="bd-in" id="baPeriod" onchange="baQ='';baRender()"><option value="all">All time</option><option value="lfy" id="baLfyOpt">Last FY</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="year">This year</option></select>
         <select class="bd-in" id="baSort" onchange="baRender()"><option value="mtr">Most metres</option><option value="pcs">Most pcs</option><option value="times">Most batches</option><option value="recent">Recently dyed</option><option value="name">Name A–Z</option></select>
       </div>
       <div class="ba-wrap" id="baWrap">
@@ -1427,6 +1431,12 @@
           <div class="ba-plist" id="baPList"></div>
           <button class="ba-done" onclick="baTogglePanel()">Done</button>
         </div>
+      </div>
+      <div class="ba-chips" id="baChips">
+        <button data-q="last5" onclick="baQuick('last5')">Last 5 batches</button>
+        <button data-q="tm" id="baTmOpt" onclick="baQuick('tm')">This month</button>
+        <button data-q="lm" id="baLmOpt" onclick="baQuick('lm')">Last month</button>
+        <button data-q="fy" id="baFyOpt" onclick="baQuick('fy')">Current FY</button>
       </div>
       <input class="bd-in" id="baSearch" placeholder="Search colour name or hex" oninput="baRender()" style="margin-top:8px">
     </div>
@@ -5565,18 +5575,19 @@ function bdBuildSheetPages(b) {
   return html;
 }
 /* ---------- Dye analytics ---------- */
-let baOpenHex = null, baSel = new Set(), baColSel = new Map(), baVisible = [];
+let baQ = '', baOpenHex = null, baSel = new Set(), baColSel = new Map(), baVisible = [];
+function baQuick(q) { baQ = baQ === q ? '' : q; document.getElementById('baPeriod').value = 'all'; baRender(); }
 function baFyRange(back) {
   const n = new Date(), y = (n.getMonth() >= 3 ? n.getFullYear() : n.getFullYear() - 1) - back;   // Indian FY: 1 Apr – 31 Mar
   return { from: y + '-04-01', to: (y + 1) + '-03-31', label: `FY ${y}-${String(y + 1).slice(2)}` };
 }
 function baOpen() {
   const mn = d => d.toLocaleString('en-GB', { month: 'short', year: 'numeric' }), nw = new Date();
-  document.getElementById('baTmOpt').textContent = 'This month (' + mn(nw) + ')';
-  document.getElementById('baLmOpt').textContent = 'Last month (' + mn(new Date(nw.getFullYear(), nw.getMonth() - 1, 1)) + ')';
-  document.getElementById('baFyOpt').textContent = 'Current FY (' + baFyRange(0).label.slice(3) + ')';
+  document.getElementById('baTmOpt').innerHTML = 'This month<small>' + mn(nw) + '</small>';
+  document.getElementById('baLmOpt').innerHTML = 'Last month<small>' + mn(new Date(nw.getFullYear(), nw.getMonth() - 1, 1)) + '</small>';
+  document.getElementById('baFyOpt').innerHTML = 'Current FY<small>' + baFyRange(0).label.slice(3) + '</small>';
   document.getElementById('baLfyOpt').textContent = 'Last FY (' + baFyRange(1).label.slice(3) + ')';
-  baOpenHex = null; baSel = new Set(); baColSel = new Map(); document.getElementById('baPanel').style.display = 'none'; showView('batchAnalytics'); baRender(); }
+  baQ = ''; document.getElementById('baPeriod').value = 'all'; baOpenHex = null; baSel = new Set(); baColSel = new Map(); document.getElementById('baPanel').style.display = 'none'; showView('batchAnalytics'); baRender(); }
 function baSortedBatches() {
   return (batches || []).slice().sort((a, b) => (b.sentDate || '') < (a.sentDate || '') ? -1 : (b.sentDate || '') > (a.sentDate || '') ? 1 : (parseInt(b.no, 10) || 0) - (parseInt(a.no, 10) || 0));
 }
@@ -5607,7 +5618,7 @@ function baNewBatchSel() {
 }
 function baToggle(hex) { baOpenHex = baOpenHex === hex ? null : hex; baRender(); }
 function baRender() {
-  const per = document.getElementById('baPeriod').value, sort = document.getElementById('baSort').value;
+  const per = baQ || document.getElementById('baPeriod').value, sort = document.getElementById('baSort').value;
   const q = document.getElementById('baSearch').value.trim().toLowerCase();
   const now = new Date(); let from = '', to = '';
   const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -5618,6 +5629,7 @@ function baRender() {
   else if (per === 'fy' || per === 'lfy') { const r = baFyRange(per === 'fy' ? 0 : 1); from = r.from; to = r.to; } else
   if (per === 'year') from = now.getFullYear() + '-01-01';
   else if (per !== 'all') { const d = new Date(now.getTime() - (+per) * 864e5); from = d.toISOString().slice(0, 10); }
+  document.querySelectorAll('#baChips button').forEach(x => x.classList.toggle('on', x.dataset.q === baQ));
   document.getElementById('baBtnTxt').textContent = baSel.size ? (baSel.size === 1 ? (() => { const x = bdById([...baSel][0]); return x ? (x.no ? '#' + x.no + ' · ' : '') + (x.name || 'Untitled') : '1 batch'; })() : baSel.size + ' batches selected') : 'All Batches';
   const map = new Map(); let nb = 0, tp = 0, tm = 0;
   (batches || []).forEach(b => {
