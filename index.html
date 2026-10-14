@@ -466,6 +466,17 @@
   .bd-row1 { display:flex; justify-content:space-between; align-items:center; gap:8px; }
   .bd-name { font-weight:700; color:var(--brown-900); font-size:14.5px; }
   .bd-meta { font-size:12px; color:var(--muted); margin-top:4px; }
+  .ba-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:0 0 12px; }
+  .ba-kpi { background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 4px; text-align:center; }
+  .ba-kpi b { display:block; font-size:17px; color:var(--brown-900); } .ba-kpi small { font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .ba-card { background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px 12px; margin-bottom:8px; cursor:pointer; }
+  .ba-top { display:flex; align-items:center; gap:10px; } .ba-sw { width:42px; height:42px; border-radius:9px; border:1px solid rgba(0,0,0,.25); flex-shrink:0; }
+  .ba-nm { flex:1; min-width:0; font-weight:700; font-size:14px; color:var(--brown-900); } .ba-nm small { display:block; font-weight:500; font-size:11px; color:var(--muted); font-family:monospace; }
+  .ba-num { text-align:right; font-size:12px; color:var(--brown-700); line-height:1.35; } .ba-num b { font-size:15px; color:var(--brown-900); }
+  .ba-bar { height:5px; border-radius:3px; background:var(--tan-200); margin-top:8px; overflow:hidden; } .ba-bar i { display:block; height:100%; background:var(--brown-700); border-radius:3px; }
+  .ba-det { margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; font-size:12.5px; color:var(--brown-900); }
+  .ba-det h4 { margin:8px 0 4px; font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); }
+  .ba-det .r { display:flex; justify-content:space-between; gap:8px; padding:3px 0; border-bottom:1px solid var(--tan-200); }
   .bd-badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; background:var(--tan-200); color:var(--brown-700); white-space:nowrap; }
   .bd-badge.at { background:#FCE8C8; color:#8A5A00; } .bd-badge.rec { background:#DDEFD9; color:#2F6B2A; } .bd-badge.redo { background:#F6D9D3; color:var(--danger); }
   .bd-dots { display:flex; flex-wrap:wrap; gap:3px; margin-top:8px; }
@@ -1373,8 +1384,25 @@
       <h1>Dye Batches</h1>
     </div>
     <div class="page-sub no-print">Each batch is one set of colours to send for dyeing — with lace design and quantity.</div>
-    <div class="filter-row no-print"><button class="add-colour-btn" onclick="bdNew()">+ New Batch</button></div>
+    <div class="filter-row no-print" style="gap:8px"><button class="add-colour-btn" onclick="bdNew()">+ New Batch</button><button class="add-secondary-btn" onclick="baOpen()" style="flex:0 0 auto">📊 Analytics</button></div>
     <div id="bdList"></div>
+  </div>
+
+  <div class="view" id="view-batchAnalytics">
+    <div class="screen-header no-print">
+      <button class="back-btn" onclick="switchTab('batches')">&#10005;</button>
+      <h1>Dye Analytics</h1>
+    </div>
+    <div class="page-sub no-print">How much of each colour has been sent for dyeing, across all batches.</div>
+    <div class="builder no-print">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <select class="bd-in" id="baPeriod" onchange="baRender()"><option value="all">All time</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option><option value="year">This year</option></select>
+        <select class="bd-in" id="baSort" onchange="baRender()"><option value="mtr">Most metres</option><option value="pcs">Most pcs</option><option value="times">Most batches</option><option value="recent">Recently dyed</option><option value="name">Name A–Z</option></select>
+      </div>
+      <input class="bd-in" id="baSearch" placeholder="Search colour name or hex" oninput="baRender()" style="margin-top:8px">
+    </div>
+    <div class="ba-kpis" id="baKpis"></div>
+    <div id="baList"></div>
   </div>
 
   <div class="view" id="view-batchDetail">
@@ -2342,7 +2370,7 @@ const VIEW_TO_TAB = {
   generallyused: 'generallyused',
   backup: 'backup',
   library: 'library',
-  batches: 'batches', batchDetail: 'batches', batchAdd: 'batches', batchPreview: 'batches'
+  batches: 'batches', batchAnalytics: 'batches', batchDetail: 'batches', batchAdd: 'batches', batchPreview: 'batches'
 };
 
 function showView(name) {
@@ -5501,6 +5529,45 @@ function bdBuildSheetPages(b) {
     </div>`;
   });
   return html;
+}
+/* ---------- Dye analytics ---------- */
+let baOpenHex = null;
+function baOpen() { baOpenHex = null; showView('batchAnalytics'); baRender(); }
+function baToggle(hex) { baOpenHex = baOpenHex === hex ? null : hex; baRender(); }
+function baRender() {
+  const per = document.getElementById('baPeriod').value, sort = document.getElementById('baSort').value;
+  const q = document.getElementById('baSearch').value.trim().toLowerCase();
+  const now = new Date(); let from = '';
+  if (per === 'year') from = now.getFullYear() + '-01-01';
+  else if (per !== 'all') { const d = new Date(now.getTime() - (+per) * 864e5); from = d.toISOString().slice(0, 10); }
+  const map = new Map(); let nb = 0, tp = 0, tm = 0;
+  (batches || []).forEach(b => {
+    if (from && (b.sentDate || '') < from) return;
+    nb++;
+    (b.items || []).forEach(i => {
+      const hex = String(i.hex).toUpperCase(), x = bdItemTotals(i);
+      if (!(x.pcs > 0)) return;
+      const e = map.get(hex) || { hex, name: '', last: '', pcs: 0, mtr: 0, bs: new Map(), sizes: new Map(), designs: new Set() };
+      if (!e.name || (b.sentDate || '') >= e.last) { e.name = i.name || e.name; }
+      if ((b.sentDate || '') >= e.last) e.last = b.sentDate || '';
+      e.pcs += x.pcs; e.mtr += x.mtr; tp += x.pcs; tm += x.mtr;
+      const r = e.bs.get(b.id) || { b, pcs: 0, mtr: 0 }; r.pcs += x.pcs; r.mtr += x.mtr; e.bs.set(b.id, r);
+      (i.lines || []).forEach(l => { const p = parseFloat(l.qty); if (!(p > 0)) return; const m = parseFloat(l.mtr) > 0 ? +parseFloat(l.mtr).toFixed(2) : 0; const z = e.sizes.get(m) || { pcs: 0, mtr: 0 }; z.pcs += p; z.mtr += bdLineMtr(l); e.sizes.set(m, z); });
+      if (i.design) e.designs.add(i.design);
+      map.set(hex, e);
+    });
+  });
+  let rows = [...map.values()].filter(e => !q || (e.name || '').toLowerCase().includes(q) || e.hex.toLowerCase().includes(q.replace('#', '')));
+  rows.sort((a, b) => sort === 'pcs' ? b.pcs - a.pcs : sort === 'times' ? b.bs.size - a.bs.size || b.mtr - a.mtr : sort === 'recent' ? (b.last < a.last ? -1 : 1) : sort === 'name' ? (a.name || '').localeCompare(b.name || '') : b.mtr - a.mtr || b.pcs - a.pcs);
+  document.getElementById('baKpis').innerHTML = [[nb, 'Batches'], [map.size, 'Colours'], [+tp.toFixed(2), 'Pcs'], [+tm.toFixed(2), 'Mtr']].map(([v, l]) => `<div class="ba-kpi"><b>${v}</b><small>${l}</small></div>`).join('');
+  const top = Math.max(1, ...rows.map(e => sort === 'pcs' ? e.pcs : e.mtr || 0));
+  document.getElementById('baList').innerHTML = rows.length ? rows.map(e => {
+    const open = baOpenHex === e.hex, w = Math.round(100 * (sort === 'pcs' ? e.pcs : e.mtr) / top);
+    const det = open ? `<div class="ba-det"><h4>By size</h4>${[...e.sizes.entries()].sort((a, c) => c[0] - a[0]).map(([m, z]) => `<div class="r"><span>${m ? m + ' mtr' : 'Pcs only'}</span><span><b>${+z.pcs.toFixed(2)}</b> pcs${z.mtr ? ' · <b>' + +z.mtr.toFixed(2) + '</b> mtr' : ''}</span></div>`).join('')}
+      <h4>Batches (${e.bs.size})</h4>${[...e.bs.values()].sort((a, c) => (c.b.sentDate || '') < (a.b.sentDate || '') ? -1 : 1).map(r => `<div class="r" onclick="event.stopPropagation();bdOpen('${r.b.id}')"><span>${r.b.no ? '#' + escapeHtml(String(r.b.no)) + ' · ' : ''}${escapeHtml(r.b.name || 'Untitled')} <span style="color:var(--muted)">${bdFmtDate(r.b.sentDate)}</span></span><span><b>${+r.pcs.toFixed(2)}</b> pcs${r.mtr ? ' · <b>' + +r.mtr.toFixed(2) + '</b> mtr' : ''}</span></div>`).join('')}
+      ${e.designs.size ? `<h4>Lace designs</h4><div>${[...e.designs].map(escapeHtml).join(', ')}</div>` : ''}</div>` : '';
+    return `<div class="ba-card" onclick="baToggle('${e.hex}')"><div class="ba-top"><div class="ba-sw" style="background:${e.hex}"></div><div class="ba-nm">${escapeHtml(e.name || e.hex)}<small>${e.hex} · ${e.bs.size} batch${e.bs.size !== 1 ? 'es' : ''}${e.last ? ' · last ' + bdFmtDate(e.last) : ''}</small></div><div class="ba-num"><b>${+e.pcs.toFixed(2)}</b> pcs<br>${e.mtr ? '<b>' + +e.mtr.toFixed(2) + '</b> mtr' : '—'}</div></div><div class="ba-bar"><i style="width:${w}%"></i></div>${det}</div>`;
+  }).join('') : `<div class="empty-state">No dyed quantities yet for this period.</div>`;
 }
 function bdPrintColours() {
   const b = bdById(bdCurrentId); if (!b) return;
