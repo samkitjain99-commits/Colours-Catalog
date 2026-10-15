@@ -1503,7 +1503,7 @@
       <span class="header-icon">&#128247;</span>
       <h1>Colours from photo</h1>
     </div>
-    <div class="page-sub no-print">Photo of the physical swatches you are sending. Numbers on the photo match the cards below. Tick the ones you want, remove wrong ones with ✕, or tap the photo to pick a colour yourself. Colours are NOT saved to your library unless you tap “Save to library”.</div>
+    <div class="page-sub no-print">Photo of the physical swatches you are sending. Numbers on the photo match the cards below. Tick the ones you want, edit any name or hex code, remove wrong ones with ✕, or tap the photo to pick a colour yourself. Colours are NOT saved to your library unless you tap “Save to library”.</div>
     <div class="builder no-print bp-stick">
       <div class="bp-stage"><canvas id="bpCanvas" onclick="bpTap(event)"></canvas></div>
       <div class="bp-tools">
@@ -6139,19 +6139,24 @@ function bpTap(e) {
 let bpEdit = false;
 function bpRender() {
   const n = bpList.filter(x => x.on).length;
-  document.getElementById('bpToolbar').innerHTML = bpList.length ? `<button class="text-btn" onclick="bpAll(true)">Select all</button><button class="text-btn" onclick="bpAll(false)">Clear</button><button class="text-btn" onclick="bpEdit=!bpEdit;bpRender()">${bpEdit ? 'Done editing' : 'Edit names'}</button><button class="text-btn" onclick="bpRun()">Re-detect</button><button class="text-btn" onclick="bpSaveLib()">Save ticked to library</button>` : '';
+  document.getElementById('bpToolbar').innerHTML = bpList.length ? `<button class="text-btn" onclick="bpAll(true)">Select all</button><button class="text-btn" onclick="bpAll(false)">Clear</button><button class="text-btn" onclick="bpRun()">Re-detect</button><button class="text-btn" onclick="bpSaveLib()">Save ticked to library</button>` : '';
   document.getElementById('bpList').innerHTML = bpList.length ? bpList.map(x => `
- 
-    <${bpEdit ? 'div' : 'button'} class="lib-card ${x.on ? 'on' : ''}" ${bpEdit ? '' : `onclick="bpTog('${x.id}')"`}>
+    <div class="lib-card ${x.on ? 'on' : ''}">
       <span class="bp-x" role="button" aria-label="Remove" onclick="event.stopPropagation();bpDel('${x.id}')">&#10005;</span><span class="bp-num">${bpList.indexOf(x) + 1}</span>
-      <div class="lib-sw" style="background:${x.hex}" ${bpEdit ? `onclick="bpTog('${x.id}')"` : ''}></div><span class="lib-tick">&#10003;</span>
-      ${bpEdit ? `<input class="bd-in" style="margin:4px 0 2px;padding:5px 6px;font-size:16px" value="${escapeHtml(x.name)}" oninput="bpName('${x.id}',this.value)"><button class="x" style="border:0;background:none;color:var(--danger);font-size:12px;padding:0" onclick="bpDel('${x.id}')">Remove</button>` : `<div class="lib-nm">${escapeHtml(x.name || x.hex)}</div>`}
-      <div class="lib-hx">${x.hex}${x.bg ? ' · background?' : ''}</div></${bpEdit ? 'div' : 'button'}>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No colours detected. Tap the photo to pick colours.</div>';
+      <div class="lib-sw" id="bpsw_${x.id}" style="background:${x.hex}" onclick="bpTog('${x.id}')"></div><span class="lib-tick">&#10003;</span>
+      <input class="bd-in" style="margin:4px 0 2px;padding:5px 6px;font-size:16px;width:100%;box-sizing:border-box" value="${escapeHtml(x.name)}" placeholder="Colour name" oninput="bpName('${x.id}',this.value)">
+      <input class="bd-in" style="margin:0;padding:5px 6px;font-size:14px;font-family:monospace;width:100%;box-sizing:border-box;text-transform:uppercase" value="${x.hex}" maxlength="7" placeholder="#RRGGBB" oninput="bpHexIn('${x.id}',this)">
+      ${x.bg ? '<div class="lib-hx">background?</div>' : ''}</div>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No colours detected. Tap the photo to pick colours.</div>';
   document.getElementById('bpBar').style.display = n ? 'flex' : 'none';
   document.getElementById('bpAddBtn').textContent = `Add ${n} to batch`;
   document.getElementById('bpPrintBtn').textContent = `Print Colour Swatch (${n})`;
 }
 function bpTog(id) { const x = bpList.find(v => v.id === id); if (x) { x.on = !x.on; bpDraw(); bpRender(); } }
+function bpHexIn(id, inp) {
+  let v = inp.value.trim().replace(/^#?/, '#'); const ok = /^#([0-9a-f]{6}|[0-9a-f]{3})$/i.test(v); inp.style.borderColor = ok ? '' : 'var(--danger,#c0392b)';
+  if (!ok) return; if (v.length === 4) v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3]; v = v.toUpperCase();
+  const x = bpList.find(q => q.id === id); if (!x) return; x.hex = v; const sw = document.getElementById('bpsw_' + id); if (sw) sw.style.background = v;
+}
 function bpName(id, v) { const x = bpList.find(q => q.id === id); if (x) x.name = v; }
 function bpDel(id) { bpList = bpList.filter(v => v.id !== id); bpDraw(); bpRender(); }
 function bpAll(on) { bpList.forEach(x => x.on = on); bpDraw(); bpRender(); }
