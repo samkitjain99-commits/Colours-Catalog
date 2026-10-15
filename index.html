@@ -514,6 +514,11 @@
   .bp-stage { background:#222; border-radius:12px; overflow:hidden; line-height:0; } .bp-stage canvas { width:100%; height:auto; max-height:60vh; object-fit:contain; display:block; touch-action:manipulation; }
   .bp-tools { margin-top:10px; font-size:13px; font-weight:600; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 10px; } .bp-tools label { white-space:nowrap; margin:0; }
   .bp-tools select { width:auto !important; display:inline-block; margin:0 4px !important; padding:6px 8px !important; font-size:15px !important; }
+  .bp-stick { position:sticky; top:0; z-index:20; background:var(--bg,#fff); padding:6px 0 8px; }
+  .bp-stick .bp-stage canvas { max-height:34vh; }
+  #bpList .lib-tick { right:auto; left:10px; }
+  .bp-num { position:absolute; top:10px; left:34px; min-width:20px; height:20px; padding:0 4px; box-sizing:border-box; border-radius:10px; background:#fff; color:#000; border:1.5px solid #000; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .bp-x { position:absolute; top:7px; right:7px; width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,.95); border:1.5px solid var(--danger,#c0392b); color:var(--danger,#c0392b); font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; z-index:3; }
   .bp-row { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 10px; margin-bottom:8px; }
   .bp-row.off { opacity:.55; } .bp-row .sw { width:44px; height:44px; border-radius:9px; border:1px solid rgba(0,0,0,.25); flex-shrink:0; }
   .bp-row .mid { flex:1; min-width:0; } .bp-row .mid input { width:100%; margin:0 0 3px !important; padding:6px 8px !important; }
@@ -1498,8 +1503,8 @@
       <span class="header-icon">&#128247;</span>
       <h1>Colours from photo</h1>
     </div>
-    <div class="page-sub no-print">Photo of the physical swatches you are sending. Colours are detected automatically — tick the ones you want, fix names, or tap the photo to pick a colour yourself.</div>
-    <div class="builder no-print">
+    <div class="page-sub no-print">Photo of the physical swatches you are sending. Numbers on the photo match the cards below. Tick the ones you want, remove wrong ones with ✕, or tap the photo to pick a colour yourself. Colours are NOT saved to your library unless you tap “Save to library”.</div>
+    <div class="builder no-print bp-stick">
       <div class="bp-stage"><canvas id="bpCanvas" onclick="bpTap(event)"></canvas></div>
       <div class="bp-tools">
         <label>Photo <select class="bd-in" id="bpMode" onchange="bpRun()"><option value="auto">Auto</option><option value="sep">Separate swatches</option><option value="fill">Strips fill photo</option></select></label>
@@ -5997,9 +6002,9 @@ function bpDetectBlobs(cv, maxN) {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1), y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1); o[y * w + x] = (sat[y1 * (w + 1) + x1] - sat[y0 * (w + 1) + x1] - sat[y1 * (w + 1) + x0] + sat[y0 * (w + 1) + x0]) / ((x1 - x0) * (y1 - y0)); }
     return o;
   };
-  const dens = box(edge, 4), tex = new Uint8Array(N); let cover = 0;
+  const dens = box(edge, 4); let tex = new Uint8Array(N); let cover = 0;
   for (let i = 0; i < N; i++) { tex[i] = dens[i] > 0.30 ? 1 : 0; cover += tex[i]; }
-  const comp = new Int32Array(N).fill(-1), blobs = [], stack = [];
+  const comp = new Int32Array(N).fill(-1); let blobs = []; const stack = [];
   for (let s0 = 0; s0 < N; s0++) {
     if (!tex[s0] || comp[s0] >= 0) continue;
     const id = blobs.length, b = { n: 0, x0: w, x1: 0, y0: h, y1: 0, px: [] }; comp[s0] = id; stack.push(s0);
@@ -6007,8 +6012,61 @@ function bpDetectBlobs(cv, maxN) {
       for (const q of [p - 1, p + 1, p - w, p + w]) { if (q < 0 || q >= N) continue; if ((q === p - 1 && x === 0) || (q === p + 1 && x === w - 1)) continue; if (tex[q] && comp[q] < 0) { comp[q] = id; stack.push(q); } } }
     blobs.push(b);
   }
-  const keep = blobs.filter(b => { const bw = b.x1 - b.x0 + 1, bh = b.y1 - b.y0 + 1, share = b.n / N, m = 0.01; return share >= 0.002 && share <= 0.1 && Math.min(bw, bh) >= 8 && b.n / (bw * bh) >= 0.45 && b.x0 > w * m && b.y0 > h * m && b.x1 < w * (1 - m) && b.y1 < h * (1 - m); });
-  const res = keep.map(b => {
+  // the swatches sit on a card / sheet: find that backing (largest smooth, bright, low-chroma region) and ignore everything outside it
+  let pbox = null;
+  { const bins2 = new Map();
+    for (let i = 0; i < N; i++) { if (tex[i]) continue; const L = lab[i * 3]; if (L < 55 || Math.hypot(lab[i * 3 + 1], lab[i * 3 + 2]) > 26) continue; const k = (Math.round(L / 6) << 16) | ((Math.round(lab[i * 3 + 1] / 6) + 32) << 8) | (Math.round(lab[i * 3 + 2] / 6) + 32); (bins2.get(k) || bins2.set(k, []).get(k)).push(i); }
+    let pb = null; bins2.forEach(a => { if (!pb || a.length > pb.length) pb = a; });
+    if (pb && pb.length > N * 0.06) {
+      const med2 = c => { const v = pb.map(i => lab[i * 3 + c]).sort((p, q) => p - q); return v[v.length >> 1]; }, pl = [med2(0), med2(1), med2(2)];
+      const back = new Uint8Array(N); for (let i = 0; i < N; i++) back[i] = !tex[i] && Math.hypot(lab[i * 3] - pl[0], lab[i * 3 + 1] - pl[1], lab[i * 3 + 2] - pl[2]) < 14 ? 1 : 0;
+      const seen = new Uint8Array(N); let bestC = null;
+      for (let s0 = 0; s0 < N; s0++) { if (!back[s0] || seen[s0]) continue; const c = { n: 0, x0: w, x1: 0, y0: h, y1: 0 }; seen[s0] = 1; stack.push(s0);
+        while (stack.length) { const p = stack.pop(), x = p % w, y = (p / w) | 0; c.n++; if (x < c.x0) c.x0 = x; if (x > c.x1) c.x1 = x; if (y < c.y0) c.y0 = y; if (y > c.y1) c.y1 = y;
+          for (const q of [p - 1, p + 1, p - w, p + w]) { if (q < 0 || q >= N) continue; if ((q === p - 1 && x === 0) || (q === p + 1 && x === w - 1)) continue; if (back[q] && !seen[q]) { seen[q] = 1; stack.push(q); } } }
+        if (!bestC || c.n > bestC.n) bestC = c; }
+      if (bestC && bestC.n > N * 0.05) {
+        pbox = bestC; // tighten to where the card really is (glass / reflections at the sides have few backing pixels)
+        const bh0 = bestC.y1 - bestC.y0 + 1, bw0 = bestC.x1 - bestC.x0 + 1, cc = new Float32Array(w), rr = new Float32Array(h);
+        for (let y = bestC.y0; y <= bestC.y1; y++) for (let x = bestC.x0; x <= bestC.x1; x++) if (back[y * w + x]) { cc[x]++; rr[y]++; }
+        let x0 = bestC.x0, x1 = bestC.x1, y0 = bestC.y0, y1 = bestC.y1;
+        while (x0 < x1 && cc[x0] < bh0 * 0.12) x0++; while (x1 > x0 && cc[x1] < bh0 * 0.12) x1--;
+        while (y0 < y1 && rr[y0] < bw0 * 0.12) y0++; while (y1 > y0 && rr[y1] < bw0 * 0.12) y1--;
+        pbox = { n: bestC.n, x0, x1, y0, y1 }; } } }
+  // card found: segment by 'not the card colour' inside the card; this separates touching laces far better than texture
+  if (pbox) {
+    const bk = []; { const pbArr = []; for (let y = pbox.y0; y <= pbox.y1; y++) for (let x = pbox.x0; x <= pbox.x1; x++) { const i = y * w + x; if (!tex[i] && lab[i * 3] > 62 && Math.hypot(lab[i * 3 + 1], lab[i * 3 + 2]) < 22) pbArr.push(i); }
+      const m = c => { const v = pbArr.map(i => lab[i * 3 + c]).sort((p, q) => p - q); return v.length ? v[v.length >> 1] : (c ? 0 : 90); }; bk.push(m(0), m(1), m(2)); }
+    const mk = new Uint8Array(N), ins = 10;
+    for (let y = pbox.y0 + ins; y <= pbox.y1 - ins; y++) for (let x = pbox.x0 + ins; x <= pbox.x1 - ins; x++) { const i = y * w + x; mk[i] = Math.hypot(lab[i * 3] - bk[0], lab[i * 3 + 1] - bk[1], lab[i * 3 + 2] - bk[2]) > 17 ? 1 : 0; }
+    const dil = box(mk, 1), c2 = new Int32Array(N).fill(-1), nb = [];
+    for (let s0 = 0; s0 < N; s0++) { if (dil[s0] <= 0.001 || c2[s0] >= 0) continue; const id = nb.length, b = { n: 0, x0: w, x1: 0, y0: h, y1: 0, px: [], all: 0 }; c2[s0] = id; stack.push(s0);
+      while (stack.length) { const p = stack.pop(), x = p % w, y = (p / w) | 0; b.all++; if (mk[p]) { b.n++; b.px.push(p); } if (x < b.x0) b.x0 = x; if (x > b.x1) b.x1 = x; if (y < b.y0) b.y0 = y; if (y > b.y1) b.y1 = y;
+        for (const q of [p - 1, p + 1, p - w, p + w]) { if (q < 0 || q >= N) continue; if ((q === p - 1 && x === 0) || (q === p + 1 && x === w - 1)) continue; if (dil[q] > 0.001 && c2[q] < 0) { c2[q] = id; stack.push(q); } } }
+      nb.push(b); }
+    const good = nb.filter(b => b.n / N >= 0.004 && b.n / N <= 0.25 && Math.min(b.x1 - b.x0, b.y1 - b.y0) >= 8);
+    if (good.length >= 3) { blobs = good; tex = mk; pbox.seg = true; }
+  }
+  const inBox = b => !pbox || ((b.x0 + b.x1) / 2 >= pbox.x0 - w * 0.02 && (b.x0 + b.x1) / 2 <= pbox.x1 + w * 0.02 && (b.y0 + b.y1) / 2 >= pbox.y0 - h * 0.02 && (b.y0 + b.y1) / 2 <= pbox.y1 + h * 0.02);
+  const keep = blobs.filter(b => { const bw = b.x1 - b.x0 + 1, bh = b.y1 - b.y0 + 1, share = b.n / N, m = 0.01; if (pbox && pbox.seg) return true; return inBox(b) && share >= 0.002 && share <= 0.1 && Math.min(bw, bh) >= 8 && b.n / (bw * bh) >= 0.45 && b.x0 > w * m && b.y0 > h * m && b.x1 < w * (1 - m) && b.y1 < h * (1 - m); });
+  // touching laces end up in one blob: split by hue (shading of one thread keeps its hue; different laces do not)
+  const splitB = b => {
+    const ok = b.px.filter(i => !edge[i]), pts = (ok.length > 60 ? ok : b.px).map(i => ({ i, a: lab[i * 3 + 1], c: lab[i * 3 + 2], L: lab[i * 3] }));
+    const groups = [], used = new Uint8Array(pts.length);
+    for (let it = 0; it < 8; it++) {
+      const bins = new Map(); pts.forEach((p, k) => { if (used[k]) return; const key = Math.round(p.a / 8) * 1000 + Math.round(p.c / 8); (bins.get(key) || bins.set(key, []).get(key)).push(k); });
+      let top = null; bins.forEach(v => { if (!top || v.length > top.length) top = v; });
+      if (!top || top.length < 40) break;
+      let ma = 0, mc = 0; top.forEach(k => { ma += pts[k].a; mc += pts[k].c; }); ma /= top.length; mc /= top.length;
+      const mem = []; pts.forEach((p, k) => { if (!used[k] && Math.hypot(p.a - ma, p.c - mc) < 16) { used[k] = 1; mem.push(p.i); } });
+      groups.push(mem);
+    }
+    const tot = pts.length, big = groups.filter(g => g.length >= Math.max(400, tot * 0.12));
+    if (big.length <= 1) return [b];
+    return big.map(g => { const nb = { n: g.length, px: g, x0: w, x1: 0, y0: h, y1: 0 }; g.forEach(i => { const x = i % w, y = (i / w) | 0; if (x < nb.x0) nb.x0 = x; if (x > nb.x1) nb.x1 = x; if (y < nb.y0) nb.y0 = y; if (y > nb.y1) nb.y1 = y; }); return nb; });
+  };
+  const keep2 = pbox && pbox.seg ? keep.flatMap(splitB) : keep;
+  const res = keep2.map(b => {
     const inB = new Set(b.px), ring = [];
     for (let y = Math.max(0, b.y0 - 7); y <= Math.min(h - 1, b.y1 + 7); y++) for (let x = Math.max(0, b.x0 - 7); x <= Math.min(w - 1, b.x1 + 7); x++) { const i = y * w + x; if (!inB.has(i) && !tex[i]) ring.push(i); }
     const med = (arr, c) => { const v = arr.map(i => lab[i * 3 + c]).sort((p, q) => p - q); return v.length ? v[v.length >> 1] : 0; };
@@ -6018,7 +6076,7 @@ function bpDetectBlobs(cv, maxN) {
     if (px.length < 10) px = b.px;
     const L = [med(px, 0), med(px, 1), med(px, 2)], near = px.map(i => ({ i, d: bpDE([lab[i * 3], lab[i * 3 + 1], lab[i * 3 + 2]], L) })).sort((p, q) => p.d - q.d).slice(0, Math.max(8, px.length >> 1));
     let r = 0, g = 0, bl = 0; near.forEach(o => { r += d[o.i * 4]; g += d[o.i * 4 + 1]; bl += d[o.i * 4 + 2]; }); r /= near.length; g /= near.length; bl /= near.length;
-    return { hex: bpHex(r, g, bl), lab: bpRgb2Lab(r, g, bl), share: b.n / N, y: (b.y0 + b.y1) / 2, x: (b.x0 + b.x1) / 2 };
+    return { hex: bpHex(r, g, bl), lab: bpRgb2Lab(r, g, bl), share: b.n / N, y: (b.y0 + b.y1) / 2, x: (b.x0 + b.x1) / 2, px: ((b.x0 + b.x1) / 2) / w, py: ((b.y0 + b.y1) / 2) / h };
   });
   res.sort((p, q) => (Math.abs(p.x - q.x) > w * 0.25 ? p.x - q.x : p.y - q.y));
   const out = []; res.forEach(c => { if (!out.some(o => bpDE(o.lab, c.lab) < 5)) out.push(c); });
@@ -6050,20 +6108,23 @@ function bpMake(hex, share, extra) {
   // already a saved colour in the app? use its saved hex + name
   let best = null, bd = 1e9;
   try { bdPoolSource('all').forEach(r => { const rl = r._lab || (r._lab = bpRgb2Lab(parseInt(r.hex.slice(1, 3), 16), parseInt(r.hex.slice(3, 5), 16), parseInt(r.hex.slice(5, 7), 16))); const dd = bpDE(lab, rl); if (dd < bd) { bd = dd; best = r; } }); } catch (e) {}
-  if (best && bd <= 12) return { id: uid(), hex: best.hex.toUpperCase(), name: best.name || best.hex, on: true, share, saved: true, ...extra };
+  if (best && bd <= 12) return { id: uid(), hex: best.hex.toUpperCase(), name: best.name || best.hex, on: true, share, ...extra };
   return { id: uid(), hex, name: bpGenericName(lab), on: true, share, ...extra };
 }
 function bpRun() {
   if (!bpCv) return;
   const det = bpDetectAuto(bpCv, 30);
   const manual = bpList.filter(x => x.manual);
-  bpList = det.map(o => bpMake(o.hex, o.share, o.bg ? { on: false, bg: true } : {})).concat(manual);
+  bpList = det.map(o => bpMake(o.hex, o.share, Object.assign({ px: o.px, py: o.py }, o.bg ? { on: false, bg: true } : {}))).concat(manual);
   const seen = new Set(); bpList = bpList.filter(x => !seen.has(x.hex) && seen.add(x.hex));
   bpDraw(); bpRender();
 }
 function bpDraw() {
   const cv = document.getElementById('bpCanvas'); cv.width = bpCv.width; cv.height = bpCv.height;
   const g = cv.getContext('2d'); g.drawImage(bpCv, 0, 0);
+  const fs = Math.max(12, cv.width / 34), rd = fs * 0.85;
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 ' + fs + 'px sans-serif';
+  bpList.forEach((x, i) => { if (x.px == null) return; const cx = x.px * cv.width, cy = x.py * cv.height; g.globalAlpha = x.on ? 1 : 0.45; g.beginPath(); g.arc(cx, cy, rd, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = Math.max(2, cv.width / 330); g.strokeStyle = x.on ? '#000' : '#888'; g.stroke(); g.fillStyle = '#000'; g.fillText(String(i + 1), cx, cy + 1); g.globalAlpha = 1; });
   bpMarks.forEach((m, i) => { g.lineWidth = Math.max(3, cv.width / 220); g.strokeStyle = '#fff'; g.beginPath(); g.arc(m.x, m.y, cv.width / 38, 0, 7); g.stroke(); g.strokeStyle = '#000'; g.lineWidth = Math.max(1.5, cv.width / 450); g.stroke(); });
 }
 function bpTap(e) {
@@ -6071,27 +6132,36 @@ function bpTap(e) {
   const R = Math.max(2, Math.round(cv.width / 160)), d = bpCv.getContext('2d').getImageData(Math.max(0, x - R), Math.max(0, y - R), R * 2 + 1, R * 2 + 1).data;
   let rr = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) { rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; }
   const hex = bpHex(rr / n, gg / n, bb / n);
-  bpMarks.push({ x, y }); const nx = bpMake(hex, 0, { manual: true });
-  const ex = bpList.find(v => v.hex === nx.hex); if (ex) ex.on = true; else bpList.unshift(nx);
+  const nx = bpMake(hex, 0, { manual: true, px: x / cv.width, py: y / cv.height });
+  const ex = bpList.find(v => v.hex === nx.hex); if (ex) ex.on = true; else bpList.push(nx);
   bpDraw(); bpRender();
 }
 let bpEdit = false;
 function bpRender() {
   const n = bpList.filter(x => x.on).length;
-  document.getElementById('bpToolbar').innerHTML = bpList.length ? `<button class="text-btn" onclick="bpAll(true)">Select all</button><button class="text-btn" onclick="bpAll(false)">Clear</button><button class="text-btn" onclick="bpEdit=!bpEdit;bpRender()">${bpEdit ? 'Done editing' : 'Edit names'}</button><button class="text-btn" onclick="bpRun()">Re-detect</button>` : '';
+  document.getElementById('bpToolbar').innerHTML = bpList.length ? `<button class="text-btn" onclick="bpAll(true)">Select all</button><button class="text-btn" onclick="bpAll(false)">Clear</button><button class="text-btn" onclick="bpEdit=!bpEdit;bpRender()">${bpEdit ? 'Done editing' : 'Edit names'}</button><button class="text-btn" onclick="bpRun()">Re-detect</button><button class="text-btn" onclick="bpSaveLib()">Save ticked to library</button>` : '';
   document.getElementById('bpList').innerHTML = bpList.length ? bpList.map(x => `
+ 
     <${bpEdit ? 'div' : 'button'} class="lib-card ${x.on ? 'on' : ''}" ${bpEdit ? '' : `onclick="bpTog('${x.id}')"`}>
+      <span class="bp-x" role="button" aria-label="Remove" onclick="event.stopPropagation();bpDel('${x.id}')">&#10005;</span><span class="bp-num">${bpList.indexOf(x) + 1}</span>
       <div class="lib-sw" style="background:${x.hex}" ${bpEdit ? `onclick="bpTog('${x.id}')"` : ''}></div><span class="lib-tick">&#10003;</span>
       ${bpEdit ? `<input class="bd-in" style="margin:4px 0 2px;padding:5px 6px;font-size:16px" value="${escapeHtml(x.name)}" oninput="bpName('${x.id}',this.value)"><button class="x" style="border:0;background:none;color:var(--danger);font-size:12px;padding:0" onclick="bpDel('${x.id}')">Remove</button>` : `<div class="lib-nm">${escapeHtml(x.name || x.hex)}</div>`}
-      <div class="lib-hx">${x.hex}${x.saved ? ' · saved' : x.bg ? ' · background?' : ''}</div></${bpEdit ? 'div' : 'button'}>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No colours detected. Tap the photo to pick colours.</div>';
+      <div class="lib-hx">${x.hex}${x.bg ? ' · background?' : ''}</div></${bpEdit ? 'div' : 'button'}>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No colours detected. Tap the photo to pick colours.</div>';
   document.getElementById('bpBar').style.display = n ? 'flex' : 'none';
   document.getElementById('bpAddBtn').textContent = `Add ${n} to batch`;
   document.getElementById('bpPrintBtn').textContent = `Print Colour Swatch (${n})`;
 }
-function bpTog(id) { const x = bpList.find(v => v.id === id); if (x) { x.on = !x.on; bpRender(); } }
+function bpTog(id) { const x = bpList.find(v => v.id === id); if (x) { x.on = !x.on; bpDraw(); bpRender(); } }
 function bpName(id, v) { const x = bpList.find(q => q.id === id); if (x) x.name = v; }
-function bpDel(id) { bpList = bpList.filter(v => v.id !== id); bpRender(); }
-function bpAll(on) { bpList.forEach(x => x.on = on); bpRender(); }
+function bpDel(id) { bpList = bpList.filter(v => v.id !== id); bpDraw(); bpRender(); }
+function bpAll(on) { bpList.forEach(x => x.on = on); bpDraw(); bpRender(); }
+function bpSaveLib() {
+  const sel = bpList.filter(x => x.on); if (!sel.length) { alert('Tick the colours you want to save first.'); return; }
+  const have = new Set(bdPoolSource('all').map(r => r.hex.toUpperCase())); let n = 0;
+  sel.forEach(x => { const h = x.hex.toUpperCase(); if (!have.has(h)) { getOrCreateSecondaryColor(h, (x.name || '').trim() || h); have.add(h); n++; } });
+  if (n) { try { saveAppStateToStorage(); } catch (e) {} }
+  alert(n ? `${n} colour${n !== 1 ? 's' : ''} saved to your library.` + (sel.length - n ? ` ${sel.length - n} already there.` : '') : 'All ticked colours are already in your library.');
+}
 function bpPrint() {
   const sw = bpList.filter(x => x.on).map(x => ({ hex: x.hex, name: (x.name || '').trim() })); if (!sw.length) return;
   renderPrintColoursFromSwatches(sw, `${sw.length} colour${sw.length !== 1 ? 's' : ''} from photo`, null);
