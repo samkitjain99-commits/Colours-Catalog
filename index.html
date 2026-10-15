@@ -5386,9 +5386,10 @@ function bdListBar() {
   const el = document.getElementById('bdListBar'); if (!el) return;
   bdListSel = new Set([...bdListSel].filter(id => bdById(id)));
   const n = bdListSel.size; el.style.display = n ? 'flex' : 'none';
-  el.innerHTML = `<button onclick="bdListAll()">${n === batches.length ? 'Clear' : 'Select all'}</button><button onclick="bdListDel([...bdListSel])" style="background:#fff;color:var(--danger,#c0392b)">Delete ${n} selected</button>`;
+  el.innerHTML = `${n < batches.length ? '<button onclick="bdListAll()">Select all</button>' : ''}<button onclick="bdListClear()">Clear</button><button onclick="bdListDel([...bdListSel])" style="background:#fff;color:var(--danger,#c0392b)">Delete ${n} selected</button>`;
 }
-function bdListAll() { if (bdListSel.size === batches.length) bdListSel = new Set(); else bdListSel = new Set(batches.map(b => b.id)); renderBatches(); }
+function bdListClear() { bdListSel = new Set(); renderBatches(); }
+function bdListAll() { bdListSel = new Set(batches.map(b => b.id)); renderBatches(); }
 function bdListDel(ids) {
   if (!ids.length) return;
   const nm = ids.length === 1 ? (() => { const b = bdById(ids[0]); return `batch ${b && b.no ? '#' + b.no : ''} ${b && b.name ? '"' + b.name + '"' : ''}`.replace(/\s+/g, ' ').trim(); })() : `${ids.length} batches`;
