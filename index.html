@@ -489,6 +489,26 @@
   .ba-chips button { border:1.5px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:9px 6px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer; line-height:1.2; }
   .ba-chips button small { display:block; font-size:10.5px; font-weight:600; color:var(--muted); }
   .ba-chips button.on { background:var(--brown-700); border-color:var(--brown-700); color:#fff; } .ba-chips button.on small { color:#f0e2cc; }
+  .ba-seg { display:grid; grid-template-columns:1fr 1fr; background:var(--tan-200); border-radius:12px; padding:3px; margin:0 0 12px; }
+  .ba-seg button { border:0; background:transparent; padding:9px; border-radius:10px; font-family:inherit; font-size:14px; font-weight:700; color:var(--brown-700); cursor:pointer; }
+  .ba-seg button.on { background:#fff; box-shadow:0 1px 4px rgba(43,29,18,.18); }
+  .ba-exp { display:flex; gap:8px; margin:0 0 10px; } .ba-exp button { flex:1; border:1.5px solid var(--border); background:#fff; border-radius:10px; padding:9px; font-family:inherit; font-size:13.5px; font-weight:700; color:var(--brown-700); cursor:pointer; }
+  .ba-mchip { display:inline-flex; align-items:center; gap:8px; margin-top:8px; background:var(--brown-700); color:#fff; border-radius:99px; padding:6px 8px 6px 12px; font-size:13px; font-weight:700; cursor:pointer; border:0; font-family:inherit; }
+  .ba-ins { background:#fff; border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:12px; }
+  .ba-ins h3 { margin:0 0 2px; font-size:15px; color:var(--brown-900); } .ba-ins .sub { font-size:12px; color:var(--muted); margin-bottom:10px; }
+  .ba-bars { display:flex; align-items:flex-end; gap:6px; height:150px; overflow-x:auto; padding-top:18px; }
+  .ba-bar-col { flex:1 0 34px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; cursor:pointer; border:0; background:none; padding:0; font-family:inherit; }
+  .ba-bar-col i { display:block; width:100%; background:var(--brown-700); border-radius:6px 6px 0 0; min-height:3px; } .ba-bar-col.on i { background:#C98A4B; outline:2px solid var(--brown-900); }
+  .ba-bar-col b { font-size:10px; color:var(--brown-900); margin-bottom:2px; white-space:nowrap; } .ba-bar-col small { font-size:10px; color:var(--muted); margin-top:4px; white-space:nowrap; }
+  .ba-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--tan-200); font-size:13px; }
+  .ba-row:last-child { border-bottom:0; } .ba-row .sw { width:22px; height:22px; border-radius:6px; border:1px solid rgba(0,0,0,.25); flex-shrink:0; }
+  .ba-row .nm { flex:1; min-width:0; font-weight:700; color:var(--brown-900); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ba-row .nm small { display:block; font-weight:500; color:var(--muted); font-size:11px; }
+  .ba-row .v { text-align:right; white-space:nowrap; color:var(--brown-900); } .ba-row .v small { display:block; color:var(--muted); font-size:11px; }
+  .ba-row.tap { cursor:pointer; }
+  .ba-meter { height:6px; background:var(--tan-200); border-radius:3px; overflow:hidden; margin-top:3px; } .ba-meter i { display:block; height:100%; background:var(--brown-700); }
+  .ba-up { color:#2F6B2A; font-weight:700; } .ba-dn { color:var(--danger); font-weight:700; }
+  .ba-ins select { width:auto !important; display:inline-block; margin:0 6px 8px 0 !important; padding:7px 8px !important; font-size:14px !important; }
+  .ba-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:8px; } .ba-stats div { background:var(--tan-200); border-radius:10px; padding:8px 4px; text-align:center; font-size:11px; color:var(--muted); font-weight:600; } .ba-stats b { display:block; font-size:16px; color:var(--brown-900); }
   .ba-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:0 0 12px; }
   .ba-kpi { background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 4px; text-align:center; }
   .ba-kpi b { display:block; font-size:17px; color:var(--brown-900); } .ba-kpi small { font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); font-weight:600; }
@@ -498,6 +518,7 @@
   .ba-num { text-align:right; font-size:12px; color:var(--brown-700); line-height:1.35; } .ba-num b { font-size:15px; color:var(--brown-900); }
   .ba-bar { height:5px; border-radius:3px; background:var(--tan-200); margin-top:8px; overflow:hidden; } .ba-bar i { display:block; height:100%; background:var(--brown-700); border-radius:3px; }
   .ba-det { margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; font-size:12.5px; color:var(--brown-900); }
+  .ba-det .r.tap { cursor:pointer; align-items:center; } .ba-det .r span:last-child { text-align:right; }
   .ba-det h4 { margin:8px 0 4px; font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); }
   .ba-det .r { display:flex; justify-content:space-between; gap:8px; padding:3px 0; border-bottom:1px solid var(--tan-200); }
   .bd-badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px; background:var(--tan-200); color:var(--brown-700); white-space:nowrap; }
@@ -1438,14 +1459,27 @@
         <button data-q="lm" id="baLmOpt" onclick="baQuick('lm')">Last month</button>
         <button data-q="fy" id="baFyOpt" onclick="baQuick('fy')">Current FY</button>
       </div>
+      <div id="baMonthChip"></div>
       <input class="bd-in" id="baSearch" placeholder="Search colour name or hex" oninput="baRender()" style="margin-top:8px">
     </div>
     <div class="ba-kpis" id="baKpis"></div>
+    <div class="ba-exp no-print"><button onclick="baExportExcel()">⬇ Excel</button><button onclick="baExportPdf()" id="baPdfBtn">⬇ PDF</button></div>
+    <div class="ba-seg no-print"><button id="baTabCol" class="on" onclick="baSetTab('col')">Colours</button><button id="baTabIns" onclick="baSetTab('ins')">Insights</button></div>
+    <div id="baColsWrap">
     <div class="ba-selrow" id="baSelRow"></div>
     <div id="baList"></div>
+    </div>
+    <div id="baInsights" style="display:none"></div>
     <div class="ba-actbar" id="baActBar" style="display:none">
       <button onclick="baPrintSel()">Print Colour Swatch <span id="baActN1"></span></button>
       <button onclick="baNewBatchSel()">New batch <span id="baActN2"></span></button>
+    </div>
+  </div>
+
+  <div class="bd-modal no-print" id="baModal" style="display:none" onclick="if(event.target===this)baCloseModal()">
+    <div class="bd-modal-card" style="max-height:82vh">
+      <div id="baModalBody"></div>
+      <button class="add-secondary-btn" style="width:100%;margin-top:12px" onclick="baCloseModal()">Close</button>
     </div>
   </div>
 
@@ -5575,7 +5609,7 @@ function bdBuildSheetPages(b) {
   return html;
 }
 /* ---------- Dye analytics ---------- */
-let baQ = '', baOpenHex = null, baSel = new Set(), baColSel = new Map(), baVisible = [];
+let baTab = 'col', baMonth = '', baCmp = 'tm_lm', baCmpMetric = 'mtr', baStale = 90, baAllRows = [], baRowMap = new Map(), baQ = '', baOpenHex = null, baSel = new Set(), baColSel = new Map(), baVisible = [];
 function baQuick(q) { baQ = baQ === q ? '' : q; document.getElementById('baPeriod').value = 'all'; baRender(); }
 function baFyRange(back) {
   const n = new Date(), y = (n.getMonth() >= 3 ? n.getFullYear() : n.getFullYear() - 1) - back;   // Indian FY: 1 Apr – 31 Mar
@@ -5587,7 +5621,7 @@ function baOpen() {
   document.getElementById('baLmOpt').innerHTML = 'Last month<small>' + mn(new Date(nw.getFullYear(), nw.getMonth() - 1, 1)) + '</small>';
   document.getElementById('baFyOpt').innerHTML = 'Current FY<small>' + baFyRange(0).label.slice(3) + '</small>';
   document.getElementById('baLfyOpt').textContent = 'Last FY (' + baFyRange(1).label.slice(3) + ')';
-  baQ = ''; document.getElementById('baPeriod').value = 'all'; baOpenHex = null; baSel = new Set(); baColSel = new Map(); document.getElementById('baPanel').style.display = 'none'; showView('batchAnalytics'); baRender(); }
+  baQ = ''; baMonth = ''; baTab = 'col'; document.getElementById('baPeriod').value = 'all'; baOpenHex = null; baSel = new Set(); baColSel = new Map(); document.getElementById('baPanel').style.display = 'none'; showView('batchAnalytics'); baRender(); }
 function baSortedBatches() {
   return (batches || []).slice().sort((a, b) => (b.sentDate || '') < (a.sentDate || '') ? -1 : (b.sentDate || '') > (a.sentDate || '') ? 1 : (parseInt(b.no, 10) || 0) - (parseInt(a.no, 10) || 0));
 }
@@ -5616,27 +5650,25 @@ function baNewBatchSel() {
   const b = { id: uid(), no: bdNextNo(), name: '', sentDate: bdToday(), notes: '', items: [] };
   batches.unshift(b); bdCurrentId = b.id; bdAddItems(sw); saveBatches(); baColSel = new Map(); bdOpen(b.id);
 }
-function baToggle(hex) { baOpenHex = baOpenHex === hex ? null : hex; baRender(); }
+function baToggle(hex) {
+  const e = baRowMap.get(hex); if (!e) return;
+  const sizes = [...e.sizes.entries()].sort((a, c) => c[0] - a[0]).map(([m, z]) => `<div class="r"><span>${m ? m + ' mtr' : 'Pcs only'}</span><span><b>${+z.pcs.toFixed(2)}</b> pcs${z.mtr ? ' · <b>' + +z.mtr.toFixed(2) + '</b> mtr' : ''}</span></div>`).join('');
+  const bs = [...e.bs.values()].sort((a, c) => (c.b.sentDate || '') < (a.b.sentDate || '') ? -1 : 1).map(r => `<div class="r tap" onclick="baCloseModal();bdOpen('${r.b.id}')"><span>${r.b.no ? '#' + escapeHtml(String(r.b.no)) + ' · ' : ''}${escapeHtml(r.b.name || 'Untitled')}<br><small style="color:var(--muted)">${bdFmtDate(r.b.sentDate)}</small></span><span><b>${+r.pcs.toFixed(2)}</b> pcs${r.mtr ? '<br><b>' + +r.mtr.toFixed(2) + '</b> mtr' : ''}</span></div>`).join('');
+  document.getElementById('baModalBody').innerHTML = `
+    <div class="ba-top" style="margin-bottom:10px"><div class="ba-sw" style="background:${e.hex}"></div><div class="ba-nm">${escapeHtml(e.name || e.hex)}<small>${e.hex}</small></div><div class="ba-num"><b>${+e.pcs.toFixed(2)}</b> pcs<br>${e.mtr ? '<b>' + +e.mtr.toFixed(2) + '</b> mtr' : '—'}</div></div>
+    <div class="ba-det" style="margin-top:0"><h4>By size</h4>${sizes}<h4>Batches (${e.bs.size})</h4>${bs}${e.designs.size ? `<h4>Lace designs</h4><div>${[...e.designs].map(escapeHtml).join(', ')}</div>` : ''}</div>`;
+  document.getElementById('baModal').style.display = 'flex';
+}
+function baCloseModal() { document.getElementById('baModal').style.display = 'none'; }
 function baRender() {
-  const per = baQ || document.getElementById('baPeriod').value, sort = document.getElementById('baSort').value;
+  const sort = document.getElementById('baSort').value;
   const q = document.getElementById('baSearch').value.trim().toLowerCase();
-  const now = new Date(); let from = '', to = '';
-  const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  let lastIds = null;
-  if (per === 'last5') lastIds = new Set(baSortedBatches().slice(0, 5).map(b => b.id));
-  else if (per === 'tm') { from = ymd(new Date(now.getFullYear(), now.getMonth(), 1)); to = ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0)); }
-  else if (per === 'lm') { from = ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1)); to = ymd(new Date(now.getFullYear(), now.getMonth(), 0)); }
-  else if (per === 'fy' || per === 'lfy') { const r = baFyRange(per === 'fy' ? 0 : 1); from = r.from; to = r.to; } else
-  if (per === 'year') from = now.getFullYear() + '-01-01';
-  else if (per !== 'all') { const d = new Date(now.getTime() - (+per) * 864e5); from = d.toISOString().slice(0, 10); }
+  const pass = baPass();
   document.querySelectorAll('#baChips button').forEach(x => x.classList.toggle('on', x.dataset.q === baQ));
   document.getElementById('baBtnTxt').textContent = baSel.size ? (baSel.size === 1 ? (() => { const x = bdById([...baSel][0]); return x ? (x.no ? '#' + x.no + ' · ' : '') + (x.name || 'Untitled') : '1 batch'; })() : baSel.size + ' batches selected') : 'All Batches';
   const map = new Map(); let nb = 0, tp = 0, tm = 0;
   (batches || []).forEach(b => {
-    if (from && (b.sentDate || '') < from) return;
-    if (to && (b.sentDate || '') > to) return;
-    if (baSel.size && !baSel.has(b.id)) return;
-    if (lastIds && !lastIds.has(b.id)) return;
+    if (!pass(b)) return;
     nb++;
     (b.items || []).forEach(i => {
       const hex = String(i.hex).toUpperCase(), x = bdItemTotals(i);
@@ -5655,19 +5687,201 @@ function baRender() {
   rows.sort((a, b) => sort === 'pcs' ? b.pcs - a.pcs : sort === 'times' ? b.bs.size - a.bs.size || b.mtr - a.mtr : sort === 'recent' ? (b.last < a.last ? -1 : 1) : sort === 'name' ? (a.name || '').localeCompare(b.name || '') : b.mtr - a.mtr || b.pcs - a.pcs);
   document.getElementById('baKpis').innerHTML = [[nb, 'Batches'], [map.size, 'Colours'], [+tp.toFixed(2), 'Pcs'], [+tm.toFixed(2), 'Mtr']].map(([v, l]) => `<div class="ba-kpi"><b>${v}</b><small>${l}</small></div>`).join('');
   const top = Math.max(1, ...rows.map(e => sort === 'pcs' ? e.pcs : e.mtr || 0));
-  baVisible = rows;
+  baAllRows = [...map.values()]; baVisible = rows; baRowMap = new Map(rows.map(r => [r.hex, r]));
   const n = baColSel.size;
   document.getElementById('baSelRow').innerHTML = rows.length ? `<a onclick="baColAll()">Select all</a><a onclick="baColClear()">Clear</a><span>${n ? n + ' selected' : 'Tick colours to print or start a batch'}</span>` : '';
-  document.getElementById('baActBar').style.display = n ? 'flex' : 'none';
+  document.getElementById('baActBar').style.display = n && baTab === 'col' ? 'flex' : 'none';
+  document.getElementById('baMonthChip').innerHTML = baMonth ? `<button class="ba-mchip" onclick="baMonthSet('')">Month: ${baMonthLabel(baMonth)} <span>✕</span></button>` : '';
+  document.getElementById('baColsWrap').style.display = baTab === 'col' ? 'block' : 'none';
+  document.getElementById('baInsights').style.display = baTab === 'ins' ? 'block' : 'none';
+  document.getElementById('baTabCol').classList.toggle('on', baTab === 'col'); document.getElementById('baTabIns').classList.toggle('on', baTab === 'ins');
+  if (baTab === 'ins') baRenderInsights();
   document.getElementById('baActN1').textContent = '(' + n + ')'; document.getElementById('baActN2').textContent = '(' + n + ')';
   document.getElementById('baList').innerHTML = rows.length ? rows.map(e => {
-    const open = baOpenHex === e.hex, w = Math.round(100 * (sort === 'pcs' ? e.pcs : e.mtr) / top);
-    const det = open ? `<div class="ba-det"><h4>By size</h4>${[...e.sizes.entries()].sort((a, c) => c[0] - a[0]).map(([m, z]) => `<div class="r"><span>${m ? m + ' mtr' : 'Pcs only'}</span><span><b>${+z.pcs.toFixed(2)}</b> pcs${z.mtr ? ' · <b>' + +z.mtr.toFixed(2) + '</b> mtr' : ''}</span></div>`).join('')}
-      <h4>Batches (${e.bs.size})</h4>${[...e.bs.values()].sort((a, c) => (c.b.sentDate || '') < (a.b.sentDate || '') ? -1 : 1).map(r => `<div class="r" onclick="event.stopPropagation();bdOpen('${r.b.id}')"><span>${r.b.no ? '#' + escapeHtml(String(r.b.no)) + ' · ' : ''}${escapeHtml(r.b.name || 'Untitled')} <span style="color:var(--muted)">${bdFmtDate(r.b.sentDate)}</span></span><span><b>${+r.pcs.toFixed(2)}</b> pcs${r.mtr ? ' · <b>' + +r.mtr.toFixed(2) + '</b> mtr' : ''}</span></div>`).join('')}
-      ${e.designs.size ? `<h4>Lace designs</h4><div>${[...e.designs].map(escapeHtml).join(', ')}</div>` : ''}</div>` : '';
+    const w = Math.round(100 * (sort === 'pcs' ? e.pcs : e.mtr) / top);
     const on = baColSel.has(e.hex);
-    return `<div class="ba-card${on ? ' sel' : ''}" onclick="baToggle('${e.hex}')"><div class="ba-top"><input type="checkbox" class="ba-cb" ${on ? 'checked' : ''} onclick="event.stopPropagation()" onchange="baColPick('${e.hex}', '${escapeHtml((e.name || e.hex).replace(/'/g, ''))}')"><div class="ba-sw" style="background:${e.hex}"></div><div class="ba-nm">${escapeHtml(e.name || e.hex)}<small>${e.hex} · ${e.bs.size} batch${e.bs.size !== 1 ? 'es' : ''}${e.last ? ' · last ' + bdFmtDate(e.last) : ''}</small></div><div class="ba-num"><b>${+e.pcs.toFixed(2)}</b> pcs<br>${e.mtr ? '<b>' + +e.mtr.toFixed(2) + '</b> mtr' : '—'}</div></div><div class="ba-bar"><i style="width:${w}%"></i></div>${det}</div>`;
+    return `<div class="ba-card${on ? ' sel' : ''}" onclick="baToggle('${e.hex}')"><div class="ba-top"><input type="checkbox" class="ba-cb" ${on ? 'checked' : ''} onclick="event.stopPropagation()" onchange="baColPick('${e.hex}', '${escapeHtml((e.name || e.hex).replace(/'/g, ''))}')"><div class="ba-sw" style="background:${e.hex}"></div><div class="ba-nm">${escapeHtml(e.name || e.hex)}<small>${e.hex} · ${e.bs.size} batch${e.bs.size !== 1 ? 'es' : ''}${e.last ? ' · last ' + bdFmtDate(e.last) : ''}</small></div><div class="ba-num"><b>${+e.pcs.toFixed(2)}</b> pcs<br>${e.mtr ? '<b>' + +e.mtr.toFixed(2) + '</b> mtr' : '—'}</div></div><div class="ba-bar"><i style="width:${w}%"></i></div></div>`;
   }).join('') : `<div class="empty-state">No dyed quantities yet for this period.</div>`;
+}
+
+/* ---------- Dye analytics: filters, insights, export ---------- */
+const BA_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function baMonthLabel(ym) { const [y, m] = ym.split('-'); return BA_MONTHS[+m - 1] + ' ' + y; }
+function baYmd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function baMonthSet(ym) { baMonth = baMonth === ym ? '' : ym; baRender(); }
+function baSetTab(t) { baTab = t; baRender(); window.scrollTo(0, 0); }
+// predicate for the current filters (period / batch picker / month bar)
+function baPass(noMonth) {
+  const per = baQ || document.getElementById('baPeriod').value, now = new Date();
+  let from = '', to = '', ids = null;
+  if (per === 'last5') ids = new Set(baSortedBatches().slice(0, 5).map(b => b.id));
+  else if (per === 'tm') { from = baYmd(new Date(now.getFullYear(), now.getMonth(), 1)); to = baYmd(new Date(now.getFullYear(), now.getMonth() + 1, 0)); }
+  else if (per === 'lm') { from = baYmd(new Date(now.getFullYear(), now.getMonth() - 1, 1)); to = baYmd(new Date(now.getFullYear(), now.getMonth(), 0)); }
+  else if (per === 'fy' || per === 'lfy') { const r = baFyRange(per === 'fy' ? 0 : 1); from = r.from; to = r.to; }
+  else if (per === 'year') from = now.getFullYear() + '-01-01';
+  else if (per !== 'all') from = new Date(now.getTime() - (+per) * 864e5).toISOString().slice(0, 10);
+  return b => {
+    const d = b.sentDate || '';
+    if (from && d < from) return false; if (to && d > to) return false;
+    if (baSel.size && !baSel.has(b.id)) return false;
+    if (ids && !ids.has(b.id)) return false;
+    if (!noMonth && baMonth && d.slice(0, 7) !== baMonth) return false;
+    return true;
+  };
+}
+function baFilterLabel() {
+  const per = baQ || document.getElementById('baPeriod').value;
+  const names = { all: 'All time', last5: 'Last 5 batches', tm: 'This month', lm: 'Last month', fy: 'Current FY ' + baFyRange(0).label.slice(3), lfy: 'Last FY ' + baFyRange(1).label.slice(3), 30: 'Last 30 days', 90: 'Last 90 days', 365: 'Last 12 months', year: 'This year' };
+  let t = names[per] || per;
+  if (baMonth) t += ' · ' + baMonthLabel(baMonth);
+  if (baSel.size) t += ' · ' + baSel.size + ' batch' + (baSel.size > 1 ? 'es' : '') + ' picked';
+  return t;
+}
+// aggregate any list of batches
+function baAgg(list) {
+  const cols = new Map(), sizes = new Map(), brows = []; let pcs = 0, mtr = 0;
+  list.forEach(b => {
+    let bp = 0, bm = 0, bc = 0;
+    (b.items || []).forEach(i => {
+      const x = bdItemTotals(i); if (!(x.pcs > 0)) return;
+      const hex = String(i.hex).toUpperCase(), c = cols.get(hex) || { hex, name: '', last: '', pcs: 0, mtr: 0, bs: new Set() };
+      if (!c.name || (b.sentDate || '') >= c.last) c.name = i.name || c.name;
+      if ((b.sentDate || '') >= c.last) c.last = b.sentDate || '';
+      c.pcs += x.pcs; c.mtr += x.mtr; c.bs.add(b.id); cols.set(hex, c);
+      bp += x.pcs; bm += x.mtr; bc++; pcs += x.pcs; mtr += x.mtr;
+      (i.lines || []).forEach(l => { const p = parseFloat(l.qty); if (!(p > 0)) return; const m = parseFloat(l.mtr) > 0 ? +parseFloat(l.mtr).toFixed(2) : 0; const z = sizes.get(m) || { pcs: 0, mtr: 0 }; z.pcs += p; z.mtr += bdLineMtr(l); sizes.set(m, z); });
+    });
+    brows.push({ b, pcs: bp, mtr: bm, n: bc });
+  });
+  return { cols, sizes, brows, pcs, mtr };
+}
+const baN = n => +(+n).toFixed(2);
+const baSw = (hex) => `<span class="sw" style="background:${hex}"></span>`;
+function baRenderInsights() {
+  const list = (batches || []).filter(baPass()), A = baAgg(list), noMonth = (batches || []).filter(baPass(true));
+  let h = '';
+  // 1. monthly trend
+  const mm = new Map(); noMonth.forEach(b => { const ym = (b.sentDate || '').slice(0, 7); if (!ym) return; const x = baAgg([b]); const e = mm.get(ym) || { pcs: 0, mtr: 0 }; e.pcs += x.pcs; e.mtr += x.mtr; mm.set(ym, e); });
+  const months = [...mm.entries()].sort((a, c) => a[0] < c[0] ? -1 : 1).slice(-12), mx = Math.max(1, ...months.map(([, e]) => e.mtr || e.pcs));
+  h += `<div class="ba-ins"><h3>Monthly trend</h3><div class="sub">Metres sent per month (pcs-only months show pcs). Tap a bar to filter to that month.</div>${months.length ? `<div class="ba-bars">${months.map(([ym, e]) => { const v = e.mtr || e.pcs; return `<button class="ba-bar-col${baMonth === ym ? ' on' : ''}" onclick="baMonthSet('${ym}')"><b>${baN(v)}</b><i style="height:${Math.max(3, Math.round(100 * v / mx))}%"></i><small>${BA_MONTHS[+ym.slice(5) - 1]} ${ym.slice(2, 4)}</small></button>`; }).join('')}</div>` : '<div class="empty-state">No data.</div>'}</div>`;
+  // 2. size mix
+  const sz = [...A.sizes.entries()].sort((a, c) => (c[0] || -1) - (a[0] || -1)), tpcs = Math.max(1, A.pcs);
+  h += `<div class="ba-ins"><h3>Size mix</h3><div class="sub">Share of pieces by pack size.</div>${sz.length ? sz.map(([m, z]) => `<div style="margin-bottom:8px"><div class="ba-row" style="border:0;padding:0"><span class="nm">${m ? m + ' mtr' : 'Pcs only'}</span><span class="v"><b>${baN(z.pcs)}</b> pcs${z.mtr ? ' · ' + baN(z.mtr) + ' mtr' : ''} · ${Math.round(100 * z.pcs / tpcs)}%</span></div><div class="ba-meter"><i style="width:${100 * z.pcs / tpcs}%"></i></div></div>`).join('') : '<div class="empty-state">No data.</div>'}</div>`;
+  // 3. colour share
+  const cs = [...A.cols.values()].sort((a, c) => c.mtr - a.mtr || c.pcs - a.pcs), top = cs.slice(0, 10), rest = cs.slice(10), tm = Math.max(1, A.mtr);
+  const restM = rest.reduce((t, c) => t + c.mtr, 0);
+  h += `<div class="ba-ins"><h3>Colour share</h3><div class="sub">Top 10 colours by metres, as a share of everything sent.</div>${top.length ? top.map(c => `<div style="margin-bottom:8px"><div class="ba-row" style="border:0;padding:0">${baSw(c.hex)}<span class="nm">${escapeHtml(c.name || c.hex)}</span><span class="v"><b>${baN(c.mtr)}</b> mtr · ${Math.round(100 * c.mtr / tm)}%</span></div><div class="ba-meter"><i style="width:${100 * c.mtr / tm}%"></i></div></div>`).join('') + (rest.length ? `<div class="ba-row" style="border:0;padding:0"><span class="nm" style="color:var(--muted)">Other ${rest.length} colours</span><span class="v"><b>${baN(restM)}</b> mtr · ${Math.round(100 * restM / tm)}%</span></div>` : '') : '<div class="empty-state">No data.</div>'}</div>`;
+  // 4. compare periods
+  h += baCompareHtml();
+  // 5. not dyed lately
+  h += baStaleHtml();
+  // 7. batch stats
+  const nb = list.length, big = A.brows.slice().sort((a, c) => c.mtr - a.mtr || c.pcs - a.pcs).slice(0, 3);
+  h += `<div class="ba-ins"><h3>Batch size</h3><div class="sub">What a typical batch looks like in this view.</div><div class="ba-stats"><div><b>${nb ? baN(A.pcs / nb) : 0}</b>avg pcs</div><div><b>${nb ? baN(A.mtr / nb) : 0}</b>avg mtr</div><div><b>${nb ? baN(A.brows.reduce((t, r) => t + r.n, 0) / nb) : 0}</b>avg colours</div></div>${big.length ? '<div class="sub" style="margin:6px 0 2px">Biggest batches</div>' + big.map(r => `<div class="ba-row tap" onclick="bdOpen('${r.b.id}')"><span class="nm">${r.b.no ? '#' + escapeHtml(String(r.b.no)) + ' · ' : ''}${escapeHtml(r.b.name || 'Untitled')}<small>${bdFmtDate(r.b.sentDate)} · ${r.n} colours</small></span><span class="v"><b>${baN(r.pcs)}</b> pcs${r.mtr ? '<small>' + baN(r.mtr) + ' mtr</small>' : ''}</span></div>`).join('') : ''}</div>`;
+  // 8. dyed together
+  const pc = new Map(), cn = new Map(); A.cols.forEach(c => cn.set(c.hex, c));
+  list.forEach(b => { const hs = [...new Set((b.items || []).filter(i => bdItemTotals(i).pcs > 0).map(i => String(i.hex).toUpperCase()))].sort(); for (let i = 0; i < hs.length; i++) for (let j = i + 1; j < hs.length; j++) { const k = hs[i] + '|' + hs[j]; pc.set(k, (pc.get(k) || 0) + 1); } });
+  const pairs = [...pc.entries()].filter(([, n]) => n >= 2).sort((a, c) => c[1] - a[1]).slice(0, 10);
+  h += `<div class="ba-ins"><h3>Dyed together</h3><div class="sub">Colour pairs that often go in the same batch (2+ batches).</div>${pairs.length ? pairs.map(([k, n]) => { const [x, y] = k.split('|'); return `<div class="ba-row">${baSw(x)}${baSw(y)}<span class="nm">${escapeHtml(cn.get(x).name || x)} + ${escapeHtml(cn.get(y).name || y)}</span><span class="v"><b>${n}</b> batches</span></div>`; }).join('') : '<div class="empty-state">No pairs repeat yet.</div>'}</div>`;
+  document.getElementById('baInsights').innerHTML = h;
+}
+function baCmpSets() {
+  const now = new Date(), inR = (f, t) => new Set((batches || []).filter(b => (b.sentDate || '') >= f && (b.sentDate || '') <= t).map(b => b.id));
+  if (baCmp === 'fy_lfy') { const a = baFyRange(0), b = baFyRange(1); return { la: 'Current FY', lb: 'Last FY', A: inR(a.from, a.to), B: inR(b.from, b.to) }; }
+  if (baCmp === 'l5_p5') { const l = baSortedBatches(); return { la: 'Last 5', lb: 'Previous 5', A: new Set(l.slice(0, 5).map(b => b.id)), B: new Set(l.slice(5, 10).map(b => b.id)) }; }
+  const f = (m) => [baYmd(new Date(now.getFullYear(), now.getMonth() + m, 1)), baYmd(new Date(now.getFullYear(), now.getMonth() + m + 1, 0))];
+  return { la: 'This month', lb: 'Last month', A: inR(...f(0)), B: inR(...f(-1)) };
+}
+function baCompareHtml() {
+  const S = baCmpSets(), met = baCmpMetric, unit = met === 'mtr' ? 'mtr' : 'pcs';
+  const a = baAgg((batches || []).filter(b => S.A.has(b.id))), b = baAgg((batches || []).filter(x => S.B.has(x.id)));
+  const hexes = new Set([...a.cols.keys(), ...b.cols.keys()]);
+  const rows = [...hexes].map(hx => { const ca = a.cols.get(hx), cb = b.cols.get(hx); return { hex: hx, name: (ca || cb).name, a: ca ? ca[met] : 0, b: cb ? cb[met] : 0 }; }).filter(r => r.a || r.b).sort((x, y) => Math.max(y.a, y.b) - Math.max(x.a, x.b)).slice(0, 15);
+  const chg = (x, y) => !y && x ? '<span class="ba-up">new</span>' : !x && y ? '<span class="ba-dn">none</span>' : (x === y ? '–' : (x > y ? `<span class="ba-up">▲ ${Math.round(100 * (x - y) / y)}%</span>` : `<span class="ba-dn">▼ ${Math.round(100 * (y - x) / y)}%</span>`));
+  const ta = a[met === 'mtr' ? 'mtr' : 'pcs'], tb = b[met === 'mtr' ? 'mtr' : 'pcs'];
+  return `<div class="ba-ins"><h3>Compare periods</h3><div class="sub">Ignores the filters above — always uses all batches.</div>
+    <select class="bd-in" onchange="baCmp=this.value;baRenderInsights()"><option value="tm_lm" ${baCmp === 'tm_lm' ? 'selected' : ''}>This vs last month</option><option value="fy_lfy" ${baCmp === 'fy_lfy' ? 'selected' : ''}>This vs last FY</option><option value="l5_p5" ${baCmp === 'l5_p5' ? 'selected' : ''}>Last 5 vs previous 5</option></select>
+    <select class="bd-in" onchange="baCmpMetric=this.value;baRenderInsights()"><option value="mtr" ${met === 'mtr' ? 'selected' : ''}>Metres</option><option value="pcs" ${met === 'pcs' ? 'selected' : ''}>Pieces</option></select>
+    <div class="ba-row" style="font-weight:700"><span class="nm">Total</span><span class="v">${baN(tb)} → ${baN(ta)} ${unit} &nbsp; ${chg(ta, tb)}</span></div>
+    <div class="sub" style="margin:4px 0 2px">${S.lb} → ${S.la}</div>
+    ${rows.length ? rows.map(r => `<div class="ba-row">${baSw(r.hex)}<span class="nm">${escapeHtml(r.name || r.hex)}</span><span class="v">${baN(r.b)} → <b>${baN(r.a)}</b> ${unit}<small>${chg(r.a, r.b)}</small></span></div>`).join('') : '<div class="empty-state">Nothing dyed in these periods.</div>'}</div>`;
+}
+function baStaleList() {
+  const all = baAgg(batches || []), cut = new Date(Date.now() - baStale * 864e5).toISOString().slice(0, 10);
+  return [...all.cols.values()].filter(c => c.last && c.last < cut).sort((x, y) => x.last < y.last ? -1 : 1);
+}
+function baStaleSelect() { baStaleList().forEach(c => baColSel.set(c.hex, c.name || c.hex)); baTab = 'col'; baRender(); window.scrollTo(0, 0); }
+function baStaleHtml() {
+  const rows = baStaleList(), days = c => Math.floor((Date.now() - new Date(c.last + 'T00:00:00').getTime()) / 864e5);
+  return `<div class="ba-ins"><h3>Not dyed lately</h3><div class="sub">Colours you have dyed before but not sent recently (all batches).</div>
+    <select class="bd-in" onchange="baStale=+this.value;baRenderInsights()">${[60, 90, 180].map(d => `<option value="${d}" ${baStale === d ? 'selected' : ''}>Not in ${d} days</option>`).join('')}</select>
+    ${rows.length ? `<button class="add-secondary-btn" style="width:100%;margin:0 0 6px" onclick="baStaleSelect()">Select these ${rows.length} colours</button>` + rows.slice(0, 30).map(c => `<div class="ba-row">${baSw(c.hex)}<span class="nm">${escapeHtml(c.name || c.hex)}<small>last ${bdFmtDate(c.last)}</small></span><span class="v"><b>${days(c)}</b> days<small>${baN(c.mtr || c.pcs)} ${c.mtr ? 'mtr' : 'pcs'} total</small></span></div>`).join('') + (rows.length > 30 ? `<div class="sub" style="margin-top:6px">+ ${rows.length - 30} more</div>` : '') : '<div class="empty-state">Every colour has been dyed recently.</div>'}</div>`;
+}
+// ----- export -----
+function baExportData() {
+  const list = (batches || []).filter(baPass()), A = baAgg(list);
+  const cols = [...A.cols.values()].sort((a, c) => c.mtr - a.mtr || c.pcs - a.pcs);
+  const sizes = [...A.sizes.entries()].sort((a, c) => (c[0] || -1) - (a[0] || -1));
+  const brows = A.brows.slice().sort((a, c) => (c.b.sentDate || '') < (a.b.sentDate || '') ? -1 : 1);
+  return { label: baFilterLabel(), list, A, cols, sizes, brows };
+}
+async function baExportExcel() {
+  const d = baExportData(); if (!d.cols.length) { alert('Nothing to export for this view.'); return; }
+  const sheets = {
+    'By colour': [['Colour', 'Hex', 'Batches', 'Total pcs', 'Total mtr', 'Last dyed']].concat(d.cols.map(c => [c.name || c.hex, c.hex, c.bs.size, baN(c.pcs), baN(c.mtr), c.last])),
+    'By size': [['Size', 'Total pcs', 'Total mtr']].concat(d.sizes.map(([m, z]) => [m ? m + ' mtr' : 'Pcs only', baN(z.pcs), baN(z.mtr)])),
+    'By batch': [['Batch No', 'Batch', 'Date', 'Colours', 'Total pcs', 'Total mtr']].concat(d.brows.map(r => [r.b.no || '', r.b.name || '', r.b.sentDate || '', r.n, baN(r.pcs), baN(r.mtr)])),
+    'Detail': [['Batch No', 'Batch', 'Date', 'Colour', 'Hex', 'Lace design', 'Pcs', 'Mtr/pc', 'Total mtr']]
+  };
+  d.list.forEach(b => (b.items || []).forEach(i => (i.lines || []).forEach(l => { if (parseFloat(l.qty) > 0) sheets['Detail'].push([b.no || '', b.name || '', b.sentDate || '', i.name || i.hex, i.hex, i.design || '', parseFloat(l.qty), l.mtr || '', bdLineMtr(l) || '']); })));
+  const base = 'Dye_Analytics_' + baYmd(new Date());
+  try {
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined');
+    const wb = window.XLSX.utils.book_new();
+    Object.entries(sheets).forEach(([n, rows]) => { const ws = window.XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = rows[0].map((_, k) => ({ wch: Math.min(34, Math.max(10, ...rows.map(r => String(r[k] ?? '').length)) + 2) })); window.XLSX.utils.book_append_sheet(wb, ws, n); });
+    window.XLSX.writeFile(wb, base + '.xlsx');
+  } catch (e) {
+    const csv = sheets['By colour'].map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = base + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  }
+}
+function baPdfHtml(d) {
+  const W = 'font-size:13px;color:#000;';
+  const td = (w, t, o) => `<div style="${w ? 'width:' + w + 'px;' : 'flex:1;'}${o && o.r ? 'text-align:right;' : ''}${o && o.b ? 'font-weight:700;' : ''}">${t}</div>`;
+  const thRow = cols => `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #999;font-size:10px;font-weight:700;letter-spacing:.6px;color:#7a6a55;text-transform:uppercase">${cols.map(c => td(c[0], c[1], { r: c[2] })).join('')}</div>`;
+  const blocks = [];
+  const sec = (title, head, rows) => { blocks.push({ h: 44, html: `<div style="font-size:15px;font-weight:700;color:#2b1d12;margin:18px 0 4px">${title}</div>`, head }); rows.forEach(r => blocks.push({ h: 34, html: r, head })); };
+  const hCol = thRow([[24, '#'], [0, 'Colour'], [60, 'Batches', 1], [80, 'Total pcs', 1], [90, 'Total mtr', 1], [90, 'Last dyed', 1]]);
+  sec('By colour', hCol, d.cols.map((c, i) => `<div style="display:flex;gap:10px;align-items:center;height:34px;border-bottom:1px solid #e3d9c6;${W}">${td(24, i + 1)}<div style="flex:1;display:flex;align-items:center;gap:8px"><span style="width:26px;height:20px;border-radius:4px;border:1px solid #999;background:${c.hex};flex-shrink:0"></span><b>${escapeHtml(c.name || c.hex)}</b> <span style="font-family:monospace;font-size:11px">${c.hex}</span></div>${td(60, c.bs.size, { r: 1 })}${td(80, baN(c.pcs), { r: 1, b: 1 })}${td(90, c.mtr ? baN(c.mtr) + ' mtr' : '-', { r: 1, b: 1 })}${td(90, c.last ? bdFmtDate(c.last) : '', { r: 1 })}</div>`));
+  const hSz = thRow([[0, 'Size (mtr per pc)'], [90, 'Total pcs', 1], [110, 'Total mtr', 1]]);
+  sec('By size', hSz, d.sizes.map(([m, z]) => `<div style="display:flex;gap:10px;align-items:center;height:34px;border-bottom:1px solid #e3d9c6;${W}">${td(0, `<b>${m ? m + ' mtr' : 'Pcs only (no mtr)'}</b>`)}${td(90, baN(z.pcs), { r: 1, b: 1 })}${td(110, z.mtr ? baN(z.mtr) + ' mtr' : '-', { r: 1, b: 1 })}</div>`));
+  const hB = thRow([[40, 'No.'], [0, 'Batch'], [90, 'Date'], [60, 'Colours', 1], [70, 'Pcs', 1], [90, 'Mtr', 1]]);
+  sec('By batch', hB, d.brows.map(r => `<div style="display:flex;gap:10px;align-items:center;height:34px;border-bottom:1px solid #e3d9c6;${W}">${td(40, r.b.no ? '#' + escapeHtml(String(r.b.no)) : '')}${td(0, `<b>${escapeHtml(r.b.name || 'Untitled')}</b>`)}${td(90, bdFmtDate(r.b.sentDate))}${td(60, r.n, { r: 1 })}${td(70, baN(r.pcs), { r: 1, b: 1 })}${td(90, r.mtr ? baN(r.mtr) + ' mtr' : '-', { r: 1, b: 1 })}</div>`));
+  const pages = [[]]; let used = 0, cap = 800, lastHead = null;
+  blocks.forEach(bl => {
+    if (used + bl.h > cap) { pages.push([]); used = 0; cap = 940; if (!bl.html.includes('margin:18px 0 4px')) { pages[pages.length - 1].push({ html: bl.head }); used += 30; } }
+    pages[pages.length - 1].push(bl); used += bl.h;
+    if (bl.html.includes('margin:18px 0 4px')) used += 30;   // header row follows the title
+    lastHead = bl.head;
+  });
+  // insert the header row right after each section title
+  return pages.map((pg, p) => {
+    const body = pg.map(bl => bl.html + (bl.html.includes('margin:18px 0 4px') ? bl.head : '')).join('');
+    return `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative;overflow:hidden">
+      ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dye Analytics</div>
+      <div style="margin:10px 0 4px;font-size:13px;color:#7a6a55">${escapeHtml(d.label)} · generated ${bdFmtDate(baYmd(new Date()))}</div>
+      <div style="display:flex;gap:26px;font-size:14px;color:#2b1d12;margin-top:6px"><div><span style="color:#7a6a55">Batches:</span> <b>${d.list.length}</b></div><div><span style="color:#7a6a55">Colours:</span> <b>${d.cols.length}</b></div><div><span style="color:#7a6a55">Pcs:</span> <b>${baN(d.A.pcs)}</b></div><div><span style="color:#7a6a55">Mtr:</span> <b>${baN(d.A.mtr)}</b></div></div>` : `<div style="font-size:16px;font-weight:700;color:#7a6a55">Dye Analytics (continued)</div>`}
+      ${body}
+      <div style="position:absolute;left:44px;right:44px;bottom:30px;display:flex;justify-content:space-between;font-size:11px;color:#8a7a65"><span>${escapeHtml(d.label)}</span><span>Page ${p + 1} / ${pages.length}</span></div></div>`;
+  }).join('');
+}
+async function baExportPdf() {
+  const d = baExportData(); if (!d.cols.length) { alert('Nothing to export for this view.'); return; }
+  const btn = document.getElementById('baPdfBtn'), old = btn.textContent; btn.disabled = true; btn.textContent = 'Generating…';
+  const stage = bdPvStage();
+  try { stage.innerHTML = baPdfHtml(d); const pdf = await buildPdfFromPages('bdPdfStage'); pdf.save(safePdfFilename('Dye Analytics ' + baYmd(new Date()))); }
+  catch (e) { alert('Could not generate the PDF. Please try again.'); }
+  finally { stage.innerHTML = ''; btn.disabled = false; btn.textContent = old; }
 }
 function bdPrintColours() {
   const b = bdById(bdCurrentId); if (!b) return;
