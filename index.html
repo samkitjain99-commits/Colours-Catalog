@@ -1503,13 +1503,15 @@
       <div class="bp-stage"><canvas id="bpCanvas" onclick="bpTap(event)"></canvas></div>
       <div class="bp-tools">
         <label>Photo <select class="bd-in" id="bpMode" onchange="bpRun()"><option value="auto">Auto</option><option value="sep">Separate swatches</option><option value="fill">Strips fill photo</option></select></label>
-        <label>Detect up to <select class="bd-in" id="bpMax" onchange="bpRun()"><option>6</option><option>8</option><option selected>12</option><option>16</option><option>24</option></select> colours</label>
         <button class="add-secondary-btn" onclick="document.getElementById('bpFile').click()">Another photo</button>
       </div>
     </div>
-    <div class="ba-selrow no-print" id="bpSelRow"></div>
-    <div id="bpList"></div>
-    <div class="ba-actbar no-print" id="bpBar" style="display:none"><button onclick="bpAdd()" id="bpAddBtn">Add to batch</button></div>
+    <div class="filter-row no-print" id="bpToolbar" style="gap:6px;flex-wrap:wrap"></div>
+    <div class="lib-grid" id="bpList"></div>
+    <div class="ba-actbar no-print" id="bpBar" style="display:none">
+      <button onclick="bpPrint()" id="bpPrintBtn">Print Colour Swatch</button>
+      <button onclick="bpAdd()" id="bpAddBtn" style="background:#fff;color:var(--brown-700)">Add to batch</button>
+    </div>
   </div>
 
   <div class="view" id="view-batchDetail">
@@ -5928,7 +5930,7 @@ function bpPick(inp) {
     const sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height, k = Math.min(1, 1100 / Math.max(sw, sh));
     const c = document.createElement('canvas'); c.width = Math.round(sw * k); c.height = Math.round(sh * k);
     const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(src, 0, 0, c.width, c.height);
-    bpCv = c; bpMarks = []; showView('batchPhoto'); bpRun();
+    bpCv = c; bpMarks = []; bpList = []; bpEdit = false; showView('batchPhoto'); bpRun();
   };
   if (window.createImageBitmap) createImageBitmap(f, { imageOrientation: 'from-image' }).then(draw).catch(() => bpViaImg(f, draw));
   else bpViaImg(f, draw);
@@ -6045,13 +6047,18 @@ function bpNameFor(hex, lab) {
 }
 function bpMake(hex, share, extra) {
   const lab = bpRgb2Lab(parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16));
-  return { id: uid(), hex, name: bpNameFor(hex, lab), on: true, share, ...extra };
+  // already a saved colour in the app? use its saved hex + name
+  let best = null, bd = 1e9;
+  try { bdPoolSource('all').forEach(r => { const rl = r._lab || (r._lab = bpRgb2Lab(parseInt(r.hex.slice(1, 3), 16), parseInt(r.hex.slice(3, 5), 16), parseInt(r.hex.slice(5, 7), 16))); const dd = bpDE(lab, rl); if (dd < bd) { bd = dd; best = r; } }); } catch (e) {}
+  if (best && bd <= 12) return { id: uid(), hex: best.hex.toUpperCase(), name: best.name || best.hex, on: true, share, saved: true, ...extra };
+  return { id: uid(), hex, name: bpGenericName(lab), on: true, share, ...extra };
 }
 function bpRun() {
   if (!bpCv) return;
-  const max = +document.getElementById('bpMax').value, det = bpDetectAuto(bpCv, max);
+  const det = bpDetectAuto(bpCv, 30);
   const manual = bpList.filter(x => x.manual);
   bpList = det.map(o => bpMake(o.hex, o.share, o.bg ? { on: false, bg: true } : {})).concat(manual);
+  const seen = new Set(); bpList = bpList.filter(x => !seen.has(x.hex) && seen.add(x.hex));
   bpDraw(); bpRender();
 }
 function bpDraw() {
@@ -6064,26 +6071,39 @@ function bpTap(e) {
   const R = Math.max(2, Math.round(cv.width / 160)), d = bpCv.getContext('2d').getImageData(Math.max(0, x - R), Math.max(0, y - R), R * 2 + 1, R * 2 + 1).data;
   let rr = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) { rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; }
   const hex = bpHex(rr / n, gg / n, bb / n);
-  bpMarks.push({ x, y }); bpList.unshift(bpMake(hex, 0, { manual: true }));
+  bpMarks.push({ x, y }); const nx = bpMake(hex, 0, { manual: true });
+  const ex = bpList.find(v => v.hex === nx.hex); if (ex) ex.on = true; else bpList.unshift(nx);
   bpDraw(); bpRender();
 }
+let bpEdit = false;
 function bpRender() {
   const n = bpList.filter(x => x.on).length;
-  document.getElementById('bpSelRow').innerHTML = bpList.length ? `<a onclick="bpAll(true)">Select all</a><a onclick="bpAll(false)">None</a><span>${bpList.length} found</span>` : '';
-  document.getElementById('bpList').innerHTML = bpList.length ? bpList.map(x => `<div class="bp-row${x.on ? '' : ' off'}"><input type="checkbox" class="ba-cb" ${x.on ? 'checked' : ''} onchange="bpTog('${x.id}')"><div class="sw" style="background:${x.hex}"></div><div class="mid"><input class="bd-in" value="${escapeHtml(x.name)}" oninput="bpName('${x.id}',this.value)"><small>${x.hex}${x.bg ? ' · looks like background' : ''}${x.share ? ' · ' + Math.round(x.share * 100) + '% of photo' : x.manual ? ' · picked by you' : ''}</small></div><button class="x" onclick="bpDel('${x.id}')">✕</button></div>`).join('') : '<div class="empty-state">No colours detected. Tap the photo to pick colours.</div>';
+  document.getElementById('bpToolbar').innerHTML = bpList.length ? `<button class="text-btn" onclick="bpAll(true)">Select all</button><button class="text-btn" onclick="bpAll(false)">Clear</button><button class="text-btn" onclick="bpEdit=!bpEdit;bpRender()">${bpEdit ? 'Done editing' : 'Edit names'}</button><button class="text-btn" onclick="bpRun()">Re-detect</button>` : '';
+  document.getElementById('bpList').innerHTML = bpList.length ? bpList.map(x => `
+    <${bpEdit ? 'div' : 'button'} class="lib-card ${x.on ? 'on' : ''}" ${bpEdit ? '' : `onclick="bpTog('${x.id}')"`}>
+      <div class="lib-sw" style="background:${x.hex}" ${bpEdit ? `onclick="bpTog('${x.id}')"` : ''}></div><span class="lib-tick">&#10003;</span>
+      ${bpEdit ? `<input class="bd-in" style="margin:4px 0 2px;padding:5px 6px;font-size:16px" value="${escapeHtml(x.name)}" oninput="bpName('${x.id}',this.value)"><button class="x" style="border:0;background:none;color:var(--danger);font-size:12px;padding:0" onclick="bpDel('${x.id}')">Remove</button>` : `<div class="lib-nm">${escapeHtml(x.name || x.hex)}</div>`}
+      <div class="lib-hx">${x.hex}${x.saved ? ' · saved' : x.bg ? ' · background?' : ''}</div></${bpEdit ? 'div' : 'button'}>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No colours detected. Tap the photo to pick colours.</div>';
   document.getElementById('bpBar').style.display = n ? 'flex' : 'none';
-  document.getElementById('bpAddBtn').textContent = `Add ${n} colour${n !== 1 ? 's' : ''} to batch`;
+  document.getElementById('bpAddBtn').textContent = `Add ${n} to batch`;
+  document.getElementById('bpPrintBtn').textContent = `Print Colour Swatch (${n})`;
 }
 function bpTog(id) { const x = bpList.find(v => v.id === id); if (x) { x.on = !x.on; bpRender(); } }
 function bpName(id, v) { const x = bpList.find(q => q.id === id); if (x) x.name = v; }
 function bpDel(id) { bpList = bpList.filter(v => v.id !== id); bpRender(); }
 function bpAll(on) { bpList.forEach(x => x.on = on); bpRender(); }
+function bpPrint() {
+  const sw = bpList.filter(x => x.on).map(x => ({ hex: x.hex, name: (x.name || '').trim() })); if (!sw.length) return;
+  renderPrintColoursFromSwatches(sw, `${sw.length} colour${sw.length !== 1 ? 's' : ''} from photo`, null);
+  printColoursReturnView = 'batchPhoto';
+  showView('printcolours');
+}
 function bpAdd() {
   const sel = bpList.filter(x => x.on).map(x => ({ hex: x.hex, name: (x.name || '').trim() || x.hex }));
   if (!sel.length) return;
   const n = bdAddItems(sel); bdRenderItems(); showView('batchDetail');
   if (n < sel.length) alert(`${n} added. ${sel.length - n} were already in this batch.`);
-  bpList = []; bpMarks = [];
+  bpList = []; bpMarks = []; bpEdit = false;
 }
 function bdPrintColours() {
   const b = bdById(bdCurrentId); if (!b) return;
