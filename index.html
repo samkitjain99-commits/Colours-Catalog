@@ -604,7 +604,20 @@
   .lib-bar { position:fixed; left:0; right:0; bottom:18px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:50; pointer-events:none; }
   .lib-count { background:#fff; color:var(--brown-700); border:1px solid var(--border); font-size:12.5px; font-weight:700; padding:4px 12px; border-radius:99px; box-shadow:0 2px 8px rgba(0,0,0,.12); }
   .lib-pill { pointer-events:auto; background:var(--brown-700); color:#fff; border:none; font-family:inherit; font-size:15px; font-weight:700; padding:14px 38px; border-radius:99px; box-shadow:0 4px 14px rgba(0,0,0,.28); cursor:pointer; }
-  .bd-modal { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100; display:flex; align-items:flex-end; justify-content:center; }
+  .bc-chips { display:flex; gap:6px; overflow-x:auto; padding:2px 0 8px; -webkit-overflow-scrolling:touch; }
+  .bc-chip { flex:0 0 auto; border:1.5px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .bc-chip.on { background:var(--brown-700); color:#fff; border-color:var(--brown-700); }
+  .lib-dy { font-size:10px; color:var(--brown-700); font-weight:700; margin-top:1px; line-height:1.25; }
+  .bc-nudge { display:none; align-items:center; gap:8px; background:#fff3cd; border:1px solid #e6cf7a; color:#5a4500; border-radius:12px; padding:9px 12px; margin:0 0 10px; font-size:13px; font-weight:600; }
+  .bc-nudge button { margin-left:auto; border:0; background:#5a4500; color:#fff; border-radius:8px; padding:7px 12px; font-family:inherit; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap; }
+  #undoToast { position:fixed; left:50%; transform:translateX(-50%); bottom:84px; z-index:9999; background:#2b1d12; color:#fff; border-radius:12px; padding:10px 12px 10px 16px; display:none; align-items:center; gap:14px; font-size:14px; font-weight:600; box-shadow:0 6px 20px rgba(0,0,0,.4); max-width:92vw; }
+  #undoToast button { border:0; background:#fff; color:#2b1d12; border-radius:8px; padding:7px 14px; font-family:inherit; font-weight:800; font-size:14px; cursor:pointer; }
+  .bc-row { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 10px; margin-bottom:8px; }
+  .bc-row .sw2 { width:40px; height:40px; border-radius:9px; border:1px solid rgba(0,0,0,.2); flex-shrink:0; }
+  .bc-row .mid { flex:1; min-width:0; font-size:14px; font-weight:700; } .bc-row .mid small { display:block; font-weight:600; color:var(--muted); font-size:12px; }
+  .bc-row button { border:0; background:var(--brown-700); color:#fff; border-radius:9px; padding:8px 12px; font-family:inherit; font-weight:700; font-size:13px; cursor:pointer; }
+  .bc-tag { font-size:11px; font-weight:800; border-radius:99px; padding:2px 8px; background:#e8dcc8; color:var(--brown-700); }
+  .bc-tag.same { background:#cfe9cf; color:#1d5d1d; } .bc-tag.vc { background:#e3efc8; color:#4a5d12; } .bd-modal { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100; display:flex; align-items:flex-end; justify-content:center; }
   .bd-modal-card { background:var(--cream); width:100%; max-width:700px; border-radius:18px 18px 0 0; padding:16px; max-height:75vh; overflow:auto; box-sizing:border-box; }
   .bd-pick { display:flex; justify-content:space-between; width:100%; text-align:left; background:#fff; border:1px solid var(--border); border-radius:10px; padding:11px 12px; margin-bottom:8px; font-family:inherit; font-size:13.5px; font-weight:700; color:var(--brown-900); cursor:pointer; }
 
@@ -1398,9 +1411,15 @@
       <h1>Colour Library</h1>
     </div>
     <div class="page-sub no-print">Every colour in one place. Tap colours to select, then add them to a dye batch.</div>
+    <div class="bc-nudge no-print" id="bcNudgeLib"></div>
     <div class="bd-two no-print">
       <input class="bd-in" id="libSearch" placeholder="Search name or hex" oninput="renderLibrary()">
       <select class="bd-in" id="libSrc" onchange="renderLibrary()"></select>
+    </div>
+    <div class="bc-chips no-print" id="libFam"></div>
+    <div class="bd-two no-print" style="margin-bottom:8px">
+      <select class="bd-in" id="libSort" onchange="renderLibrary()"><option value="">Sort: saved</option><option value="name">Name A–Z</option><option value="hue">By shade</option><option value="light">Light → Dark</option><option value="dark">Dark → Light</option><option value="used">Most dyed</option><option value="new">Recently added</option></select>
+      <button class="add-secondary-btn" style="margin:0" onclick="bcMatchOpen()">&#128269; Find closest match</button>
     </div>
     <div class="bd-actions no-print">
       <button class="add-secondary-btn" onclick="libPrint()">Print Colour Swatch</button>
@@ -1413,6 +1432,11 @@
     <div class="bd-actions no-print">
       <button class="add-secondary-btn" id="libFavAddBtn" onclick="libFavToggleSelected()">&#9734; Add to favourites</button>
       <button class="add-secondary-btn" id="libFavBtn" onclick="libOnlyFav=!libOnlyFav;if(libOnlyFav)libOnlySel=false;renderLibrary()">&#9733; Favourites (0)</button>
+    </div>
+    <div class="bd-actions no-print">
+      <button class="add-secondary-btn" onclick="bcGroupOpen()">&#128193; Add to group</button>
+      <button class="add-secondary-btn" onclick="bcShareCard()">&#128228; Colour card</button>
+      <button class="add-secondary-btn" style="color:var(--danger)" onclick="libDelete()">&#128465; Delete</button>
     </div>
     <div class="page-sub no-print" id="libHint" style="margin:0 0 10px"></div>
     <div class="lib-grid" id="libGrid"></div>
@@ -1429,6 +1453,8 @@
     </div>
     <div class="page-sub no-print" id="libEditSub"></div>
     <div class="builder no-print">
+      <div class="bd-two" style="margin-bottom:6px"><input class="bd-in" id="libEditPre" placeholder="Add before names, e.g. Pastel "><input class="bd-in" id="libEditSuf" placeholder="Add after names"></div>
+      <button class="add-secondary-btn" style="width:100%;margin-bottom:10px" onclick="bcEditAffix()">Apply to all names below</button>
       <div id="libEditRows"></div>
       <div class="form-msg" id="libEditMsg"></div>
       <button class="save-btn" onclick="libEditSave()">Save changes</button>
@@ -1444,6 +1470,8 @@
   </div>
 
   <!-- ============ DYE BATCHES ============ -->
+  <div class="bd-modal no-print" id="bcModal" style="display:none" onclick="if(event.target===this)bcClose()"><div class="bd-modal-card" id="bcModalCard"></div></div>
+  <div id="undoToast"></div>
   <div class="view" id="view-batches">
     <div class="screen-header no-print">
       <span class="header-icon">&#129525;</span>
@@ -1451,6 +1479,7 @@
     </div>
     <div class="page-sub no-print">Each batch is one set of colours to send for dyeing — with lace design and quantity.</div>
     <div class="filter-row no-print" style="gap:8px"><button class="add-colour-btn" onclick="bdNew()">+ New Batch</button><button class="add-secondary-btn" onclick="baOpen()" aria-label="Analytics" title="Analytics" style="flex:0 0 auto;width:52px;align-self:stretch;margin:0;padding:0;font-size:22px;line-height:1">📊</button></div>
+    <div class="bc-nudge no-print" id="bcNudgeBd"></div>
     <div id="bdList"></div>
     <div class="ba-actbar" id="bdListBar" style="display:none"></div>
   </div>
@@ -1595,7 +1624,8 @@
     </div>
     <div class="bd-actions no-print">
       <button class="add-secondary-btn" onclick="bdPoolAll(true)">Select all</button>
-      <button class="add-secondary-btn" onclick="bdPoolAll(false)">Clear</button>
+ <button class="add-secondary-btn" onclick="bdPoolAll(false)">Clear</button>
+      <button class="add-secondary-btn" onclick="bcReuseOpen()">&#8634; From past batch</button>
       <button class="add-secondary-btn" id="bdaFavBtn" onclick="bdaFav=!bdaFav;bdRenderPool()">&#9733; Favourites</button>
       <button class="add-secondary-btn" onclick="document.getElementById('bdaManual').style.display=document.getElementById('bdaManual').style.display==='none'?'block':'none'">+ Type hex</button>
     </div>
@@ -5244,7 +5274,7 @@ function saveNewSecondaryColours() {
 let pendingRestoreData = null;
 
 function exportBackup() {
-  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches, favourites: [...libFavs] };
+  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches, favourites: [...libFavs], generallyUsed: getOrInitGuPalette() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -5254,6 +5284,8 @@ function exportBackup() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  try { localStorage.setItem('colourCatalog_lastBackup', String(Date.now())); } catch (e) {}
+  bcNudge();
 }
 
 document.getElementById('restoreFileInput').addEventListener('change', (e) => {
@@ -5299,6 +5331,7 @@ function performRestore() {
 
   if (Array.isArray(pendingRestoreData.favourites)) { libFavs = new Set(pendingRestoreData.favourites.map(h => String(h).toUpperCase())); saveFavs(); }
   if (Array.isArray(pendingRestoreData.batches)) { batches = pendingRestoreData.batches; bdMigrate(); saveBatches(); }
+  if (pendingRestoreData.generallyUsed && Array.isArray(pendingRestoreData.generallyUsed.pastels)) { generallyUsedPalette = pendingRestoreData.generallyUsed; saveGuPaletteToStorage(); }
   selectedSet = new Set();
   groupFilter = '';
   renderCatalog();
@@ -5384,7 +5417,7 @@ function renderBatches() {
       <div class="bd-meta">${(b.items || []).length} colour${(b.items || []).length !== 1 ? 's' : ''}${bdQtyTotals(b) ? ' · ' + bdQtyTotals(b) : ''}</div>
       <div class="bd-dots">${dots}</div></div><button class="bd-del" aria-label="Delete batch" onclick="bdListDel(['${b.id}'])">&#128465;</button></div>`;
   }).join('');
-  bdListBar();
+  bdListBar(); bcNudge();
 }
 let bdListSel = new Set();
 function bdListTog(id, on) { on ? bdListSel.add(id) : bdListSel.delete(id); bdListBar(); }
@@ -5398,9 +5431,9 @@ function bdListClear() { bdListSel = new Set(); renderBatches(); }
 function bdListAll() { bdListSel = new Set(batches.map(b => b.id)); renderBatches(); }
 function bdListDel(ids) {
   if (!ids.length) return;
-  const nm = ids.length === 1 ? (() => { const b = bdById(ids[0]); return `batch ${b && b.no ? '#' + b.no : ''} ${b && b.name ? '"' + b.name + '"' : ''}`.replace(/\s+/g, ' ').trim(); })() : `${ids.length} batches`;
-  if (!confirm(`Delete ${nm}? This cannot be undone.`)) return;
+  const snap = undoCapture();
   batches = batches.filter(b => !ids.includes(b.id)); ids.forEach(id => bdListSel.delete(id)); saveBatches(); renderBatches();
+  undoOffer(ids.length === 1 ? 'Batch deleted' : `${ids.length} batches deleted`, snap);
 }
 
 function bdNew() {
@@ -5439,11 +5472,12 @@ function bdRenderItems() {
   const b = bdById(bdCurrentId); if (!b) return;
   document.getElementById('bdTitle').textContent = b.name || 'Batch';
   document.getElementById('bdCount').textContent = `(${b.items.length})`;
+  const hmI = bcHistMap();
   document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
     <div class="bd-item bd-selrow">
       <input type="checkbox" class="bd-chk" ${bdSel.has(i.id) ? 'checked' : ''} onchange="bdToggleSel('${i.id}')">
       <div class="bd-sw" style="background:${i.hex}"></div>
-      <div><div class="bd-iname">${n + 1}. ${escapeHtml(i.name || i.hex)}</div><div class="bd-ihex">${i.hex}</div></div>
+      <div><div class="bd-iname">${n + 1}. ${escapeHtml(i.name || i.hex)}</div><div class="bd-ihex">${i.hex}</div>${bcDyLabel(i.hex, hmI, b.id)}</div>
       <button class="bd-x" onclick="bdRemoveItem('${i.id}')">&#10005;</button>
       <div class="bd-lines">${i.lines.map((l, k) => bdLineHtml(i, l, k)).join('')}</div>
       ${i.lines.length > 1 ? `<div class="bd-ltot" id="ltot-${i.id}">${bdLineText(i)}</div>` : ''}</div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
@@ -5513,9 +5547,11 @@ function bdToggleSel(id) { if (bdSel.has(id)) bdSel.delete(id); else bdSel.add(i
 function bdSelAllToggle(on) { const b = bdById(bdCurrentId); bdSel = on ? new Set(b.items.map(i => i.id)) : new Set(); bdRenderItems(); }
 function bdRemoveSelected() {
   const b = bdById(bdCurrentId); if (!b || !bdSel.size) return;
+  const snap = undoCapture(), n = bdSel.size;
   b.items = b.items.filter(i => !bdSel.has(i.id)); bdSel = new Set(); saveBatches(); bdRenderItems();
+  undoOffer(`${n} colour${n !== 1 ? 's' : ''} removed`, snap);
 }
-function bdRemoveItem(id) { bdSel.delete(id); const b = bdById(bdCurrentId); b.items = b.items.filter(i => i.id !== id); saveBatches(); bdRenderItems(); }
+function bdRemoveItem(id) { const snap = undoCapture(); bdSel.delete(id); const b = bdById(bdCurrentId); b.items = b.items.filter(i => i.id !== id); saveBatches(); bdRenderItems(); undoOffer('Colour removed', snap); }
 function bdFillAll(k, inputId) {
   const b = bdById(bdCurrentId); if (!b || !b.items.length) return;
   const el = document.getElementById(inputId); const v = el ? el.value.trim() : '';
@@ -5531,8 +5567,9 @@ function bdDuplicate() {
   batches.unshift(c); saveBatches(); bdOpen(c.id);
 }
 function bdDelete() {
-  if (!confirm('Delete this batch?')) return;
+  const snap = undoCapture();
   batches = batches.filter(b => b.id !== bdCurrentId); saveBatches(); switchTab('batches');
+  undoOffer('Batch deleted', snap);
 }
 
 /* add colours */
@@ -5564,12 +5601,12 @@ function bdRenderPool() {
   const q = document.getElementById('bdaSearch').value.trim().toLowerCase();
   const src = bdaFav ? bdPoolSource('all').filter(r => libFavs.has(r.hex)) : bdPoolSource();
   bdPoolRows = src.filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
-  const b = bdById(bdCurrentId), inBatch = new Set(b ? b.items.map(i => i.hex.toUpperCase()) : []);
+  const b = bdById(bdCurrentId), inBatch = new Set(b ? b.items.map(i => i.hex.toUpperCase()) : []), hmP = bcHistMap();
   const fb = document.getElementById('bdaFavBtn'); if (fb) { fb.style.background = bdaFav ? 'var(--brown-700)' : ''; fb.style.color = bdaFav ? '#fff' : ''; }
   document.getElementById('bdaPool').innerHTML = bdPoolRows.length ? bdPoolRows.map(r => `
     <button class="lib-card ${bdPoolSel.has(r.hex) ? 'on' : ''}" onclick="bdPoolToggle('${r.hex}')" ${inBatch.has(r.hex) ? 'style="opacity:.5"' : ''}>
       <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
-      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${inBatch.has(r.hex) ? 'Already in batch' : r.hex}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
+      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${inBatch.has(r.hex) ? 'Already in batch' : r.hex}</div>${bcDyLabel(r.hex, hmP)}</button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   bdPoolUpdateBtn();
 }
 function bdPoolToggle(h) { if (bdPoolSel.has(h)) bdPoolSel.delete(h); else bdPoolSel.add(h); bdRenderPool(); }
@@ -6172,13 +6209,14 @@ let bpEdit = false;
 function bpRender() {
   const n = bpList.filter(x => x.on).length;
   document.getElementById('bpToolbar').innerHTML = bpList.length ? `<button class="text-btn" onclick="bpAll(true)">Select all</button><button class="text-btn" onclick="bpAll(false)">Clear</button><button class="text-btn" onclick="bpRun()">Re-detect</button><button class="text-btn" onclick="bpSaveLib()">Save ticked to library</button>` : '';
+  const hmB = bcHistMap();
   document.getElementById('bpList').innerHTML = bpList.length ? bpList.map(x => `
     <div class="lib-card ${x.on ? 'on' : ''}">
       <span class="bp-x" role="button" aria-label="Remove" onclick="event.stopPropagation();bpDel('${x.id}')">&#10005;</span><span class="bp-num">Sr ${bpList.indexOf(x) + 1}</span>
       <div class="lib-sw" id="bpsw_${x.id}" style="background:${x.hex};position:relative" onclick="bpTog('${x.id}')"><label class="bp-ed" style="right:5px" title="Pick colour" onclick="event.stopPropagation()">&#9998;<input type="color" value="${x.hex.toLowerCase()}" oninput="bpColorIn('${x.id}',this.value)"></label></div><span class="lib-tick">&#10003;</span>
       <input class="bd-in" style="margin:4px 0 2px;padding:5px 6px;font-size:16px;width:100%;box-sizing:border-box" value="${escapeHtml(x.name)}" placeholder="Colour name" oninput="bpName('${x.id}',this.value)">
       <input class="bd-in" id="bph_${x.id}" style="margin:0;padding:5px 6px;font-size:14px;font-family:monospace;width:100%;box-sizing:border-box;text-transform:uppercase" value="${x.hex}" maxlength="7" placeholder="#RRGGBB" oninput="bpHexIn('${x.id}',this)">
-      ${x.bg ? '<div class="lib-hx">background?</div>' : ''}</div>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No colours detected. Tap the photo to pick colours.</div>';
+      ${x.bg ? '<div class="lib-hx">background?</div>' : ''}${bcDyLabel(x.hex, hmB)}</div>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No colours detected. Tap the photo to pick colours.</div>';
   document.getElementById('bpBar').style.display = n ? 'flex' : 'none';
   document.getElementById('bpAddBtn').textContent = `Add ${n} to batch`;
   document.getElementById('bpPrintBtn').textContent = `Print Colour Swatch (${n})`;
@@ -6293,7 +6331,7 @@ async function bdPvShare() {
 }
 
 /* ---------------- Colour Library ---------------- */
-let libSel = new Set(), libRows = [], libOnlySel = false, libOnlyFav = false;
+let libSel = new Set(), libRows = [], libOnlySel = false, libOnlyFav = false, libFamily = '';
 const FAV_KEY = 'colourCatalog_favourites_v1';
 let libFavs = new Set();
 try { const r = localStorage.getItem(FAV_KEY); if (r) JSON.parse(r).forEach(h => libFavs.add(String(h).toUpperCase())); } catch (e) {}
@@ -6313,11 +6351,18 @@ function renderLibrary() {
   }
   const q = document.getElementById('libSearch').value.trim().toLowerCase();
   libRows = (libOnlyFav ? bdPoolSource('all').filter(r => libFavs.has(r.hex)) : libOnlySel ? bdPoolSource('all').filter(r => libSel.has(r.hex)) : bdPoolSource(sel.value)).filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
+  const famCount = {}; libRows.forEach(r => { const f = bcFam(r.hex); famCount[f] = (famCount[f] || 0) + 1; });
+  if (libFamily && !famCount[libFamily]) libFamily = '';
+  document.getElementById('libFam').innerHTML = `<button class="bc-chip ${!libFamily ? 'on' : ''}" onclick="libFamily='';renderLibrary()">All ${libRows.length}</button>` + BC_FAMS.filter(f => famCount[f]).map(f => `<button class="bc-chip ${libFamily === f ? 'on' : ''}" onclick="libFamily='${f}';renderLibrary()">${f} ${famCount[f]}</button>`).join('');
+  if (libFamily) libRows = libRows.filter(r => bcFam(r.hex) === libFamily);
+  const srt = document.getElementById('libSort').value, hm = bcHistMap();
+  if (srt) { const k = r => { const l = bcLab(r.hex); return srt === 'name' ? (r.name || r.hex).toLowerCase() : srt === 'hue' ? (Math.hypot(l[1], l[2]) < 10 ? 1000 - l[0] : ((Math.atan2(l[2], l[1]) * 180 / Math.PI + 360 + 20) % 360)) : srt === 'light' ? -l[0] : srt === 'dark' ? l[0] : srt === 'used' ? -((hm[r.hex] || { n: 0 }).n) : 0; };
+    if (srt === 'new') libRows.reverse(); else libRows.sort((a, b) => { const x = k(a), y = k(b); return typeof x === 'string' ? x.localeCompare(y) : x - y; }); }
   document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map(r => `
     <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
       <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
-      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
-  libUpdateBar();
+      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div>${bcDyLabel(r.hex, hm)}</button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
+  libUpdateBar(); bcNudge();
 }
 function libTargets() { const r = libSel.size ? libRows.filter(x => libSel.has(x.hex)).concat(bdPoolSource('all').filter(x => libSel.has(x.hex) && !libRows.some(y => y.hex === x.hex))) : libRows; return r.map(c => ({ hex: c.hex, name: c.name || '' })); }
 function libPrint() {
@@ -6358,6 +6403,10 @@ function libEditSave() {
     edits.push({ old: libEditList[i].old, hex: h, name: document.getElementById('leN' + i).value.trim() });
   }
   const gu = getOrInitGuPalette(); let touched = 0;
+  const snapEdit = undoCapture();
+  const useIn = batches.filter(b => (b.items || []).some(i => edits.some(e => (i.hex || '').toUpperCase() === e.old && (e.hex !== e.old || (e.name && e.name !== i.name)))));
+  const alsoBatches = useIn.length ? confirm(`These colours are also used in ${useIn.length} dye batch${useIn.length !== 1 ? 'es' : ''}. Update the name / hex there too?\n\nOK = update batches as well\nCancel = change the library only`) : false;
+  if (alsoBatches) batches.forEach(b => (b.items || []).forEach(i => { const e = edits.find(x => x.old === (i.hex || '').toUpperCase()); if (e) { i.hex = e.hex; if (e.name) i.name = e.name; } }));
   edits.forEach(e => {
     const same = x => (x || '').toUpperCase() === e.old;
     catalog.forEach(p => { if (same(p.primaryHex)) { p.primaryHex = e.hex; if (e.name) p.primaryName = e.name; touched++; } });
@@ -6366,10 +6415,11 @@ function libEditSave() {
     if (libSel.delete(e.old)) libSel.add(e.hex);
     if (libFavs.delete(e.old)) libFavs.add(e.hex);
   });
-  saveFavs(); saveAppStateToStorage(); saveGuPaletteToStorage();
+  saveFavs(); saveAppStateToStorage(); saveGuPaletteToStorage(); if (alsoBatches) saveBatches();
   refreshAllListsAfterReorder();
   if (typeof renderGenerallyUsed === 'function') renderGenerallyUsed();
   showView('library'); renderLibrary();
+  undoOffer(`${edits.length} colour${edits.length !== 1 ? 's' : ''} updated${alsoBatches ? ' (library + batches)' : ''}`, snapEdit);
 }
 function libToggle(h) { if (libSel.has(h)) libSel.delete(h); else libSel.add(h); renderLibrary(); }
 function libUpdateBar() {
@@ -6402,6 +6452,173 @@ function libDoAdd(id) {
   const n = bdAddItems(list);
   libSel = new Set();
   bdOpen(id);
+}
+
+/* ================= Colour management helpers ================= */
+const BC_FAMS = ['Red', 'Pink', 'Orange', 'Yellow', 'Beige', 'Green', 'Teal', 'Blue', 'Purple', 'Brown', 'Neutral'];
+function bcLab(hex) { return bpRgb2Lab(parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)); }
+function bcFam(hex) {
+  const l = bcLab(hex), L = l[0], C = Math.hypot(l[1], l[2]); let h = Math.atan2(l[2], l[1]) * 180 / Math.PI; if (h < 0) h += 360;
+  if (C < 10 || L < 8) return 'Neutral';
+  if (h >= 20 && h < 85 && L < 52 && C < 55) return 'Brown';
+  if (h >= 35 && h < 110 && C < 32 && L >= 52) return 'Beige';
+  if (h >= 45 && h < 75 && L > 78 && C < 42) return 'Beige';
+  if (h < 20 || h >= 335) return L > 66 ? 'Pink' : 'Red';
+  if (h < 45) return L > 72 ? 'Pink' : 'Red';
+  if (h < 70) return L > 78 ? 'Yellow' : 'Orange';
+  if (h < 125) return (h >= 85 && L < 62) ? 'Green' : 'Yellow';
+  if (h < 165) return 'Green';
+  if (h < 215) return 'Teal';
+  if (h < 275) return 'Blue';
+  if (h < 335) return h > 315 && L > 62 ? 'Pink' : 'Purple';
+  return 'Neutral';
+}
+/* ---- dye history ---- */
+function bcHistMap() {
+  const m = {};
+  (batches || []).forEach(b => (b.items || []).forEach(i => {
+    const h = (i.hex || '').toUpperCase(); const e = m[h] || (m[h] = { n: 0, mtr: 0, pcs: 0, last: null, ids: [] });
+    const t = bdItemTotals(i); e.n++; e.mtr += t.mtr; e.pcs += t.pcs; e.ids.push(b.id);
+    if (!e.last || (b.sentDate || '') > (e.last.sentDate || '') || ((b.sentDate || '') === (e.last.sentDate || '') && (+b.no || 0) > (+e.last.no || 0))) e.last = b;
+  }));
+  return m;
+}
+function bcDyLabel(hex, hm, curBatchId) {
+  const e = (hm || {})[(hex || '').toUpperCase()]; if (!e) return `<div class="lib-dy" style="color:var(--muted);font-weight:600">Never dyed</div>`;
+  const only = curBatchId && e.n === 1 && e.ids[0] === curBatchId; if (only) return `<div class="lib-dy" style="color:var(--muted);font-weight:600">First time</div>`;
+  const q = [e.mtr > 0 ? `${+e.mtr.toFixed(0)} mtr` : '', e.pcs > 0 ? `${+e.pcs.toFixed(0)} pcs` : ''].filter(Boolean).join(' + ');
+  return `<div class="lib-dy">Dyed ${e.n}× · last ${e.last.no ? '#' + escapeHtml(String(e.last.no)) : escapeHtml(e.last.name || 'batch')}${q ? ' · ' + q : ''}</div>`;
+}
+/* ---- generic modal ---- */
+function bcModal(html) { document.getElementById('bcModalCard').innerHTML = html; document.getElementById('bcModal').style.display = 'flex'; }
+function bcClose() { document.getElementById('bcModal').style.display = 'none'; }
+/* ---- undo ---- */
+let undoSnap = null, undoTimer = null;
+function undoCapture() { return JSON.stringify({ catalog, groups, secondaryColors, batches, favs: [...libFavs], gu: generallyUsedPalette }); }
+function undoOffer(label, snap) {
+  undoSnap = snap; const t = document.getElementById('undoToast');
+  t.innerHTML = `<span>${escapeHtml(label)}</span><button onclick="undoRun()">Undo</button>`; t.style.display = 'flex';
+  clearTimeout(undoTimer); undoTimer = setTimeout(() => { t.style.display = 'none'; undoSnap = null; }, 9000);
+}
+function undoRun() {
+  if (!undoSnap) return; const d = JSON.parse(undoSnap); undoSnap = null; clearTimeout(undoTimer); document.getElementById('undoToast').style.display = 'none';
+  catalog = d.catalog; groups = d.groups; secondaryColors = d.secondaryColors; batches = d.batches; libFavs = new Set(d.favs); generallyUsedPalette = d.gu;
+  try { saveAppStateToStorage(); } catch (e) {} try { saveBatches(); } catch (e) {} try { saveFavs(); } catch (e) {} try { saveGuPaletteToStorage(); } catch (e) {}
+  selectedSet = new Set(); libSel = new Set(); bdListSel = new Set();
+  try { renderCatalog(); } catch (e) {} try { renderBatches(); } catch (e) {} try { renderLibrary(); } catch (e) {} try { updateBatchGlance(); } catch (e) {}
+  try { if (bdCurrentId && bdById(bdCurrentId) && document.getElementById('view-batchDetail').classList.contains('active')) bdRenderItems(); } catch (e) {}
+}
+/* ---- backup reminder ---- */
+function bcNudge() {
+  let t = 0; try { t = +localStorage.getItem('colourCatalog_lastBackup') || 0; } catch (e) {}
+  const days = t ? Math.floor((Date.now() - t) / 864e5) : -1, show = (days < 0 || days >= 7) && !bcNudge.hidden && (catalog.length || secondaryColors.length || batches.length);
+  const html = `<span>${days < 0 ? 'No backup yet — your data lives only in this browser.' : `Last backup ${days} days ago.`}</span><button onclick="exportBackup()">Back up now</button>`;
+  ['bcNudgeLib', 'bcNudgeBd'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.display = show ? 'flex' : 'none'; el.innerHTML = html; } });
+}
+/* ---- delete colours from the library ---- */
+function libDelete() {
+  if (!libSel.size) { alert('Tick the colours you want to delete first.'); return; }
+  if (!confirm(`Delete ${libSel.size} colour${libSel.size !== 1 ? 's' : ''} from the library? Past dye batches keep their copy. You can undo for a few seconds.`)) return;
+  const snap = undoCapture(), hs = new Set([...libSel].map(h => h.toUpperCase())), gu = getOrInitGuPalette();
+  const pIds = catalog.filter(e => hs.has((e.primaryHex || '').toUpperCase())).map(e => e.id);
+  pIds.forEach(id => { catalog = catalog.filter(e => e.id !== id); const k = groupMemberKey('primary', id); groups.forEach(g => { g.colorIds = g.colorIds.filter(x => x !== k); }); });
+  secondaryColors.filter(s => hs.has((s.hex || '').toUpperCase())).map(s => s.id).forEach(id => removeSecondaryColorEverywhere(id));
+  gu.pastels = gu.pastels.filter(c => !hs.has(c.hex.toUpperCase())); gu.darks = gu.darks.filter(c => !hs.has(c.hex.toUpperCase()));
+  hs.forEach(h => libFavs.delete(h)); const n = hs.size; libSel = new Set(); selectedSet = new Set();
+  saveAppStateToStorage(); saveGuPaletteToStorage(); saveFavs(); try { refreshAllListsAfterReorder(); } catch (e) {} try { renderGenerallyUsed(); } catch (e) {}
+  renderLibrary(); undoOffer(`${n} colour${n !== 1 ? 's' : ''} deleted`, snap);
+}
+/* ---- add selected colours to a group ---- */
+function bcGroupOpen() {
+  if (!libSel.size) { alert('Tick some colours first.'); return; }
+  bcModal(`<div class="section-label">Add ${libSel.size} colour${libSel.size !== 1 ? 's' : ''} to which group?</div>` +
+    groups.map(g => `<button class="bd-pick" onclick="bcGroupDo('${g.id}')"><span>${escapeHtml(g.name)}</span><span style="color:var(--muted);font-weight:600">${g.colorIds.length}</span></button>`).join('') +
+    `<div class="bd-two" style="margin-top:8px"><input class="bd-in" id="bcNewGroup" placeholder="New group name"><button class="add-secondary-btn" style="margin:0" onclick="bcGroupDo('new')">+ Create & add</button></div>
+     <button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Cancel</button>`);
+}
+function bcGroupDo(id) {
+  let g;
+  if (id === 'new') { const nm = (document.getElementById('bcNewGroup').value || '').trim(); if (!nm) { alert('Type a group name.'); return; } g = { id: uid(), name: nm, colorIds: [] }; groups.push(g); }
+  else g = groups.find(x => x.id === id);
+  if (!g) return; const snap = null; let n = 0;
+  [...libSel].forEach(h => {
+    h = h.toUpperCase(); const pr = catalog.find(e => (e.primaryHex || '').toUpperCase() === h); let key;
+    if (pr) key = groupMemberKey('primary', pr.id); else { const nm = (bdPoolSource('all').find(r => r.hex === h) || {}).name; key = groupMemberKey('secondary', getOrCreateSecondaryColor(h, nm)); }
+    if (!g.colorIds.includes(key)) { g.colorIds.push(key); n++; }
+  });
+  saveAppStateToStorage(); bcClose(); try { refreshAllListsAfterReorder(); } catch (e) {} renderLibrary();
+  alert(`${n} colour${n !== 1 ? 's' : ''} added to "${g.name}".`);
+}
+/* ---- bulk prefix/suffix on the Edit screen ---- */
+function bcEditAffix() {
+  const pre = document.getElementById('libEditPre').value, suf = document.getElementById('libEditSuf').value; if (!pre && !suf) return;
+  libEditList.forEach((c, i) => { const el = document.getElementById('leN' + i); if (el) el.value = (pre + el.value + suf).replace(/\s+/g, ' ').trim(); });
+  document.getElementById('libEditPre').value = ''; document.getElementById('libEditSuf').value = '';
+}
+/* ---- find closest match ---- */
+function bcMatchOpen(h) {
+  h = h || (libSel.size === 1 ? [...libSel][0] : '#C2185B');
+  bcModal(`<div class="section-label">Find closest colour in your library</div>
+    <div class="bd-two" style="grid-template-columns:56px 1fr;margin-bottom:8px"><input type="color" id="bcMq" value="${h.toLowerCase()}" style="width:56px;height:44px;border:none;padding:0;background:none" oninput="document.getElementById('bcMh').value=this.value.toUpperCase();bcMatchRun()">
+    <input class="bd-in" id="bcMh" value="${h.toUpperCase()}" placeholder="#RRGGBB" style="margin:0" oninput="bcMatchRun()"></div>
+    <div id="bcMres"></div><button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Close</button>`);
+  bcMatchRun();
+}
+function bcMatchRun() {
+  let v = document.getElementById('bcMh').value.trim(); if (v && v[0] !== '#') v = '#' + v; const box = document.getElementById('bcMres');
+  if (!isValidHex(v)) { box.innerHTML = '<div class="page-sub">Type a 6-digit hex code, or pick a colour.</div>'; return; }
+  document.getElementById('bcMq').value = v.toLowerCase(); const ql = bcLab(v), hm = bcHistMap();
+  const top = bdPoolSource('all').map(r => ({ r, d: bpDE(ql, bcLab(r.hex)) })).sort((a, b) => a.d - b.d).slice(0, 6);
+  box.innerHTML = top.map(({ r, d }) => { const tg = d < 2.5 ? ['Same', 'same'] : d < 7 ? ['Very close', 'vc'] : d < 14 ? ['Close', ''] : ['Different', '']; return `<div class="bc-row"><div class="sw2" style="background:${v}"></div><div class="sw2" style="background:${r.hex}"></div><div class="mid">${escapeHtml(r.name || r.hex)}<small>${r.hex} · <span class="bc-tag ${tg[1]}">${tg[0]}</span>${hm[r.hex] ? ' · dyed ' + hm[r.hex].n + '×' : ''}</small></div><button onclick="bcMatchPick('${r.hex}')">Select</button></div>`; }).join('') || '<div class="page-sub">Library is empty.</div>';
+}
+function bcMatchPick(hex) { bcClose(); libOnlySel = false; libOnlyFav = false; libFamily = ''; document.getElementById('libSearch').value = ''; libSel.add(hex); renderLibrary(); }
+/* ---- colour card image (WhatsApp / share) ---- */
+function bcShareCard() {
+  const list = libSel.size ? bdPoolSource('all').filter(r => libSel.has(r.hex)) : []; if (!list.length) { alert('Tick the colours you want a card for.'); return; }
+  const items = list.slice(0, 60), cv = document.createElement('canvas'), g = cv.getContext('2d'), W = 1080, bg = '#F5EDE0', ink = '#2B1D12';
+  const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+  const rgb = h => `RGB ${parseInt(h.slice(1, 3), 16)}, ${parseInt(h.slice(3, 5), 16)}, ${parseInt(h.slice(5, 7), 16)}`;
+  const fit = (t, mx) => { while (g.measureText(t).width > mx && t.length > 3) t = t.slice(0, -2); return t; };
+  if (items.length === 1) {
+    cv.width = W; cv.height = 1350; g.fillStyle = bg; g.fillRect(0, 0, W, 1350);
+    rr(60, 60, 960, 860, 36); g.fillStyle = items[0].hex; g.fill(); g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.2)'; g.stroke();
+    g.fillStyle = ink; g.textAlign = 'left'; g.font = '800 68px sans-serif'; g.fillText(fit(items[0].name || items[0].hex, 960), 60, 1030);
+    g.font = '700 56px monospace'; g.fillText(items[0].hex, 60, 1110); g.font = '600 40px sans-serif'; g.fillStyle = '#7a6a58'; g.fillText(rgb(items[0].hex), 60, 1170);
+  } else {
+    const cols = items.length <= 8 ? 2 : 3, gap = 30, cw = (W - 60 * 2 - gap * (cols - 1)) / cols, sh = cw * 0.72, rh = sh + 120, rows = Math.ceil(items.length / cols);
+    cv.width = W; cv.height = 190 + rows * (rh + 20) + 40; g.fillStyle = bg; g.fillRect(0, 0, W, cv.height);
+    g.fillStyle = ink; g.textAlign = 'left'; g.font = '800 54px sans-serif'; g.fillText(`Colour card · ${items.length} colour${items.length !== 1 ? 's' : ''}`, 60, 110);
+    items.forEach((c, i) => { const x = 60 + (i % cols) * (cw + gap), y = 160 + Math.floor(i / cols) * (rh + 20);
+      rr(x, y, cw, sh, 22); g.fillStyle = c.hex; g.fill(); g.lineWidth = 2; g.strokeStyle = 'rgba(0,0,0,.2)'; g.stroke();
+      g.fillStyle = ink; g.font = `800 ${cols === 2 ? 38 : 30}px sans-serif`; g.fillText(fit(`${i + 1}. ${c.name || c.hex}`, cw), x, y + sh + 48);
+      g.font = `600 ${cols === 2 ? 32 : 26}px monospace`; g.fillStyle = '#7a6a58'; g.fillText(c.hex, x, y + sh + 90); });
+  }
+  cv.toBlob(async blob => {
+    const file = new File([blob], items.length === 1 ? `colour-${items[0].hex.slice(1)}.png` : `colour-card-${items.length}.png`, { type: 'image/png' });
+    try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Colour card' }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+}
+/* ---- reuse colours from a past batch ---- */
+let bcReuseSrc = null, bcReuseSel = new Set();
+function bcReuseOpen() {
+  const list = batches.filter(b => b.id !== bdCurrentId && (b.items || []).length).sort((a, b) => (b.sentDate || '') < (a.sentDate || '') ? -1 : 1);
+  if (!list.length) { alert('There are no other batches with colours yet.'); return; }
+  bcModal(`<div class="section-label">Copy colours from which batch?</div>` + list.map(b => `<button class="bd-pick" onclick="bcReuseStep('${b.id}')"><span>${b.no ? '#' + escapeHtml(String(b.no)) + ' · ' : ''}${escapeHtml(b.name || 'Untitled batch')}</span><span style="color:var(--muted);font-weight:600">${bdFmtDate(b.sentDate)} · ${b.items.length}</span></button>`).join('') + `<button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Cancel</button>`);
+}
+function bcReuseStep(id) { bcReuseSrc = id; const b = bdById(id); bcReuseSel = new Set(b.items.map(i => i.id)); bcReuseDraw(); }
+function bcReuseDraw() {
+  const b = bdById(bcReuseSrc), cur = bdById(bdCurrentId), have = new Set((cur ? cur.items : []).map(i => i.hex.toUpperCase()));
+  bcModal(`<div class="section-label">${b.no ? '#' + escapeHtml(String(b.no)) + ' · ' : ''}${escapeHtml(b.name || 'Untitled batch')} — untick any you don't want</div>` +
+    b.items.map(i => { const dup = have.has(i.hex.toUpperCase()); return `<label class="bc-row" style="${dup ? 'opacity:.5' : ''}"><input type="checkbox" style="width:22px;height:22px;margin:0" ${bcReuseSel.has(i.id) && !dup ? 'checked' : ''} ${dup ? 'disabled' : ''} onchange="bcReuseTog('${i.id}',this.checked)"><div class="sw2" style="background:${i.hex}"></div><div class="mid">${escapeHtml(i.name || i.hex)}<small>${i.hex}${dup ? ' · already in this batch' : i.design ? ' · ' + escapeHtml(i.design) : ''}</small></div></label>`; }).join('') +
+    `<label style="display:flex;gap:8px;align-items:center;margin:10px 0;font-weight:600"><input type="checkbox" id="bcReuseDesign" checked style="width:20px;height:20px;margin:0"> Also copy lace design (quantities are not copied)</label>
+     <button class="save-btn" style="width:100%" onclick="bcReuseDo()">Add selected colours</button><button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcReuseOpen()">Back</button>`);
+}
+function bcReuseTog(id, on) { on ? bcReuseSel.add(id) : bcReuseSel.delete(id); }
+function bcReuseDo() {
+  const src = bdById(bcReuseSrc), b = bdById(bdCurrentId); if (!src || !b) return; const cd = document.getElementById('bcReuseDesign').checked; const fresh = [];
+  src.items.forEach(i => { if (!bcReuseSel.has(i.id) || b.items.some(x => x.hex.toUpperCase() === i.hex.toUpperCase()) || fresh.some(x => x.hex.toUpperCase() === i.hex.toUpperCase())) return; fresh.push({ id: uid(), hex: i.hex, name: i.name || i.hex, design: cd ? (i.design || '') : '', lines: [{ id: uid(), qty: '', mtr: '' }] }); });
+  b.items = fresh.concat(b.items); saveBatches(); bcClose(); bdRenderItems(); showView('batchDetail');
 }
 
 bdMigrate();
