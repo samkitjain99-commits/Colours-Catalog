@@ -1568,7 +1568,7 @@
       <span class="header-icon">&#128247;</span>
       <h1>Colours from photo</h1>
     </div>
-    <div class="page-sub no-print">Photo of the physical swatches you are sending. Numbers on the photo match the cards below. Tick the ones you want, edit any name or hex code, remove wrong ones with ✕, or tap the photo to pick a colour yourself. Colours are NOT saved to your library unless you tap “Save to library”.</div>
+    <div class="page-sub no-print">Photo of the physical swatches you are sending. Numbers on the photo match the cards below. Tick the ones you want, edit any name or hex code, remove wrong ones with ✕, drag a number to the right lace to re-read its colour, or tap the photo to pick a colour yourself. Colours are NOT saved to your library unless you tap “Save to library”.</div>
     <div class="builder no-print bp-stick">
       <div class="bp-tabs" id="bpTabs"></div>
       <div class="bp-stage" style="position:relative"><canvas id="bpCanvas" onclick="bpTap(event)"></canvas><div id="bpPicked" class="bp-picked" style="display:none"></div></div>
@@ -6306,6 +6306,47 @@ function bpTyping(el, on) {   // while typing: un-stick the photo and hide the b
   document.body.classList.toggle('bp-typing', !!on);
   if (on) { const go = () => { try { el.scrollIntoView({ block: 'center', behavior: 'auto' }); } catch (e) {} }; setTimeout(go, 60); setTimeout(go, 350); }
 }
+/* ---- drag a numbered marker to the right lace; the colour is re-read where you drop it ---- */
+let bpDrag = null, bpNoClick = 0;
+function bpPt(cx, cy) {
+  const cv = document.getElementById('bpCanvas'), r = cv.getBoundingClientRect(), k = Math.min(r.width / cv.width, r.height / cv.height), dw = cv.width * k, dh = cv.height * k, ox = r.left + (r.width - dw) / 2, oy = r.top + (r.height - dh) / 2;
+  return { x: (cx - ox) / k, y: (cy - oy) / k, k, cv };
+}
+function bpSample(x, y) {
+  const cv = document.getElementById('bpCanvas'); x = Math.min(cv.width - 1, Math.max(0, Math.round(x))); y = Math.min(cv.height - 1, Math.max(0, Math.round(y)));
+  const R = Math.max(2, Math.round(cv.width / 160)), d = bpCv.getContext('2d').getImageData(Math.max(0, x - R), Math.max(0, y - R), R * 2 + 1, R * 2 + 1).data;
+  let rr = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) { rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; }
+  return bpHex(rr / n, gg / n, bb / n);
+}
+function bpDragStart(cx, cy) {
+  const q = bpPt(cx, cy), cv = q.cv, fs = Math.max(12, cv.width / 34), hit = fs * 1.9; let best = null, bd = 1e9;
+  bpList.forEach(x => { if (x.px == null) return; const dd = Math.hypot(x.px * cv.width - q.x, x.py * cv.height - q.y); if (dd < hit && dd < bd) { bd = dd; best = x; } });
+  if (!best) return false; bpDrag = { id: best.id, moved: false, sx: cx, sy: cy }; return true;
+}
+function bpDragMove(cx, cy) {
+  if (!bpDrag) return; if (!bpDrag.moved && Math.hypot(cx - bpDrag.sx, cy - bpDrag.sy) < 6) return; bpDrag.moved = true;
+  const q = bpPt(cx, cy), x = bpList.find(v => v.id === bpDrag.id); if (!x) return;
+  x.px = Math.min(1, Math.max(0, q.x / q.cv.width)); x.py = Math.min(1, Math.max(0, q.y / q.cv.height)); bpDraw();
+}
+function bpDragEnd() {
+  if (!bpDrag) return; const d = bpDrag; bpDrag = null; if (!d.moved) return;
+  bpNoClick = Date.now(); const x = bpList.find(v => v.id === d.id); if (!x) return;
+  const cv = document.getElementById('bpCanvas'), hex = bpSample(x.px * cv.width, x.py * cv.height), nx = bpMake(hex, 0, {});
+  x.hex = nx.hex; x.bg = false; x.on = true; if (!x.edited) x.name = nx.name;
+  bpPicked(x.hex, x.name, `Moved Sr ${bpList.indexOf(x) + 1} \u2014 colour re-read here`); bpDraw(); bpRender();
+}
+(function () {
+  const wire = () => {
+    const cv = document.getElementById('bpCanvas'); if (!cv || cv._bpDrag) return; cv._bpDrag = true;
+    cv.addEventListener('touchstart', e => { const t = e.touches[0]; if (e.touches.length === 1 && bpDragStart(t.clientX, t.clientY)) e.preventDefault(); }, { passive: false });
+    cv.addEventListener('touchmove', e => { if (bpDrag) { e.preventDefault(); const t = e.touches[0]; bpDragMove(t.clientX, t.clientY); } }, { passive: false });
+    cv.addEventListener('touchend', () => { bpDragEnd(); }); cv.addEventListener('touchcancel', () => { bpDrag = null; });
+    cv.addEventListener('mousedown', e => { bpDragStart(e.clientX, e.clientY); });
+    window.addEventListener('mousemove', e => { bpDragMove(e.clientX, e.clientY); });
+    window.addEventListener('mouseup', () => { bpDragEnd(); });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
+})();
 let bpPkTimer = null;
 function bpPicked(hex, name, msg) {
   const el = document.getElementById('bpPicked'); if (!el) return;
@@ -6313,6 +6354,7 @@ function bpPicked(hex, name, msg) {
   el.style.display = 'flex'; clearTimeout(bpPkTimer); bpPkTimer = setTimeout(() => { el.style.display = 'none'; }, 6000);
 }
 function bpTap(e) {
+  if (Date.now() - bpNoClick < 450) return;
   const cv = document.getElementById('bpCanvas'), r = cv.getBoundingClientRect();
   // the canvas is letterboxed (object-fit:contain): map the tap onto the real picture area only
   const k = Math.min(r.width / cv.width, r.height / cv.height), dw = cv.width * k, dh = cv.height * k, ox = r.left + (r.width - dw) / 2, oy = r.top + (r.height - dh) / 2;
@@ -6357,7 +6399,7 @@ function bpHexIn(id, inp) {
   if (!ok) return; if (v.length === 4) v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3]; v = v.toUpperCase();
   const x = bpList.find(q => q.id === id); if (!x) return; x.hex = v; const sw = document.getElementById('bpsw_' + id); if (sw) sw.style.background = v;
 }
-function bpName(id, v) { const x = bpList.find(q => q.id === id); if (x) x.name = v; }
+function bpName(id, v) { const x = bpList.find(q => q.id === id); if (x) { x.name = v; x.edited = true; } }
 function bpDel(id) { bpList = bpList.filter(v => v.id !== id); bpDraw(); bpRender(); }
 function bpAll(on) { bpList.forEach(x => x.on = on); bpDraw(); bpRender(); }
 function bpSaveLib() {
