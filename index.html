@@ -1251,6 +1251,8 @@
       <button class="gu-filter-btn" onclick="sortPreviewByLightness('dark-light')">&#9790; Dark &rarr; Light</button>
     </div>
 
+    <label class="sw-editchk no-print"><input type="checkbox" id="swHideChk" onchange="swHideHex=this.checked;renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource)"> Dyer copy &mdash; hide hex codes (print a code like C014 instead)</label>
+    <div class="no-print" id="swHideRow" style="display:none;margin:0 0 10px"><button class="add-secondary-btn" onclick="bcCodeKey()">&#128273; Code key &amp; find a code</button></div>
     <label class="sw-editchk no-print"><input type="checkbox" id="swEditChk" onchange="document.getElementById('swPages').classList.toggle('sw-editing', this.checked)"> Edit — show &#10005; remove and &#9664; &#9654; reposition markers</label>
     <div id="swPages"></div>
   </div>
@@ -1413,7 +1415,7 @@
     <div class="page-sub no-print">Every colour in one place. Tap colours to select, then add them to a dye batch.</div>
     <div class="bc-nudge no-print" id="bcNudgeLib"></div>
     <div class="bd-two no-print">
-      <input class="bd-in" id="libSearch" placeholder="Search name or hex" oninput="renderLibrary()">
+      <input class="bd-in" id="libSearch" placeholder="Search name, hex or code" oninput="renderLibrary()">
       <select class="bd-in" id="libSrc" onchange="renderLibrary()"></select>
     </div>
     <div class="bc-chips no-print" id="libFam"></div>
@@ -3796,7 +3798,8 @@ function refreshAllListsAfterReorder() {
 // The same file can be re-uploaded through the Excel upload buttons.
 async function downloadColoursExcel(list, baseName) {
   if (!list || list.length === 0) { alert('No colours to download.'); return; }
-  const rows = [['Sr No', 'Hex Code', 'Colour Name']].concat(list.map((c, i) => [i + 1, c.hex, c.name || '']));
+  const withCode = typeof swHideHex !== 'undefined' && swHideHex && list === swCurrentSwatches;
+  const rows = (withCode ? [['Sr No', 'Code', 'Hex Code', 'Colour Name']] : [['Sr No', 'Hex Code', 'Colour Name']]).concat(list.map((c, i) => withCode ? [i + 1, bcCodeOf(c.hex), c.hex, c.name || ''] : [i + 1, c.hex, c.name || '']));
   try {
     await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined');
     const ws = window.XLSX.utils.aoa_to_sheet(rows);
@@ -3856,7 +3859,9 @@ function moveSwatchToPosition(idx) {
   renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
 }
 
+let swHideHex = false;
 function renderPrintColoursFromSwatches(swatches, label, source) {
+  const hc = document.getElementById('swHideChk'); if (hc) hc.checked = swHideHex; const hr = document.getElementById('swHideRow'); if (hr) hr.style.display = swHideHex ? 'block' : 'none';
   swSource = source || null;
   swCurrentSwatches = swatches.slice();
   swCurrentLabel = label;
@@ -3880,7 +3885,7 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
         <button class="sw-remove sw-mv no-print" style="top:26px; right:0;" onclick="moveSwatchInPreview(${globalIdx - 1}, 1)" ${globalIdx === swatches.length ? 'disabled' : ''} title="Move later">&#9654;</button>
         <div class="sw-srno" onclick="moveSwatchToPosition(${globalIdx - 1})" title="Tap to move to a specific position" style="cursor:pointer;">#${String(globalIdx).padStart(2, '0')}</div>
         <div class="sw-dot" style="background:${s.hex}"></div>
-        <div class="sw-hex">${s.hex}</div>
+        <div class="sw-hex">${swHideHex ? bcCodeOf(s.hex) : s.hex}</div>
         ${s.name ? `<div class="sw-name">${s.name}</div>` : ''}
       </div>
     `;
@@ -5274,7 +5279,7 @@ function saveNewSecondaryColours() {
 let pendingRestoreData = null;
 
 function exportBackup() {
-  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches, favourites: [...libFavs], generallyUsed: getOrInitGuPalette() };
+  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches, favourites: [...libFavs], generallyUsed: getOrInitGuPalette(), colourCodes: bcCodes() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -5331,6 +5336,7 @@ function performRestore() {
 
   if (Array.isArray(pendingRestoreData.favourites)) { libFavs = new Set(pendingRestoreData.favourites.map(h => String(h).toUpperCase())); saveFavs(); }
   if (Array.isArray(pendingRestoreData.batches)) { batches = pendingRestoreData.batches; bdMigrate(); saveBatches(); }
+  if (pendingRestoreData.colourCodes && typeof pendingRestoreData.colourCodes === 'object') { bcCodesMap = Object.assign({}, bcCodes(), pendingRestoreData.colourCodes); bcCodesSave(); }
   if (pendingRestoreData.generallyUsed && Array.isArray(pendingRestoreData.generallyUsed.pastels)) { generallyUsedPalette = pendingRestoreData.generallyUsed; saveGuPaletteToStorage(); }
   selectedSet = new Set();
   groupFilter = '';
@@ -5600,7 +5606,7 @@ let bdaFav = false;
 function bdRenderPool() {
   const q = document.getElementById('bdaSearch').value.trim().toLowerCase();
   const src = bdaFav ? bdPoolSource('all').filter(r => libFavs.has(r.hex)) : bdPoolSource();
-  bdPoolRows = src.filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
+  bdPoolRows = src.filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q) || bcCodeMatch(r.hex, q));
   const b = bdById(bdCurrentId), inBatch = new Set(b ? b.items.map(i => i.hex.toUpperCase()) : []), hmP = bcHistMap();
   const fb = document.getElementById('bdaFavBtn'); if (fb) { fb.style.background = bdaFav ? 'var(--brown-700)' : ''; fb.style.color = bdaFav ? '#fff' : ''; }
   document.getElementById('bdaPool').innerHTML = bdPoolRows.length ? bdPoolRows.map(r => `
@@ -6350,7 +6356,7 @@ function renderLibrary() {
     sel.dataset.g = String(groups.length); if (cur) sel.value = cur;
   }
   const q = document.getElementById('libSearch').value.trim().toLowerCase();
-  libRows = (libOnlyFav ? bdPoolSource('all').filter(r => libFavs.has(r.hex)) : libOnlySel ? bdPoolSource('all').filter(r => libSel.has(r.hex)) : bdPoolSource(sel.value)).filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q));
+  libRows = (libOnlyFav ? bdPoolSource('all').filter(r => libFavs.has(r.hex)) : libOnlySel ? bdPoolSource('all').filter(r => libSel.has(r.hex)) : bdPoolSource(sel.value)).filter(r => !q || (r.name || '').toLowerCase().includes(q) || r.hex.toLowerCase().includes(q) || bcCodeMatch(r.hex, q));
   const famCount = {}; libRows.forEach(r => { const f = bcFam(r.hex); famCount[f] = (famCount[f] || 0) + 1; });
   if (libFamily && !famCount[libFamily]) libFamily = '';
   document.getElementById('libFam').innerHTML = `<button class="bc-chip ${!libFamily ? 'on' : ''}" onclick="libFamily='';renderLibrary()">All ${libRows.length}</button>` + BC_FAMS.filter(f => famCount[f]).map(f => `<button class="bc-chip ${libFamily === f ? 'on' : ''}" onclick="libFamily='${f}';renderLibrary()">${f} ${famCount[f]}</button>`).join('');
@@ -6361,7 +6367,7 @@ function renderLibrary() {
   document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map(r => `
     <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
       <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
-      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div>${bcDyLabel(r.hex, hm)}</button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
+      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}${bcCodes()[r.hex] ? ' \u00b7 ' + bcCodes()[r.hex] : ''}</div>${bcDyLabel(r.hex, hm)}</button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   libUpdateBar(); bcNudge();
 }
 function libTargets() { const r = libSel.size ? libRows.filter(x => libSel.has(x.hex)).concat(bdPoolSource('all').filter(x => libSel.has(x.hex) && !libRows.some(y => y.hex === x.hex))) : libRows; return r.map(c => ({ hex: c.hex, name: c.name || '' })); }
@@ -6514,6 +6520,35 @@ function bcNudge() {
   const days = t ? Math.floor((Date.now() - t) / 864e5) : -1, show = (days < 0 || days >= 7) && !bcNudge.hidden && (catalog.length || secondaryColors.length || batches.length);
   const html = `<span>${days < 0 ? 'No backup yet — your data lives only in this browser.' : `Last backup ${days} days ago.`}</span><button onclick="exportBackup()">Back up now</button>`;
   ['bcNudgeLib', 'bcNudgeBd'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.display = show ? 'flex' : 'none'; el.innerHTML = html; } });
+}
+
+/* ---- permanent print codes (dyer copy hides hex) ---- */
+const BC_CODE_KEY = 'colourCatalog_printCodes_v1';
+let bcCodesMap = null;
+function bcCodes() { if (!bcCodesMap) { try { bcCodesMap = JSON.parse(localStorage.getItem(BC_CODE_KEY) || '{}') || {}; } catch (e) { bcCodesMap = {}; } } return bcCodesMap; }
+function bcCodesSave() { try { localStorage.setItem(BC_CODE_KEY, JSON.stringify(bcCodesMap || {})); } catch (e) {} }
+function bcCodeOf(hex) {
+  hex = (hex || '').toUpperCase(); const m = bcCodes(); if (m[hex]) return m[hex];
+  let mx = 0; Object.values(m).forEach(c => { const n = parseInt(String(c).replace(/\D/g, ''), 10); if (n > mx) mx = n; });
+  m[hex] = 'C' + String(mx + 1).padStart(3, '0'); bcCodesSave(); return m[hex];
+}
+function bcCodeMatch(hex, q) { const c = bcCodes()[(hex || '').toUpperCase()]; return !!(c && q && c.toLowerCase().includes(q)); }
+function bcCodeKey() {
+  const cur = swCurrentSwatches.map(s => ({ hex: s.hex.toUpperCase(), name: s.name || '' }));
+  bcModal(`<div class="section-label">Code key (only for you — don't share)</div>
+    <input class="bd-in" id="bcCodeQ" placeholder="Find a code, e.g. C014, or a name / hex" oninput="bcCodeKeyRender()" style="margin-bottom:8px">
+    <div id="bcCodeRes"></div>
+    <button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Close</button>`);
+  bcCodeKeyRender();
+}
+function bcCodeKeyRender() {
+  const q = (document.getElementById('bcCodeQ').value || '').trim().toLowerCase(), m = bcCodes(), box = document.getElementById('bcCodeRes');
+  const names = {}; bdPoolSource('all').forEach(r => { names[r.hex] = r.name; }); swCurrentSwatches.forEach(s => { names[s.hex.toUpperCase()] = s.name || names[s.hex.toUpperCase()]; });
+  let list;
+  if (q) list = Object.keys(m).filter(h => m[h].toLowerCase().includes(q) || h.toLowerCase().includes(q) || (names[h] || '').toLowerCase().includes(q));
+  else list = swCurrentSwatches.map(s => s.hex.toUpperCase()).filter((h, i, a) => a.indexOf(h) === i).map(h => { bcCodeOf(h); return h; });
+  list.sort((a, b) => m[a].localeCompare(m[b]));
+  box.innerHTML = (q ? '' : `<div class="page-sub" style="margin:0 0 6px">On this sheet (${list.length}):</div>`) + (list.map(h => `<div class="bc-row"><div class="sw2" style="background:${h}"></div><div class="mid">${m[h]} · ${escapeHtml(names[h] || h)}<small>${h}</small></div></div>`).join('') || '<div class="page-sub">No match.</div>');
 }
 /* ---- delete colours from the library ---- */
 function libDelete() {
