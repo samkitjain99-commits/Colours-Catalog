@@ -519,6 +519,10 @@
   .ba-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:8px; } .ba-stats div { background:var(--tan-200); border-radius:10px; padding:8px 4px; text-align:center; font-size:11px; color:var(--muted); font-weight:600; } .ba-stats b { display:block; font-size:16px; color:var(--brown-900); }
   .bp-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 0; }
   .bp-btns button { border:1.5px solid var(--border); background:#fff; border-radius:12px; padding:11px 6px; font-family:inherit; font-size:14px; font-weight:700; color:var(--brown-700); cursor:pointer; }
+  .bp-picked { position:absolute; left:8px; right:8px; bottom:8px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.96); border-radius:12px; padding:7px 10px; line-height:1.25; box-shadow:0 2px 10px rgba(0,0,0,.35); pointer-events:none; font-size:13px; font-weight:700; color:#000; }
+  .bp-picked .pk-sw { flex:0 0 34px; width:34px; height:34px; border-radius:8px; border:2px solid #000; }
+  .bp-picked small { display:block; font-weight:600; color:#555; font-size:11.5px; }
+  body.bp-typing .bp-stick { position:static; } body.bp-typing #bpBar { display:none !important; }
   .bp-tabs { display:flex; gap:6px; overflow-x:auto; margin-bottom:8px; padding-bottom:2px; } .bp-tabs:empty { display:none; }
   .bp-tab { flex:0 0 auto; border:1.5px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:6px 12px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; } .bp-tab.on { background:var(--brown-700); color:#fff; border-color:var(--brown-700); }
   .bp-stage { background:#222; border-radius:12px; overflow:hidden; line-height:0; } .bp-stage canvas { width:100%; height:auto; max-height:60vh; object-fit:contain; display:block; touch-action:manipulation; }
@@ -1567,7 +1571,7 @@
     <div class="page-sub no-print">Photo of the physical swatches you are sending. Numbers on the photo match the cards below. Tick the ones you want, edit any name or hex code, remove wrong ones with ✕, or tap the photo to pick a colour yourself. Colours are NOT saved to your library unless you tap “Save to library”.</div>
     <div class="builder no-print bp-stick">
       <div class="bp-tabs" id="bpTabs"></div>
-      <div class="bp-stage"><canvas id="bpCanvas" onclick="bpTap(event)"></canvas></div>
+      <div class="bp-stage" style="position:relative"><canvas id="bpCanvas" onclick="bpTap(event)"></canvas><div id="bpPicked" class="bp-picked" style="display:none"></div></div>
       <div class="bp-tools">
         <label>Photo <select class="bd-in" id="bpMode" onchange="bpRun()"><option value="auto">Auto</option><option value="sep">Separate swatches</option><option value="fill">Strips fill photo</option></select></label>
         <button class="add-secondary-btn" onclick="bpAppend=true;document.getElementById('bpFile').click()">+ Add photos</button>
@@ -6073,7 +6077,7 @@ async function baExportPdf() {
 let bpCv = null, bpList = [], bpMarks = [];
 let bpPhotos = [], bpCur = 0, bpAppend = false;
 function bpSync() { const p = bpPhotos[bpCur]; if (p) { p.cv = bpCv; p.list = bpList; p.marks = bpMarks; } }
-function bpSwitch(i) { bpSync(); if (!bpPhotos[i]) return; bpCur = i; const p = bpPhotos[i]; bpCv = p.cv; bpList = p.list; bpMarks = p.marks; bpTarget = null; bpEdit = false; bpHint(); bpDraw(); bpRender(); }
+function bpSwitch(i) { bpSync(); { const k = document.getElementById('bpPicked'); if (k) k.style.display = 'none'; } if (!bpPhotos[i]) return; bpCur = i; const p = bpPhotos[i]; bpCv = p.cv; bpList = p.list; bpMarks = p.marks; bpTarget = null; bpEdit = false; bpHint(); bpDraw(); bpRender(); }
 function bpPhotoDel(i) { bpSync(); bpPhotos.splice(i, 1); if (!bpPhotos.length) { showView('batchDetail'); bpCv = null; bpList = []; bpMarks = []; return; } bpCur = Math.min(bpCur, bpPhotos.length - 1); const p = bpPhotos[bpCur]; bpCv = p.cv; bpList = p.list; bpMarks = p.marks; bpDraw(); bpRender(); }
 function bpSel() {   // ticked colours from ALL photos, near-identical ones counted once
   bpSync(); const out = [];
@@ -6298,6 +6302,16 @@ function bpDraw() {
   bpList.forEach((x, i) => { if (x.px == null) return; const cx = x.px * cv.width, cy = x.py * cv.height; g.globalAlpha = x.on ? 1 : 0.45; g.beginPath(); g.arc(cx, cy, rd, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = Math.max(2, cv.width / 330); g.strokeStyle = x.on ? '#000' : '#888'; g.stroke(); g.fillStyle = '#000'; g.fillText(String(i + 1), cx, cy + 1); g.globalAlpha = 1; });
   bpMarks.forEach((m, i) => { g.lineWidth = Math.max(3, cv.width / 220); g.strokeStyle = '#fff'; g.beginPath(); g.arc(m.x, m.y, cv.width / 38, 0, 7); g.stroke(); g.strokeStyle = '#000'; g.lineWidth = Math.max(1.5, cv.width / 450); g.stroke(); });
 }
+function bpTyping(el, on) {   // while typing: un-stick the photo and hide the bottom bar so the box stays visible above the keyboard
+  document.body.classList.toggle('bp-typing', !!on);
+  if (on) { const go = () => { try { el.scrollIntoView({ block: 'center', behavior: 'auto' }); } catch (e) {} }; setTimeout(go, 60); setTimeout(go, 350); }
+}
+let bpPkTimer = null;
+function bpPicked(hex, name, msg) {
+  const el = document.getElementById('bpPicked'); if (!el) return;
+  el.innerHTML = `<span class="pk-sw" style="background:${hex}"></span><span>${escapeHtml(msg)}<small>${hex}${name ? ' &middot; ' + escapeHtml(name) : ''}</small></span>`;
+  el.style.display = 'flex'; clearTimeout(bpPkTimer); bpPkTimer = setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
 function bpTap(e) {
   const cv = document.getElementById('bpCanvas'), r = cv.getBoundingClientRect();
   // the canvas is letterboxed (object-fit:contain): map the tap onto the real picture area only
@@ -6307,9 +6321,10 @@ function bpTap(e) {
   const R = Math.max(2, Math.round(cv.width / 160)), d = bpCv.getContext('2d').getImageData(Math.max(0, x - R), Math.max(0, y - R), R * 2 + 1, R * 2 + 1).data;
   let rr = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) { rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; }
   const hex = bpHex(rr / n, gg / n, bb / n);
-  if (bpTarget) { const t = bpList.find(q => q.id === bpTarget); bpTarget = null; if (t) { t.hex = hex; t.px = x / cv.width; t.py = y / cv.height; t.on = true; t.bg = false; } bpHint(); bpDraw(); bpRender(); return; }
+  if (bpTarget) { const t = bpList.find(q => q.id === bpTarget); bpTarget = null; if (t) { t.hex = hex; t.px = x / cv.width; t.py = y / cv.height; t.on = true; t.bg = false; bpPicked(hex, t.name, `Updated Sr ${bpList.indexOf(t) + 1}`); } bpHint(); bpDraw(); bpRender(); return; }
   const nx = bpMake(hex, 0, { manual: true, px: x / cv.width, py: y / cv.height });
   const ex = bpList.find(v => v.hex === nx.hex); if (ex) ex.on = true; else bpList.push(nx);
+  bpPicked(nx.hex, nx.name, ex ? `Already in list as Sr ${bpList.indexOf(ex) + 1} (ticked)` : `Added as Sr ${bpList.length}`);
   bpDraw(); bpRender();
 }
 let bpEdit = false;
@@ -6322,8 +6337,8 @@ function bpRender() {
     <div class="lib-card ${x.on ? 'on' : ''}">
       <span class="bp-x" role="button" aria-label="Remove" onclick="event.stopPropagation();bpDel('${x.id}')">&#10005;</span><span class="bp-num">Sr ${bpList.indexOf(x) + 1}</span>
       <div class="lib-sw" id="bpsw_${x.id}" style="background:${x.hex};position:relative" onclick="bpTog('${x.id}')"><label class="bp-ed" style="right:5px" title="Pick colour" onclick="event.stopPropagation()">&#9998;<input type="color" value="${x.hex.toLowerCase()}" oninput="bpColorIn('${x.id}',this.value)"></label></div><span class="lib-tick">&#10003;</span>
-      <input class="bd-in" style="margin:4px 0 2px;padding:5px 6px;font-size:16px;width:100%;box-sizing:border-box" value="${escapeHtml(x.name)}" placeholder="Colour name" oninput="bpName('${x.id}',this.value)">
-      <input class="bd-in" id="bph_${x.id}" style="margin:0;padding:5px 6px;font-size:14px;font-family:monospace;width:100%;box-sizing:border-box;text-transform:uppercase" value="${x.hex}" maxlength="7" placeholder="#RRGGBB" oninput="bpHexIn('${x.id}',this)">
+      <input class="bd-in" style="margin:4px 0 2px;padding:5px 6px;font-size:16px;width:100%;box-sizing:border-box" value="${escapeHtml(x.name)}" placeholder="Colour name" onfocus="bpTyping(this,1)" onblur="bpTyping(this,0)" oninput="bpName('${x.id}',this.value)">
+      <input class="bd-in" id="bph_${x.id}" style="margin:0;padding:5px 6px;font-size:16px;font-family:monospace;width:100%;box-sizing:border-box;text-transform:uppercase" value="${x.hex}" maxlength="7" placeholder="#RRGGBB" onfocus="bpTyping(this,1)" onblur="bpTyping(this,0)" oninput="bpHexIn('${x.id}',this)">
       ${x.bg ? '<div class="lib-hx">background?</div>' : ''}${bcDyLabel(x.hex, hmB)}</div>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No colours detected. Tap the photo to pick colours.</div>';
   document.getElementById('bpBar').style.display = n ? 'flex' : 'none';
   document.getElementById('bpAddBtn').textContent = `Add ${n} to batch`;
