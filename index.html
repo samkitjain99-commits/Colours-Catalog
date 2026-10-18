@@ -1263,7 +1263,7 @@
       <button class="gu-filter-btn" onclick="sortPreviewByLightness('dark-light')">&#9790; Dark &rarr; Light</button>
     </div>
 
-    <label class="sw-editchk no-print"><input type="checkbox" id="swHideChk" onchange="swHideHex=this.checked;renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource)"> Dyer copy &mdash; hide hex codes (print a code like C014 instead)</label>
+    <label class="sw-editchk no-print"><input type="checkbox" id="swHideChk" onchange="swHideHex=this.checked;renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource)"> Dyer copy &mdash; hide real hex codes (prints the hex with its last two characters moved to the middle)</label>
     <div class="no-print" id="swHideRow" style="display:none;margin:0 0 10px"><button class="add-secondary-btn" onclick="bcCodeKey()">&#128273; Code key &amp; find a code</button></div>
     <label class="sw-editchk no-print"><input type="checkbox" id="swEditChk" onchange="document.getElementById('swPages').classList.toggle('sw-editing', this.checked)"> Edit — show &#10005; remove and &#9664; &#9654; reposition markers</label>
     <div id="swPages"></div>
@@ -1578,13 +1578,6 @@
       <h1 id="bdTitle">Batch</h1>
       <button class="bd-notebtn" id="bdNoteBtn" onclick="bdNoteOpen()" title="Notes for the dyer" aria-label="Notes for the dyer">&#128221;</button>
     </div>
-    <div class="bd-topbtns no-print">
-      <button class="save-btn" onclick="bdPrintColours()">Print Colour Swatch</button>
-      <button class="save-btn" onclick="bdPreview()">Dyer sheet</button>
-      <button class="add-secondary-btn" onclick="bdDuplicate()">Duplicate</button>
-      <button class="add-secondary-btn" onclick="bdDelete()" style="color:var(--danger);">Delete</button>
-    </div>
-    <div class="page-sub no-print" style="margin:0 0 12px"><b>Print Colour Swatch</b> = swatches with hex and name, no quantities. <b>Dyer sheet</b> = colour, design, pcs, mtr and total mtr.</div>
     <div class="builder no-print">
       <div class="bd-namedate">
         <label>Batch No.<input class="bd-in" id="bdNo" placeholder="No." autocomplete="off" style="padding-left:8px;padding-right:4px;text-align:center" oninput="bdField('no',this.value)"></label>
@@ -1606,6 +1599,13 @@
       </div>
       <div style="text-align:right;margin:2px 0 0"><button class="text-btn" style="font-weight:700;text-decoration:underline" onclick="downloadColourTemplate('colourPicker')">&#11015; Excel template</button></div>
       <div class="bd-bulk" id="bdBulk"></div>
+      <div class="bd-topbtns no-print">
+        <button class="save-btn" onclick="bdPrintColours()">Print Colour Swatch</button>
+        <button class="save-btn" onclick="bdPreview()">Dyer sheet</button>
+        <button class="add-secondary-btn" onclick="bdDuplicate()">Duplicate</button>
+        <button class="add-secondary-btn" onclick="bdDelete()" style="color:var(--danger);">Delete</button>
+      </div>
+      <div class="page-sub no-print" style="margin:0 0 12px"><b>Print Colour Swatch</b> = swatches with hex and name, no quantities. <b>Dyer sheet</b> = colour, design, pcs, mtr and total mtr.</div>
       <div class="bd-selbar" id="bdSelBar" style="display:none">
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:0"><input type="checkbox" class="bd-chk" id="bdSelAll" onchange="bdSelAllToggle(this.checked)"> Select all</label>
         <button class="bd-rm" id="bdRmBtn" onclick="bdRemoveSelected()" style="display:none"></button>
@@ -6430,7 +6430,7 @@ function renderLibrary() {
   document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map(r => `
     <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
       <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
-      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}${bcCodes()[r.hex] ? ' \u00b7 ' + bcCodes()[r.hex] : ''}</div>${bcDyLabel(r.hex, hm)}</button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
+      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div>${bcDyLabel(r.hex, hm)}</button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   libUpdateBar(); bcNudge();
 }
 function libTargets() { const r = libSel.size ? libRows.filter(x => libSel.has(x.hex)).concat(bdPoolSource('all').filter(x => libSel.has(x.hex) && !libRows.some(y => y.hex === x.hex))) : libRows; return r.map(c => ({ hex: c.hex, name: c.name || '' })); }
@@ -6591,24 +6591,24 @@ let bcCodesMap = null;
 function bcCodes() { if (!bcCodesMap) { try { bcCodesMap = JSON.parse(localStorage.getItem(BC_CODE_KEY) || '{}') || {}; } catch (e) { bcCodesMap = {}; } } return bcCodesMap; }
 function bcCodesSave() { try { localStorage.setItem(BC_CODE_KEY, JSON.stringify(bcCodesMap || {})); } catch (e) {} }
 function bcCodeOf(hex) {
-  hex = (hex || '').toUpperCase(); const m = bcCodes(); if (m[hex]) return m[hex];
-  let mx = 0; Object.values(m).forEach(c => { const n = parseInt(String(c).replace(/\D/g, ''), 10); if (n > mx) mx = n; });
-  m[hex] = 'C' + String(mx + 1).padStart(3, '0'); bcCodesSave(); return m[hex];
+  /* dyer code = hex with the last two characters moved to the middle (swap of the 2nd and 3rd pairs); swapping again gives the real hex back */
+  const h = (hex || '').replace('#', '').toUpperCase();
+  return h.length === 6 ? h.slice(0, 2) + h.slice(4, 6) + h.slice(2, 4) : h;
 }
-function bcCodeMatch(hex, q) { const c = bcCodes()[(hex || '').toUpperCase()]; return !!(c && q && c.toLowerCase().includes(q)); }
+function bcCodeMatch(hex, q) { return !!(q && bcCodeOf(hex).toLowerCase().includes(q.replace('#', ''))); }
 function bcCodeKey() {
   const cur = swCurrentSwatches.map(s => ({ hex: s.hex.toUpperCase(), name: s.name || '' }));
   bcModal(`<div class="section-label">Code key (only for you — don't share)</div>
-    <input class="bd-in" id="bcCodeQ" placeholder="Find a code, e.g. C014, or a name / hex" oninput="bcCodeKeyRender()" style="margin-bottom:8px">
+    <input class="bd-in" id="bcCodeQ" placeholder="Type the printed code (e.g. A56990) or a name / hex" oninput="bcCodeKeyRender()" style="margin-bottom:8px">
     <div id="bcCodeRes"></div>
     <button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Close</button>`);
   bcCodeKeyRender();
 }
 function bcCodeKeyRender() {
-  const q = (document.getElementById('bcCodeQ').value || '').trim().toLowerCase(), m = bcCodes(), box = document.getElementById('bcCodeRes');
+  const q = (document.getElementById('bcCodeQ').value || '').trim().toLowerCase().replace('#', ''), m = new Proxy({}, { get: (_, h) => bcCodeOf(String(h)) }), box = document.getElementById('bcCodeRes');
   const names = {}; bdPoolSource('all').forEach(r => { names[r.hex] = r.name; }); swCurrentSwatches.forEach(s => { names[s.hex.toUpperCase()] = s.name || names[s.hex.toUpperCase()]; });
   let list;
-  if (q) list = Object.keys(m).filter(h => m[h].toLowerCase().includes(q) || h.toLowerCase().includes(q) || (names[h] || '').toLowerCase().includes(q));
+  if (q) { const all = new Set(Object.keys(names)); catalog.forEach(e => e.primaryHex && all.add(e.primaryHex.toUpperCase())); if (/^[0-9a-f]{6}$/.test(q)) { all.add('#' + bcCodeOf(q).toUpperCase()); } list = [...all].filter(h => m[h].toLowerCase().includes(q) || h.toLowerCase().includes(q) || (names[h] || '').toLowerCase().includes(q)); }
   else list = swCurrentSwatches.map(s => s.hex.toUpperCase()).filter((h, i, a) => a.indexOf(h) === i).map(h => { bcCodeOf(h); return h; });
   list.sort((a, b) => m[a].localeCompare(m[b]));
   box.innerHTML = (q ? '' : `<div class="page-sub" style="margin:0 0 6px">On this sheet (${list.length}):</div>`) + (list.map(h => `<div class="bc-row"><div class="sw2" style="background:${h}"></div><div class="mid">${m[h]} · ${escapeHtml(names[h] || h)}<small>${h}</small></div></div>`).join('') || '<div class="page-sub">No match.</div>');
