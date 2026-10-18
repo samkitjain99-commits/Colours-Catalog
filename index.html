@@ -634,7 +634,15 @@
   .sw-remove:hover:not(:disabled) { background: var(--brown-700); color: #fff; }
   @media print { .sw-remove { display: none !important; } }
   #swPages .sw-remove { display: none; }
-  #swPages.sw-editing .sw-remove { display: block; }
+  #swPages .sw-ctl { display: none; }
+  #swPages.sw-editing .sw-ctl { display: flex; gap: 8px; margin-top: 10px; justify-content: center; }
+  #swPages.sw-editing .sw-ctl .sw-remove { display: block; position: static; width: 46px; height: 46px; line-height: 46px; font-size: 20px; border-radius: 12px; border: 1.5px solid var(--brown-700); background: #fff; color: var(--brown-700); }
+  #swPages.sw-editing .sw-ctl .sw-del { background: #fdecea; border-color: #c0392b; color: #c0392b; }
+  #swPages.sw-editing .sw-ctl .sw-remove:disabled { opacity: .25; }
+  #swPages.sw-editing .sw-grid { grid-template-columns: repeat(2, 1fr); gap: 26px 10px; }
+  #swPages.sw-editing .sw-dot { width: 76px; height: 76px; }
+  #swPages.sw-editing .sw-srno { font-size: 15px; background: #fff; border: 1.5px solid var(--brown-700); border-radius: 99px; padding: 2px 10px; margin-bottom: 8px; }
+  #swPages.sw-editing .sw-hex { font-size: 13px; } #swPages.sw-editing .sw-name { font-size: 12px; }
   .sw-editchk { display:flex; align-items:center; gap:10px; margin:0 0 12px; padding:10px 12px; background:var(--tan-200); border-radius:10px; font-size:13px; font-weight:600; color:var(--brown-700); }
   .sw-editchk input { width:20px; height:20px; accent-color:var(--brown-700); }
   .gu-filter-row {
@@ -3880,11 +3888,13 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
       const globalIdx = pi * PER_PAGE + ci + 1;
       return `
       <div class="sw-card">
-        <button class="sw-remove no-print" onclick="removeSwatchFromPreview(${globalIdx - 1})" title="Remove from this sheet">&#10005;</button>
-        <button class="sw-remove sw-mv no-print" style="top:26px; right:auto; left:0;" onclick="moveSwatchInPreview(${globalIdx - 1}, -1)" ${globalIdx === 1 ? 'disabled' : ''} title="Move earlier">&#9664;</button>
-        <button class="sw-remove sw-mv no-print" style="top:26px; right:0;" onclick="moveSwatchInPreview(${globalIdx - 1}, 1)" ${globalIdx === swatches.length ? 'disabled' : ''} title="Move later">&#9654;</button>
         <div class="sw-srno" onclick="moveSwatchToPosition(${globalIdx - 1})" title="Tap to move to a specific position" style="cursor:pointer;">#${String(globalIdx).padStart(2, '0')}</div>
         <div class="sw-dot" style="background:${s.hex}"></div>
+        <div class="sw-ctl no-print">
+          <button class="sw-remove sw-mv" onclick="moveSwatchInPreview(${globalIdx - 1}, -1)" ${globalIdx === 1 ? 'disabled' : ''} title="Move earlier">&#9664;</button>
+          <button class="sw-remove sw-del" onclick="removeSwatchFromPreview(${globalIdx - 1})" title="Remove from this sheet">&#10005;</button>
+          <button class="sw-remove sw-mv" onclick="moveSwatchInPreview(${globalIdx - 1}, 1)" ${globalIdx === swatches.length ? 'disabled' : ''} title="Move later">&#9654;</button>
+        </div>
         <div class="sw-hex">${swHideHex ? bcCodeOf(s.hex) : s.hex}</div>
         ${s.name ? `<div class="sw-name">${s.name}</div>` : ''}
       </div>
