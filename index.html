@@ -445,10 +445,12 @@
   .summary-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin: 0 0 14px; }
   .summary-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   /* ---------- Dye batches ---------- */
-  .bd-topbtns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 8px; }
-  .bd-topbtns .save-btn, .bd-topbtns .add-secondary-btn { margin:0; width:100%; padding:12px 8px; font-size:13.5px; }
+  .bd-topbtns { display:grid; grid-template-columns:1.25fr 1fr 1fr .85fr; gap:6px; margin:8px 0 8px; }
+  .bd-topbtns .save-btn, .bd-topbtns .add-secondary-btn { margin:0; width:100%; min-width:0; padding:9px 4px; font-size:12px; line-height:1.2; display:flex; align-items:center; justify-content:center; text-align:center; }
   @media (max-width:900px) { input:not([type=checkbox]):not([type=radio]):not([type=color]), select, textarea { font-size:16px !important; } }
   .bd-namedate { display:grid; grid-template-columns:58px minmax(0,1fr) 116px; gap:6px; align-items:start; }
+  .bd-notebtn { position:relative; margin-left:auto; flex-shrink:0; height:42px; width:44px; border:1.5px solid var(--border); background:#fff; border-radius:12px; font-size:20px; cursor:pointer; padding:0; }
+  .bd-notebtn.has::after { content:''; position:absolute; top:5px; right:5px; width:9px; height:9px; border-radius:50%; background:var(--danger,#c0392b); }
   .bd-namedate label { min-width:0; }
   .bd-namedate .bd-in { margin:4px 0 10px; min-width:0; max-width:100%; }
   input[type=date].bd-in { -webkit-appearance:none; appearance:none; min-height:42px; text-align:left; }
@@ -1574,6 +1576,7 @@
     <div class="screen-header no-print">
       <button class="back-btn" onclick="switchTab('batches')">&#10005;</button>
       <h1 id="bdTitle">Batch</h1>
+      <button class="bd-notebtn" id="bdNoteBtn" onclick="bdNoteOpen()" title="Notes for the dyer" aria-label="Notes for the dyer">&#128221;</button>
     </div>
     <div class="bd-topbtns no-print">
       <button class="save-btn" onclick="bdPrintColours()">Print Colour Swatch</button>
@@ -1588,7 +1591,7 @@
         <label>Batch details<input class="bd-in" id="bdName" placeholder="Batch name" oninput="bdField('name',this.value)"></label>
         <label>Date<input class="bd-in" type="date" id="bdSent" style="padding-left:8px;padding-right:6px" onchange="bdField('sentDate',this.value)"></label>
       </div>
-      <textarea class="bd-in" id="bdNotes" rows="2" placeholder="Notes for the dyer (optional)" oninput="bdField('notes',this.value)"></textarea>
+      <textarea id="bdNotes" style="display:none"></textarea>
     </div>
     <div class="builder no-print">
       <div class="section-label">Colours in this batch <span id="bdCount"></span></div>
@@ -1596,11 +1599,9 @@
         <button class="add-colour-btn" onclick="bdOpenAdd()">+ Add colours</button>
       </div>
       <div class="bp-btns no-print">
-        <button onclick="document.getElementById('bpCam').click()">📷 Camera</button>
         <button onclick="document.getElementById('bpFile').click()">🖼 Upload photo</button>
-        <input type="file" id="bpCam" accept="image/*" capture="environment" style="display:none" onchange="bpPick(this)">
         <input type="file" id="bpFile" accept="image/*" style="display:none" onchange="bpPick(this)">
-        <button style="grid-column:1/-1" onclick="document.getElementById('bdSheetInput').click()">&#128196; Upload Excel / CSV</button>
+        <button onclick="document.getElementById('bdSheetInput').click()">&#128196; Upload Excel</button>
         <input type="file" id="bdSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0], 'batch');this.value=''">
       </div>
       <div style="text-align:right;margin:2px 0 0"><button class="text-btn" style="font-weight:700;text-decoration:underline" onclick="downloadColourTemplate('colourPicker')">&#11015; Excel template</button></div>
@@ -5473,7 +5474,7 @@ function bdOpen(id) {
   document.getElementById('bdNo').value = b.no || '';
   document.getElementById('bdName').value = b.name || '';
   document.getElementById('bdSent').value = b.sentDate || '';
-  document.getElementById('bdNotes').value = b.notes || '';
+  document.getElementById('bdNotes').value = b.notes || ''; bdNoteMark();
   bdRenderItems();
   showView('batchDetail');
 }
@@ -5560,6 +5561,14 @@ function bdRenderBulk() {
     <button class="add-secondary-btn bd-bulk-go" onclick="bdBulkApply()">Apply to ${n ? 'selected (' + n + ')' : 'all (' + total + ')'}</button>
     <button class="add-secondary-btn" style="width:100%;margin-top:6px;color:var(--danger)" onclick="bdClearOpen()">&#128465; Clear figures for ${n ? 'selected (' + n + ')' : 'all (' + total + ')'}&hellip;</button>
     <div class="bd-bulk-note">Blank boxes are left as they are. Size 2, 3… are added to every colour that doesn't have them yet.</div>`;
+}
+function bdNoteMark() { const b = bdById(bdCurrentId), el = document.getElementById('bdNoteBtn'); if (el) el.classList.toggle('has', !!(b && (b.notes || '').trim())); }
+function bdNoteOpen() {
+  const b = bdById(bdCurrentId); if (!b) return;
+  bcModal(`<div class="section-label">Notes for the dyer</div>
+    <textarea class="bd-in" id="bdNoteTxt" rows="6" placeholder="Anything the dyer should know (optional)" style="width:100%;box-sizing:border-box" oninput="bdField('notes',this.value);document.getElementById('bdNotes').value=this.value;bdNoteMark()">${escapeHtml(b.notes || '')}</textarea>
+    <button class="save-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Done</button>`);
+  setTimeout(() => { const t = document.getElementById('bdNoteTxt'); if (t) t.focus(); }, 60);
 }
 function bdClearOpen() {
   const b = bdById(bdCurrentId); if (!b || !b.items.length) return; const n = bdSel.size || b.items.length;
