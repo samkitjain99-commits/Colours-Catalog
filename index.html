@@ -519,6 +519,8 @@
   .ba-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:8px; } .ba-stats div { background:var(--tan-200); border-radius:10px; padding:8px 4px; text-align:center; font-size:11px; color:var(--muted); font-weight:600; } .ba-stats b { display:block; font-size:16px; color:var(--brown-900); }
   .bp-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 0; }
   .bp-btns button { border:1.5px solid var(--border); background:#fff; border-radius:12px; padding:11px 6px; font-family:inherit; font-size:14px; font-weight:700; color:var(--brown-700); cursor:pointer; }
+  .bp-tabs { display:flex; gap:6px; overflow-x:auto; margin-bottom:8px; padding-bottom:2px; } .bp-tabs:empty { display:none; }
+  .bp-tab { flex:0 0 auto; border:1.5px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:6px 12px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; } .bp-tab.on { background:var(--brown-700); color:#fff; border-color:var(--brown-700); }
   .bp-stage { background:#222; border-radius:12px; overflow:hidden; line-height:0; } .bp-stage canvas { width:100%; height:auto; max-height:60vh; object-fit:contain; display:block; touch-action:manipulation; }
   .bp-tools { margin-top:10px; font-size:13px; font-weight:600; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 10px; } .bp-tools label { white-space:nowrap; margin:0; }
   .bp-tools select { width:auto !important; display:inline-block; margin:0 4px !important; padding:6px 8px !important; font-size:15px !important; }
@@ -1564,10 +1566,11 @@
     </div>
     <div class="page-sub no-print">Photo of the physical swatches you are sending. Numbers on the photo match the cards below. Tick the ones you want, edit any name or hex code, remove wrong ones with ✕, or tap the photo to pick a colour yourself. Colours are NOT saved to your library unless you tap “Save to library”.</div>
     <div class="builder no-print bp-stick">
+      <div class="bp-tabs" id="bpTabs"></div>
       <div class="bp-stage"><canvas id="bpCanvas" onclick="bpTap(event)"></canvas></div>
       <div class="bp-tools">
         <label>Photo <select class="bd-in" id="bpMode" onchange="bpRun()"><option value="auto">Auto</option><option value="sep">Separate swatches</option><option value="fill">Strips fill photo</option></select></label>
-        <button class="add-secondary-btn" onclick="document.getElementById('bpFile').click()">Another photo</button>
+        <button class="add-secondary-btn" onclick="bpAppend=true;document.getElementById('bpFile').click()">+ Add photos</button>
       </div>
       <div id="bpHint"></div>
     </div>
@@ -1599,8 +1602,8 @@
         <button class="add-colour-btn" onclick="bdOpenAdd()">+ Add colours</button>
       </div>
       <div class="bp-btns no-print">
-        <button onclick="document.getElementById('bpFile').click()">🖼 Upload photo</button>
-        <input type="file" id="bpFile" accept="image/*" style="display:none" onchange="bpPick(this)">
+        <button onclick="bpAppend=false;document.getElementById('bpFile').click()">🖼 Upload photos</button>
+        <input type="file" id="bpFile" accept="image/*" multiple style="display:none" onchange="bpPick(this)">
         <button onclick="document.getElementById('bdSheetInput').click()">&#128196; Upload Excel</button>
         <input type="file" id="bdSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0], 'batch');this.value=''">
       </div>
@@ -6068,17 +6071,44 @@ async function baExportPdf() {
 
 /* ---------- Colours from a photo ---------- */
 let bpCv = null, bpList = [], bpMarks = [];
-function bpPick(inp) {
-  const f = inp.files && inp.files[0]; inp.value = '';
-  if (!f) return;
-  const draw = src => {
-    const sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height, k = Math.min(1, 1100 / Math.max(sw, sh));
-    const c = document.createElement('canvas'); c.width = Math.round(sw * k); c.height = Math.round(sh * k);
-    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(src, 0, 0, c.width, c.height);
-    bpCv = c; bpMarks = []; bpList = []; bpTarget = null; bpEdit = false; showView('batchPhoto'); bpRun();
-  };
-  if (window.createImageBitmap) createImageBitmap(f, { imageOrientation: 'from-image' }).then(draw).catch(() => bpViaImg(f, draw));
-  else bpViaImg(f, draw);
+let bpPhotos = [], bpCur = 0, bpAppend = false;
+function bpSync() { const p = bpPhotos[bpCur]; if (p) { p.cv = bpCv; p.list = bpList; p.marks = bpMarks; } }
+function bpSwitch(i) { bpSync(); if (!bpPhotos[i]) return; bpCur = i; const p = bpPhotos[i]; bpCv = p.cv; bpList = p.list; bpMarks = p.marks; bpTarget = null; bpEdit = false; bpHint(); bpDraw(); bpRender(); }
+function bpPhotoDel(i) { bpSync(); bpPhotos.splice(i, 1); if (!bpPhotos.length) { showView('batchDetail'); bpCv = null; bpList = []; bpMarks = []; return; } bpCur = Math.min(bpCur, bpPhotos.length - 1); const p = bpPhotos[bpCur]; bpCv = p.cv; bpList = p.list; bpMarks = p.marks; bpDraw(); bpRender(); }
+function bpSel() {   // ticked colours from ALL photos, near-identical ones counted once
+  bpSync(); const out = [];
+  bpPhotos.forEach(p => p.list.forEach(x => { if (!x.on) return; const l = bpRgb2Lab(parseInt(x.hex.slice(1, 3), 16), parseInt(x.hex.slice(3, 5), 16), parseInt(x.hex.slice(5, 7), 16)); if (!out.some(o => o.hex === x.hex.toUpperCase() || bpDE(o.lab, l) <= 3)) out.push({ hex: x.hex.toUpperCase(), name: (x.name || '').trim(), lab: l }); }));
+  return out;
+}
+function bpLoad(f) {
+  return new Promise(res => {
+    const draw = src => {
+      const sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height, k = Math.min(1, 1100 / Math.max(sw, sh));
+      const c = document.createElement('canvas'); c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+      const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(src, 0, 0, c.width, c.height); res(c);
+    };
+    const viaImg = () => { const url = URL.createObjectURL(f), im = new Image(); im.onload = () => { draw(im); URL.revokeObjectURL(url); }; im.onerror = () => res(null); im.src = url; };
+    if (window.createImageBitmap) createImageBitmap(f, { imageOrientation: 'from-image' }).then(draw).catch(viaImg); else viaImg();
+  });
+}
+async function bpPick(inp) {
+  const files = Array.from(inp.files || []).slice(0, 8); inp.value = '';
+  if (!files.length) return;
+  const add = bpAppend && bpPhotos.length && bpCv; bpAppend = false;
+  if (add) bpSync(); else { bpPhotos = []; bpCur = 0; }
+  const first = bpPhotos.length;
+  showView('batchPhoto'); const lst = document.getElementById('bpList'); if (lst) lst.innerHTML = `<div class="empty-state" style="grid-column:1/-1">Reading ${files.length} photo${files.length !== 1 ? 's' : ''}&hellip;</div>`;
+  let bad = 0;
+  for (const f of files) {
+    const cv = await bpLoad(f); if (!cv) { bad++; continue; }
+    await new Promise(r => setTimeout(r, 30));
+    bpCv = cv; bpList = []; bpMarks = []; bpTarget = null; bpRun(true);
+    bpPhotos.push({ cv: bpCv, list: bpList, marks: bpMarks });
+  }
+  if (bad) alert(`${bad} photo${bad !== 1 ? 's' : ''} could not be read.`);
+  if (bpPhotos.length <= first) { if (!bpPhotos.length) { showView('batchDetail'); return; } }
+  bpCur = Math.min(first, bpPhotos.length - 1); const q = bpPhotos[bpCur]; bpCv = q.cv; bpList = q.list; bpMarks = q.marks; bpTarget = null; bpEdit = false;
+  bpHint(); bpDraw(); bpRender();
 }
 function bpViaImg(f, draw) {
   const url = URL.createObjectURL(f), im = new Image();
@@ -6251,13 +6281,14 @@ function bpMake(hex, share, extra) {
   if (best && bd <= 12) return { id: uid(), hex: best.hex.toUpperCase(), name: best.name || best.hex, on: true, share, ...extra };
   return { id: uid(), hex, name: bpGenericName(lab), on: true, share, ...extra };
 }
-function bpRun() {
+function bpRun(noDraw) {
   if (!bpCv) return;
   const det = bpDetectAuto(bpCv, 30);
   const manual = bpList.filter(x => x.manual);
   bpList = det.map(o => bpMake(o.hex, o.share, Object.assign({ px: o.px, py: o.py }, o.bg ? { on: false, bg: true } : {}))).concat(manual);
   const seen = new Set(); bpList = bpList.filter(x => !seen.has(x.hex) && seen.add(x.hex));
-  bpDraw(); bpRender();
+  if (noDraw === true) return;
+  bpSync(); bpDraw(); bpRender();
 }
 function bpDraw() {
   const cv = document.getElementById('bpCanvas'); cv.width = bpCv.width; cv.height = bpCv.height;
@@ -6283,7 +6314,8 @@ function bpTap(e) {
 }
 let bpEdit = false;
 function bpRender() {
-  const n = bpList.filter(x => x.on).length;
+  const n = bpSel().length;
+  document.getElementById('bpTabs').innerHTML = bpPhotos.length > 1 ? bpPhotos.map((p, i) => `<button class="bp-tab ${i === bpCur ? 'on' : ''}" onclick="bpSwitch(${i})">Photo ${i + 1} &middot; ${p.list.filter(x => x.on).length}${i === bpCur ? ` <span onclick="event.stopPropagation();if(confirm('Remove photo ${i + 1}?'))bpPhotoDel(${i})" style="margin-left:4px">&#10005;</span>` : ''}</button>`).join('') : '';
   document.getElementById('bpToolbar').innerHTML = bpList.length ? `<button class="text-btn" onclick="bpAll(true)">Select all</button><button class="text-btn" onclick="bpAll(false)">Clear</button><button class="text-btn" onclick="bpRun()">Re-detect</button><button class="text-btn" onclick="bpSaveLib()">Save ticked to library</button>` : '';
   const hmB = bcHistMap();
   document.getElementById('bpList').innerHTML = bpList.length ? bpList.map(x => `
@@ -6314,24 +6346,24 @@ function bpName(id, v) { const x = bpList.find(q => q.id === id); if (x) x.name 
 function bpDel(id) { bpList = bpList.filter(v => v.id !== id); bpDraw(); bpRender(); }
 function bpAll(on) { bpList.forEach(x => x.on = on); bpDraw(); bpRender(); }
 function bpSaveLib() {
-  const sel = bpList.filter(x => x.on); if (!sel.length) { alert('Tick the colours you want to save first.'); return; }
+  const sel = bpSel(); if (!sel.length) { alert('Tick the colours you want to save first.'); return; }
   const have = new Set(bdPoolSource('all').map(r => r.hex.toUpperCase())); let n = 0;
   sel.forEach(x => { const h = x.hex.toUpperCase(); if (!have.has(h)) { getOrCreateSecondaryColor(h, (x.name || '').trim() || h); have.add(h); n++; } });
   if (n) { try { saveAppStateToStorage(); } catch (e) {} }
   alert(n ? `${n} colour${n !== 1 ? 's' : ''} saved to your library.` + (sel.length - n ? ` ${sel.length - n} already there.` : '') : 'All ticked colours are already in your library.');
 }
 function bpPrint() {
-  const sw = bpList.filter(x => x.on).map(x => ({ hex: x.hex, name: (x.name || '').trim() })); if (!sw.length) return;
+  const sw = bpSel().map(x => ({ hex: x.hex, name: x.name })); if (!sw.length) return;
   renderPrintColoursFromSwatches(sw, `${sw.length} colour${sw.length !== 1 ? 's' : ''} from photo`, null);
   printColoursReturnView = 'batchPhoto';
   showView('printcolours');
 }
 function bpAdd() {
-  const sel = bpList.filter(x => x.on).map(x => ({ hex: x.hex, name: (x.name || '').trim() || x.hex }));
+  const sel = bpSel().map(x => ({ hex: x.hex, name: x.name || x.hex }));
   if (!sel.length) return;
   const n = bdAddItems(sel); bdRenderItems(); showView('batchDetail');
   if (n < sel.length) alert(`${n} added. ${sel.length - n} were already in this batch.`);
-  bpList = []; bpMarks = []; bpEdit = false;
+  bpList = []; bpMarks = []; bpEdit = false; bpPhotos = []; bpCur = 0;
 }
 function bdPrintColours() {
   const b = bdById(bdCurrentId); if (!b) return;
