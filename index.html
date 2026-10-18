@@ -554,6 +554,8 @@
   .bd-selrow { grid-template-columns:26px 34px 1fr auto; }
   .bd-selrow .bd-fields1, .bd-selrow .bd-lines, .bd-selrow .bd-ltot { grid-column:2 / 5; }
   .bd-line { display:grid; grid-template-columns:minmax(64px,1fr) 52px 52px 66px 24px; gap:5px; align-items:center; margin-bottom:6px; }
+  .bd-usedsg .bd-line, .bd-usedsg .bd-hdr { grid-template-columns:minmax(44px,1fr) 42px 44px 50px 62px 24px; gap:4px; }
+  .bd-line .bd-dsgin { border-color:var(--brown-500,#8b5e3c); background:#fff8ec; }
   .bd-more { font-size:12px; color:var(--muted); padding-left:6px; }
   .bd-plus { width:24px; height:24px; border-radius:50%; border:none; background:var(--brown-700); color:#fff; font-size:16px; line-height:1; padding:0; cursor:pointer; }
   .bd-hdr { display:grid; grid-template-columns:minmax(64px,1fr) 52px 52px 66px 24px; gap:5px; font-size:10.5px; font-weight:700; color:var(--muted); margin:4px 0 2px 0; padding-left:34px; }
@@ -1607,6 +1609,7 @@
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:0"><input type="checkbox" class="bd-chk" id="bdSelAll" onchange="bdSelAllToggle(this.checked)"> Select all</label>
         <button class="bd-rm" id="bdRmBtn" onclick="bdRemoveSelected()" style="display:none"></button>
       </div>
+      <label class="sw-editchk" style="margin:8px 0"><input type="checkbox" id="bdUseDsg" onchange="bdSetUseDsg(this.checked)"> Multiply by No. of designs &mdash; e.g. 21 designs &times; 20 colours &times; 13.5 mtr</label>
       <div class="bd-hdr" id="bdHdr"><span>Lace design</span><span>Pcs</span><span>Mtr/pc</span><span>Total</span><span></span></div>
       <div id="bdItems"></div>
       <div class="bd-total" id="bdTotal"></div>
@@ -5398,10 +5401,11 @@ function bdMigrate() {
     if (!i.lines.length) i.lines.push({ id: uid(), qty: '', mtr: '' });
   }));
 }
-function bdLineMtr(l) { const q = parseFloat(l.qty), m = parseFloat(l.mtr); return (q > 0 && m > 0) ? +(q * m).toFixed(2) : 0; }
+function bdLinePcs(l) { const q = parseFloat(l.qty), d = parseFloat(l.dsg); return q > 0 ? +(q * (d > 0 ? d : 1)).toFixed(2) : 0; }   // pieces = pcs x no. of designs (designs optional)
+function bdLineMtr(l) { const q = bdLinePcs(l), m = parseFloat(l.mtr); return (q > 0 && m > 0) ? +(q * m).toFixed(2) : 0; }
 function bdItemTotals(i) {
   let pcs = 0, mtr = 0;
-  (i.lines || []).forEach(l => { const q = parseFloat(l.qty); if (q > 0) pcs += q; mtr += bdLineMtr(l); });
+  (i.lines || []).forEach(l => { const q = bdLinePcs(l); if (q > 0) pcs += q; mtr += bdLineMtr(l); });
   return { pcs: +pcs.toFixed(2), mtr: +mtr.toFixed(2) };
 }
 function bdLineText(i) {
@@ -5482,6 +5486,7 @@ function bdField(k, v) {
 function bdLineHtml(i, l, idx) {
   return `<div class="bd-line">
       ${idx === 0 ? `<input class="bd-des" placeholder="Design" value="${escapeHtml(i.design || '')}" oninput="bdItemField('${i.id}','design',this.value)">` : '<span class="bd-more">&#8627; size</span>'}
+      ${bdUseDsg() ? `<input class="bd-dsgin" placeholder="Dsg" inputmode="decimal" value="${escapeHtml(String(l.dsg || ''))}" oninput="bdLineField('${i.id}','${l.id}','dsg',this.value)">` : ''}
       <input placeholder="Pcs" inputmode="decimal" value="${escapeHtml(String(l.qty || ''))}" oninput="bdLineField('${i.id}','${l.id}','qty',this.value)">
       <input placeholder="Mtr" inputmode="decimal" value="${escapeHtml(String(l.mtr || ''))}" oninput="bdLineField('${i.id}','${l.id}','mtr',this.value)">
       <div class="bd-lt" id="lt-${l.id}">${bdLineTotalHtml(l)}</div>
@@ -5489,7 +5494,7 @@ function bdLineHtml(i, l, idx) {
     </div>`;
 }
 function bdLineTotalHtml(l) {
-  const m = bdLineMtr(l), q = parseFloat(l.qty);
+  const m = bdLineMtr(l), q = bdLinePcs(l);
   return m ? `<b>${m}</b> mtr` : (q > 0 ? `<b>${q}</b> pcs` : '');
 }
 function bdRenderItems() {
@@ -5497,6 +5502,9 @@ function bdRenderItems() {
   document.getElementById('bdTitle').textContent = b.name || 'Batch';
   document.getElementById('bdCount').textContent = `(${b.items.length})`;
   const hmI = bcHistMap();
+  const ud = !!b.useDsg, udc = document.getElementById('bdUseDsg'); if (udc) udc.checked = ud;
+  document.getElementById('view-batchDetail').classList.toggle('bd-usedsg', ud);
+  document.getElementById('bdHdr').innerHTML = ud ? '<span>Lace design</span><span>Dsg</span><span>Pcs</span><span>Mtr/pc</span><span>Total</span><span></span>' : '<span>Lace design</span><span>Pcs</span><span>Mtr/pc</span><span>Total</span><span></span>';
   document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
     <div class="bd-item bd-selrow">
       <input type="checkbox" class="bd-chk" ${bdSel.has(i.id) ? 'checked' : ''} onchange="bdToggleSel('${i.id}')">
@@ -5534,22 +5542,48 @@ function bdRemoveLine(id, lid) {
   i.lines = i.lines.filter(l => l.id !== lid); saveBatches(); bdRenderItems();
 }
 let bdSel = new Set();
-let bdBulk = { design: '', rows: [{ qty: '', mtr: '' }] };
+let bdBulk = { design: '', rows: [{ qty: '', mtr: '', dsg: '' }] };
+function bdUseDsg() { const b = bdById(bdCurrentId); return !!(b && b.useDsg); }
+function bdSetUseDsg(on) { const b = bdById(bdCurrentId); if (!b) return; b.useDsg = !!on; saveBatches(); bdRenderItems(); }
 function bdRenderBulk() {
   const box = document.getElementById('bdBulk'); if (!box) return;
   const n = bdSel.size, b = bdById(bdCurrentId), total = b ? b.items.length : 0;
   box.innerHTML = `<div class="bd-bulk-title">Fill in for ${n ? `<b>${n} selected</b>` : '<b>all</b>'} colour${(n || total) === 1 ? '' : 's'}</div>
     ${bdBulk.rows.map((r, k) => `<div class="bd-line">
       ${k === 0 ? `<input class="bd-des" placeholder="Design" value="${escapeHtml(bdBulk.design)}" oninput="bdBulk.design=this.value">` : '<span class="bd-more">&#8627; size</span>'}
+      ${bdUseDsg() ? `<input class="bd-dsgin" placeholder="Dsg" inputmode="decimal" value="${escapeHtml(r.dsg || '')}" oninput="bdBulk.rows[${k}].dsg=this.value">` : ''}
       <input placeholder="Pcs" inputmode="decimal" value="${escapeHtml(r.qty)}" oninput="bdBulk.rows[${k}].qty=this.value">
       <input placeholder="Mtr" inputmode="decimal" value="${escapeHtml(r.mtr)}" oninput="bdBulk.rows[${k}].mtr=this.value">
       <span></span>
       ${k === 0 ? '<button class="bd-plus" onclick="bdBulkAddRow()" title="Add another size">+</button>' : `<button class="bd-x" onclick="bdBulkDelRow(${k})">&#10005;</button>`}
     </div>`).join('')}
     <button class="add-secondary-btn bd-bulk-go" onclick="bdBulkApply()">Apply to ${n ? 'selected (' + n + ')' : 'all (' + total + ')'}</button>
+    <button class="add-secondary-btn" style="width:100%;margin-top:6px;color:var(--danger)" onclick="bdClearOpen()">&#128465; Clear figures for ${n ? 'selected (' + n + ')' : 'all (' + total + ')'}&hellip;</button>
     <div class="bd-bulk-note">Blank boxes are left as they are. Size 2, 3… are added to every colour that doesn't have them yet.</div>`;
 }
-function bdBulkAddRow() { bdBulk.rows.push({ qty: '', mtr: '' }); bdRenderBulk(); }
+function bdClearOpen() {
+  const b = bdById(bdCurrentId); if (!b || !b.items.length) return; const n = bdSel.size || b.items.length;
+  bcModal(`<div class="section-label">Clear for ${bdSel.size ? bdSel.size + ' selected' : 'all ' + n} colour${n !== 1 ? 's' : ''}</div>
+    <label class="bc-row" style="gap:12px"><input type="checkbox" id="bdClrDes" checked style="width:22px;height:22px;margin:0"><div class="mid">Lace design</div></label>
+    ${b.useDsg ? `<label class="bc-row" style="gap:12px"><input type="checkbox" id="bdClrDsg" checked style="width:22px;height:22px;margin:0"><div class="mid">No. of designs (Dsg)</div></label>` : ''}
+    <label class="bc-row" style="gap:12px"><input type="checkbox" id="bdClrPcs" checked style="width:22px;height:22px;margin:0"><div class="mid">Pcs</div></label>
+    <label class="bc-row" style="gap:12px"><input type="checkbox" id="bdClrMtr" checked style="width:22px;height:22px;margin:0"><div class="mid">Mtr</div></label>
+    <label class="bc-row" style="gap:12px"><input type="checkbox" id="bdClrSz" checked style="width:22px;height:22px;margin:0"><div class="mid">Extra sizes (keep only the first line)</div></label>
+    <button class="save-btn" style="width:100%;margin-top:6px" onclick="bdClearDo()">Clear ticked</button>
+    <button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Cancel</button>`);
+}
+function bdClearDo() {
+  const b = bdById(bdCurrentId); if (!b) return; const on = id => { const e = document.getElementById(id); return !!(e && e.checked); };
+  const snap = undoCapture(), targets = bdSel.size ? b.items.filter(i => bdSel.has(i.id)) : b.items;
+  targets.forEach(i => {
+    if (on('bdClrDes')) i.design = '';
+    if (on('bdClrSz') && i.lines.length > 1) i.lines = [i.lines[0]];
+    i.lines.forEach(l => { if (on('bdClrDsg')) l.dsg = ''; if (on('bdClrPcs')) l.qty = ''; if (on('bdClrMtr')) l.mtr = ''; });
+  });
+  bdBulk = { design: '', rows: [{ qty: '', mtr: '', dsg: '' }] };
+  saveBatches(); bcClose(); bdRenderItems(); undoOffer('Figures cleared', snap);
+}
+function bdBulkAddRow() { bdBulk.rows.push({ qty: '', mtr: '', dsg: '' }); bdRenderBulk(); }
 function bdBulkDelRow(k) { bdBulk.rows.splice(k, 1); bdRenderBulk(); }
 function bdBulkApply() {
   const b = bdById(bdCurrentId); if (!b || !b.items.length) return;
@@ -5558,9 +5592,10 @@ function bdBulkApply() {
   targets.forEach(i => {
     if (d) i.design = d;
     bdBulk.rows.forEach((r, k) => {
-      const q = String(r.qty).trim(), m = String(r.mtr).trim();
-      if (!q && !m) return;
+      const q = String(r.qty).trim(), m = String(r.mtr).trim(), dg = String(r.dsg || '').trim();
+      if (!q && !m && !dg) return;
       while (i.lines.length <= k) i.lines.push({ id: uid(), qty: '', mtr: '' });
+      if (dg) i.lines[k].dsg = dg;
       if (q) i.lines[k].qty = q;
       if (m) i.lines[k].mtr = m;
     });
@@ -5670,9 +5705,10 @@ function bdBuildSheetPages(b) {
   // size-wise summary: group every line by unit + size (metres/yards per piece), pcs-only lines on their own
   const UOM_NAME = { mtr: 'mtr', yds: 'yards', pcs: 'pcs' };
   const lineUnit = l => (parseFloat(l.mtr) > 0 ? (l.uom === 'yds' ? 'yds' : 'mtr') : 'pcs');
+  const ud = !!b.useDsg;
   const sizeMap = new Map();
   items.forEach(i => i.lines.forEach(l => {
-    const q = parseFloat(l.qty); if (!(q > 0)) return;
+    const q = bdLinePcs(l); if (!(q > 0)) return;
     const u = lineUnit(l), sz = u === 'pcs' ? 0 : +parseFloat(l.mtr).toFixed(2), key = u + '|' + sz;
     const e = sizeMap.get(key) || { u, sz, pcs: 0, qty: 0 };
     e.pcs += q; e.qty += u === 'pcs' ? q : +(q * parseFloat(l.mtr)).toFixed(2); sizeMap.set(key, e);
@@ -5694,7 +5730,7 @@ function bdBuildSheetPages(b) {
   let html = '';
   pages.forEach((pg, p) => {
     const last = p === pages.length - 1;
-    const sumHead = (w1, t1, w2, t2, w3, t3) => `<div style="display:flex;flex-shrink:0">${th(w1, t1)}${th(w2, t2)}${th(w3, t3)}</div>`;
+    const sumHead = (w1, t1, w2, t2, w3, t3) => `<div style="display:flex;flex-shrink:0">${ud ? th(70, 'Dsg \u00d7 Pcs') : ''}${th(w1, t1)}${th(w2, t2)}${th(w3, t3)}</div>`;
     const CW = 92;
     const sumCells = (pcs, per) => `<div style="display:flex;flex-shrink:0">${cell(54, fmt(pcs), true)}${sumCols.map(u => cell(CW, per[u] ? fmt(per[u]) + ' ' + u : '-', true)).join('')}</div>`;
     const tPer = {}; sizes.forEach(e => { tPer[e.u] = (tPer[e.u] || 0) + e.qty; });
@@ -5706,9 +5742,9 @@ function bdBuildSheetPages(b) {
         <div style="display:flex;gap:12px;align-items:center;height:34px;border-top:2px solid #2b1d12;font-size:15px;color:#000"><div style="flex:1;font-weight:700;text-align:right">TOTAL</div>${sumCells(sizes.reduce((a, e) => a + e.pcs, 0), tPer)}</div>
       </div>` : '';
     const rows = pg.map(({ i, idx, h }) => {
-      const n = i.lines.length, x = bdItemTotals(i); const po = i.lines.reduce((t, l) => t + (parseFloat(l.qty) > 0 && !(parseFloat(l.mtr) > 0) ? parseFloat(l.qty) : 0), 0);
-      const lines = i.lines.map(l => `<div style="display:flex">${cell(54, l.qty ? escapeHtml(String(l.qty)) : '', n === 1)}${cell(70, l.mtr ? escapeHtml(String(l.mtr)) + ' mtr' : (l.qty ? '-' : ''))}${cell(120, bdLineMtr(l) ? fmt(bdLineMtr(l)) + ' mtr' : (parseFloat(l.qty) > 0 ? fmt(parseFloat(l.qty)) + ' pcs' : ''), n === 1)}</div>`).join('')
-        + (n > 1 ? `<div style="display:flex;border-top:1px solid #999">${cell(54, fmt(x.pcs), true)}${cell(70, '')}${cell(120, [x.mtr ? fmt(x.mtr) + ' mtr' : '', po ? fmt(po) + ' pcs' : ''].filter(Boolean).join(' + '), true)}</div>` : '');
+      const n = i.lines.length, x = bdItemTotals(i); const po = i.lines.reduce((t, l) => t + (bdLinePcs(l) > 0 && !(parseFloat(l.mtr) > 0) ? bdLinePcs(l) : 0), 0);
+      const lines = i.lines.map(l => { const ep = bdLinePcs(l); return `<div style="display:flex">${ud ? cell(70, parseFloat(l.dsg) > 0 ? fmt(parseFloat(l.dsg)) + ' \u00d7 ' + fmt(parseFloat(l.qty)) : '') : ''}${cell(54, ep > 0 ? fmt(ep) : '', n === 1)}${cell(70, l.mtr ? escapeHtml(String(l.mtr)) + ' mtr' : (ep > 0 ? '-' : ''))}${cell(120, bdLineMtr(l) ? fmt(bdLineMtr(l)) + ' mtr' : (ep > 0 ? fmt(ep) + ' pcs' : ''), n === 1)}</div>`; }).join('')
+        + (n > 1 ? `<div style="display:flex;border-top:1px solid #999">${ud ? cell(70, '') : ''}${cell(54, fmt(x.pcs), true)}${cell(70, '')}${cell(120, [x.mtr ? fmt(x.mtr) + ' mtr' : '', po ? fmt(po) + ' pcs' : ''].filter(Boolean).join(' + '), true)}</div>` : '');
       return `
       <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #d8cdb8;min-height:${h}px;box-sizing:border-box">
         <div style="width:26px;font-weight:700;color:#7a6a55;font-size:15px">${idx + 1}</div>
@@ -5721,7 +5757,7 @@ function bdBuildSheetPages(b) {
     const totalRow = last ? `
       <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:2px solid #2b1d12;height:${totalH}px;box-sizing:border-box">
         <div style="flex:1;font-weight:700;font-size:16px;color:#000;text-align:right">TOTAL</div>
-        <div style="display:flex;flex-shrink:0">${cell(54, fmt(totPcs), true)}${cell(70, '')}${cell(120, fmt(totMtr) + ' mtr', true)}</div>
+        <div style="display:flex;flex-shrink:0">${ud ? cell(70, '') : ''}${cell(54, fmt(totPcs), true)}${cell(70, '')}${cell(120, fmt(totMtr) + ' mtr', true)}</div>
       </div>` : '';
     html += `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative;overflow:hidden">
       ${p === 0 ? `<div style="font-size:30px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Dyer Sheet${b.name ? ' — ' + escapeHtml(b.name) : ''}</div>
@@ -5808,7 +5844,7 @@ function baRender() {
       if ((b.sentDate || '') >= e.last) e.last = b.sentDate || '';
       e.pcs += x.pcs; e.mtr += x.mtr; tp += x.pcs; tm += x.mtr;
       const r = e.bs.get(b.id) || { b, pcs: 0, mtr: 0 }; r.pcs += x.pcs; r.mtr += x.mtr; e.bs.set(b.id, r);
-      (i.lines || []).forEach(l => { const p = parseFloat(l.qty); if (!(p > 0)) return; const m = parseFloat(l.mtr) > 0 ? +parseFloat(l.mtr).toFixed(2) : 0; const z = e.sizes.get(m) || { pcs: 0, mtr: 0 }; z.pcs += p; z.mtr += bdLineMtr(l); e.sizes.set(m, z); });
+      (i.lines || []).forEach(l => { const p = bdLinePcs(l); if (!(p > 0)) return; const m = parseFloat(l.mtr) > 0 ? +parseFloat(l.mtr).toFixed(2) : 0; const z = e.sizes.get(m) || { pcs: 0, mtr: 0 }; z.pcs += p; z.mtr += bdLineMtr(l); e.sizes.set(m, z); });
       if (i.design) e.designs.add(i.design);
       map.set(hex, e);
     });
@@ -5879,7 +5915,7 @@ function baAgg(list) {
       if ((b.sentDate || '') >= c.last) c.last = b.sentDate || '';
       c.pcs += x.pcs; c.mtr += x.mtr; c.bs.add(b.id); cols.set(hex, c);
       bp += x.pcs; bm += x.mtr; bc++; pcs += x.pcs; mtr += x.mtr;
-      (i.lines || []).forEach(l => { const p = parseFloat(l.qty); if (!(p > 0)) return; const m = parseFloat(l.mtr) > 0 ? +parseFloat(l.mtr).toFixed(2) : 0; const z = sizes.get(m) || { pcs: 0, mtr: 0 }; z.pcs += p; z.mtr += bdLineMtr(l); sizes.set(m, z); });
+      (i.lines || []).forEach(l => { const p = bdLinePcs(l); if (!(p > 0)) return; const m = parseFloat(l.mtr) > 0 ? +parseFloat(l.mtr).toFixed(2) : 0; const z = sizes.get(m) || { pcs: 0, mtr: 0 }; z.pcs += p; z.mtr += bdLineMtr(l); sizes.set(m, z); });
     });
     brows.push({ b, pcs: bp, mtr: bm, n: bc });
   });
@@ -5963,7 +5999,7 @@ async function baExportExcel() {
     'By batch': [['Batch No', 'Batch', 'Date', 'Colours', 'Total pcs', 'Total mtr']].concat(d.brows.map(r => [r.b.no || '', r.b.name || '', r.b.sentDate || '', r.n, baN(r.pcs), baN(r.mtr)])),
     'Detail': [['Batch No', 'Batch', 'Date', 'Colour', 'Hex', 'Lace design', 'Pcs', 'Mtr/pc', 'Total mtr']]
   };
-  d.list.forEach(b => (b.items || []).forEach(i => (i.lines || []).forEach(l => { if (parseFloat(l.qty) > 0) sheets['Detail'].push([b.no || '', b.name || '', b.sentDate || '', i.name || i.hex, i.hex, i.design || '', parseFloat(l.qty), l.mtr || '', bdLineMtr(l) || '']); })));
+  d.list.forEach(b => (b.items || []).forEach(i => (i.lines || []).forEach(l => { if (bdLinePcs(l) > 0) sheets['Detail'].push([b.no || '', b.name || '', b.sentDate || '', i.name || i.hex, i.hex, i.design || '', bdLinePcs(l), l.mtr || '', bdLineMtr(l) || '']); })));
   const base = 'Dye_Analytics_' + baYmd(new Date());
   try {
     await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined');
