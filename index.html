@@ -617,6 +617,7 @@
   .bc-chips { display:flex; gap:6px; overflow-x:auto; padding:2px 0 8px; -webkit-overflow-scrolling:touch; }
   .bc-chip { flex:0 0 auto; border:1.5px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
   .bc-chip.on { background:var(--brown-700); color:#fff; border-color:var(--brown-700); }
+  .lib-info { cursor:pointer; }
   .lib-dy { font-size:10px; color:var(--brown-700); font-weight:700; margin-top:1px; line-height:1.25; }
   .bc-nudge { display:none; align-items:center; gap:8px; background:#fff3cd; border:1px solid #e6cf7a; color:#5a4500; border-radius:12px; padding:9px 12px; margin:0 0 10px; font-size:13px; font-weight:600; }
   .bc-nudge button { margin-left:auto; border:0; background:#5a4500; color:#fff; border-radius:8px; padding:7px 12px; font-family:inherit; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap; }
@@ -1437,7 +1438,7 @@
       <select class="bd-in" id="libSrc" onchange="renderLibrary()"></select>
     </div>
     <div class="bd-two no-print" style="margin-bottom:8px">
-      <select class="bd-in" id="libSort" onchange="renderLibrary()"><option value="">Sort: saved</option><option value="name">Name A–Z</option><option value="hue">By shade</option><option value="light">Light → Dark</option><option value="dark">Dark → Light</option><option value="used">Most dyed</option><option value="new">Recently added</option></select>
+      <select class="bd-in" id="libSort" onchange="renderLibrary()"><option value="">Sort: most mtrs dyed</option><option value="saved">Saved order</option><option value="name">Name A–Z</option><option value="hue">By shade</option><option value="light">Light → Dark</option><option value="dark">Dark → Light</option><option value="used">Most dyed</option><option value="new">Recently added</option></select>
       <button class="add-secondary-btn" style="margin:0" onclick="bcMatchOpen()">&#128269; Find closest match</button>
     </div>
     <div class="lib-tools no-print">
@@ -6430,13 +6431,13 @@ function renderLibrary() {
   if (libFamily && !famCount[libFamily]) libFamily = '';
   document.getElementById('libFam').innerHTML = `<button class="bc-chip ${!libFamily ? 'on' : ''}" onclick="libFamily='';renderLibrary()">All ${libRows.length}</button>` + BC_FAMS.filter(f => famCount[f]).map(f => `<button class="bc-chip ${libFamily === f ? 'on' : ''}" onclick="libFamily='${f}';renderLibrary()">${f} ${famCount[f]}</button>`).join('');
   if (libFamily) libRows = libRows.filter(r => bcFam(r.hex) === libFamily);
-  const srt = document.getElementById('libSort').value, hm = bcHistMap();
-  if (srt) { const k = r => { const l = bcLab(r.hex); return srt === 'name' ? (r.name || r.hex).toLowerCase() : srt === 'hue' ? (Math.hypot(l[1], l[2]) < 10 ? 1000 - l[0] : ((Math.atan2(l[2], l[1]) * 180 / Math.PI + 360 + 20) % 360)) : srt === 'light' ? -l[0] : srt === 'dark' ? l[0] : srt === 'used' ? -((hm[r.hex] || { n: 0 }).n) : 0; };
+  const srt0 = document.getElementById('libSort').value, srt = srt0 === 'saved' ? '' : (srt0 || 'mtr'), hm = bcHistMap();
+  if (srt) { const k = r => { const l = bcLab(r.hex); return srt === 'name' ? (r.name || r.hex).toLowerCase() : srt === 'hue' ? (Math.hypot(l[1], l[2]) < 10 ? 1000 - l[0] : ((Math.atan2(l[2], l[1]) * 180 / Math.PI + 360 + 20) % 360)) : srt === 'light' ? -l[0] : srt === 'dark' ? l[0] : srt === 'mtr' ? -((hm[r.hex] || { mtr: 0 }).mtr || 0) : srt === 'used' ? -((hm[r.hex] || { n: 0 }).n) : 0; };
     if (srt === 'new') libRows.reverse(); else libRows.sort((a, b) => { const x = k(a), y = k(b); return typeof x === 'string' ? x.localeCompare(y) : x - y; }); }
   document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map(r => `
     <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
       <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
-      <div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div>${bcDyLabel(r.hex, hm)}</button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
+      <div class="lib-info" onclick="event.stopPropagation();bcHistOpen('${r.hex}')"><div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div>${bcDyLabel(r.hex, hm)}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   libUpdateBar(); bcNudge();
 }
 function libTargets() { const r = libSel.size ? libRows.filter(x => libSel.has(x.hex)).concat(bdPoolSource('all').filter(x => libSel.has(x.hex) && !libRows.some(y => y.hex === x.hex))) : libRows; return r.map(c => ({ hex: c.hex, name: c.name || '' })); }
@@ -6562,8 +6563,21 @@ function bcHistMap() {
 function bcDyLabel(hex, hm, curBatchId) {
   const e = (hm || {})[(hex || '').toUpperCase()]; if (!e) return `<div class="lib-dy" style="color:var(--muted);font-weight:600">Never dyed</div>`;
   const only = curBatchId && e.n === 1 && e.ids[0] === curBatchId; if (only) return `<div class="lib-dy" style="color:var(--muted);font-weight:600">First time</div>`;
-  const q = [e.mtr > 0 ? `${+e.mtr.toFixed(0)} mtr` : '', e.pcs > 0 ? `${+e.pcs.toFixed(0)} pcs` : ''].filter(Boolean).join(' + ');
-  return `<div class="lib-dy">Dyed ${e.n}× · last ${e.last.no ? '#' + escapeHtml(String(e.last.no)) : escapeHtml(e.last.name || 'batch')}${q ? ' · ' + q : ''}</div>`;
+  const q = e.mtr > 0 ? `${+e.mtr.toFixed(1)} mtr` : e.pcs > 0 ? `${+e.pcs.toFixed(0)} pcs` : '';
+  return `<div class="lib-dy">${q ? 'Dyed: ' + q : 'Dyed ' + e.n + '×'}</div>`;
+}
+/* ---- where was this colour dyed ---- */
+function bcHistOpen(hex) {
+  hex = (hex || '').toUpperCase();
+  const nm = (bdPoolSource('all').find(r => r.hex.toUpperCase() === hex) || {}).name || hex;
+  const rows = [];
+  (batches || []).forEach(b => (b.items || []).forEach(i => { if ((i.hex || '').toUpperCase() === hex) rows.push({ b, t: bdItemTotals(i), dsg: (i.design || '').trim() ? [(i.design || '').trim()] : [] }); }));
+  rows.sort((x, y) => (y.b.sentDate || '') < (x.b.sentDate || '') ? -1 : (y.b.sentDate || '') > (x.b.sentDate || '') ? 1 : (parseInt(y.b.no, 10) || 0) - (parseInt(x.b.no, 10) || 0));
+  const tm = rows.reduce((a, r) => a + r.t.mtr, 0), tp = rows.reduce((a, r) => a + r.t.pcs, 0);
+  bcModal(`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div class="sw2" style="background:${hex};width:42px;height:42px;border-radius:10px;border:1px solid var(--border)"></div><div><div style="font-weight:700">${escapeHtml(nm)}</div><div class="page-sub" style="margin:0">${hex}</div></div></div>
+    <div class="section-label">${rows.length ? `Dyed in ${rows.length} batch${rows.length !== 1 ? 'es' : ''} · ${+tm.toFixed(1)} mtr${tp ? ' + ' + +tp.toFixed(0) + ' pcs' : ''}` : 'Never dyed'}</div>
+    <div style="max-height:52vh;overflow:auto">${rows.map(r => `<div class="bc-row" style="cursor:pointer" onclick="bcClose();bdOpen('${r.b.id}')"><div class="mid"><b>${r.b.no ? '#' + escapeHtml(String(r.b.no)) + ' · ' : ''}${escapeHtml(r.b.name || 'Untitled batch')}</b><small>${bdFmtDate(r.b.sentDate)} · ${r.t.mtr ? +r.t.mtr.toFixed(1) + ' mtr' : ''}${r.t.mtr && r.t.pcs ? ' · ' : ''}${r.t.pcs ? +r.t.pcs.toFixed(0) + ' pcs' : ''}${r.dsg.length ? ' · ' + escapeHtml(r.dsg.join(', ')) : ''}</small></div></div>`).join('')}</div>
+    <button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Close</button>`);
 }
 /* ---- generic modal ---- */
 function bcModal(html) { document.getElementById('bcModalCard').innerHTML = html; document.getElementById('bcModal').style.display = 'flex'; }
