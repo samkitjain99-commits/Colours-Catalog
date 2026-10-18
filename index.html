@@ -457,6 +457,9 @@
   .bd-in { display:block; width:100%; font-family:inherit; font-size:14px; border:1px solid var(--border); border-radius:9px; padding:9px 10px; background:#fff; color:var(--brown-900); margin:6px 0 10px; box-sizing:border-box; }
   .builder label { display:block; font-size:12px; color:var(--muted); font-weight:600; }
   .bd-two { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .lib-tools { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:6px 0 8px; }
+  .lib-tools.two { grid-template-columns:1fr 1fr; }
+  .lib-tools .add-secondary-btn { margin:0; width:100%; min-width:0; white-space:nowrap; padding:10px 4px; font-size:12px; }
   .bd-actions { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
   .bd-actions .add-colour-btn { width:auto; flex:1 1 100%; }
   .bd-actions .add-secondary-btn { flex:1; white-space:nowrap; padding-left:6px; padding-right:6px; font-size:12px; }
@@ -607,6 +610,9 @@
   .lib-card.on .lib-tick { display:flex; }
   .lib-bar { position:fixed; left:0; right:0; bottom:18px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:50; pointer-events:none; }
   .lib-count { background:#fff; color:var(--brown-700); border:1px solid var(--border); font-size:12.5px; font-weight:700; padding:4px 12px; border-radius:99px; box-shadow:0 2px 8px rgba(0,0,0,.12); }
+  .lib-pills { display:flex; gap:5px; align-items:center; justify-content:center; pointer-events:none; }
+  .lib-pills .lib-pill { padding:12px 9px; font-size:12.5px; white-space:nowrap; }
+  .lib-pill.alt { background:#fff; color:var(--brown-700); border:1.5px solid var(--brown-700); }
   .lib-pill { pointer-events:auto; background:var(--brown-700); color:#fff; border:none; font-family:inherit; font-size:15px; font-weight:700; padding:14px 38px; border-radius:99px; box-shadow:0 4px 14px rgba(0,0,0,.28); cursor:pointer; }
   .bc-chips { display:flex; gap:6px; overflow-x:auto; padding:2px 0 8px; -webkit-overflow-scrolling:touch; }
   .bc-chip { flex:0 0 auto; border:1.5px solid var(--border); background:#fff; color:var(--brown-700); border-radius:99px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
@@ -1430,33 +1436,33 @@
       <input class="bd-in" id="libSearch" placeholder="Search name, hex or code" oninput="renderLibrary()">
       <select class="bd-in" id="libSrc" onchange="renderLibrary()"></select>
     </div>
-    <div class="bc-chips no-print" id="libFam"></div>
     <div class="bd-two no-print" style="margin-bottom:8px">
       <select class="bd-in" id="libSort" onchange="renderLibrary()"><option value="">Sort: saved</option><option value="name">Name A–Z</option><option value="hue">By shade</option><option value="light">Light → Dark</option><option value="dark">Dark → Light</option><option value="used">Most dyed</option><option value="new">Recently added</option></select>
       <button class="add-secondary-btn" style="margin:0" onclick="bcMatchOpen()">&#128269; Find closest match</button>
     </div>
-    <div class="bd-actions no-print">
-      <button class="add-secondary-btn" onclick="libPrint()">Print Colour Swatch</button>
+    <div class="lib-tools no-print">
       <button class="add-secondary-btn" onclick="libExcel()">Excel</button>
       <button class="add-secondary-btn" onclick="libEditOpen()">Edit</button>
+      <button class="add-secondary-btn" onclick="bcShareCard()">&#128228; Colour card</button>
       <button class="add-secondary-btn" id="libSelBtn" onclick="libOnlySel=!libOnlySel;renderLibrary()">Selected (0)</button>
+      <button class="add-secondary-btn" id="libFavBtn" onclick="libOnlyFav=!libOnlyFav;if(libOnlyFav)libOnlySel=false;renderLibrary()">&#9733; Favourites (0)</button>
+      <button class="add-secondary-btn" style="color:var(--danger)" onclick="libDelete()">&#128465; Delete</button>
+    </div>
+    <div class="bc-chips no-print" id="libFam"></div>
+    <div class="lib-tools two no-print">
       <button class="add-secondary-btn" onclick="libSelectAll(true)">Select all</button>
       <button class="add-secondary-btn" onclick="libSelectAll(false)">Clear</button>
-    </div>
-    <div class="bd-actions no-print">
-      <button class="add-secondary-btn" id="libFavAddBtn" onclick="libFavToggleSelected()">&#9734; Add to favourites</button>
-      <button class="add-secondary-btn" id="libFavBtn" onclick="libOnlyFav=!libOnlyFav;if(libOnlyFav)libOnlySel=false;renderLibrary()">&#9733; Favourites (0)</button>
-    </div>
-    <div class="bd-actions no-print">
-      <button class="add-secondary-btn" onclick="bcGroupOpen()">&#128193; Add to group</button>
-      <button class="add-secondary-btn" onclick="bcShareCard()">&#128228; Colour card</button>
-      <button class="add-secondary-btn" style="color:var(--danger)" onclick="libDelete()">&#128465; Delete</button>
     </div>
     <div class="page-sub no-print" id="libHint" style="margin:0 0 10px"></div>
     <div class="lib-grid" id="libGrid"></div>
     <div class="lib-bar no-print" id="libBar" style="display:none">
       <div class="lib-count" id="libCount"></div>
-      <button class="lib-pill" onclick="libAddToBatch()">Add to batch</button>
+      <div class="lib-pills">
+        <button class="lib-pill alt" onclick="libPrint()">Print</button>
+        <button class="lib-pill alt" id="libFavPill" onclick="libFavToggleSelected()">&#9734; Favourite</button>
+        <button class="lib-pill alt" onclick="bcGroupOpen()">&#128193; Group</button>
+        <button class="lib-pill" onclick="libAddToBatch()">Add to batch</button>
+      </div>
     </div>
   </div>
 
@@ -6497,11 +6503,12 @@ function libUpdateBar() {
   if (fb) { fb.textContent = `\u2605 Favourites (${libFavs.size})`; fb.style.background = libOnlyFav ? 'var(--brown-700)' : ''; fb.style.color = libOnlyFav ? '#fff' : ''; }
   const fa = document.getElementById('libFavAddBtn');
   if (fa) { const allFav = libSel.size > 0 && [...libSel].every(h => libFavs.has(h.toUpperCase())); fa.textContent = allFav ? '\u2605 Remove from favourites' : '\u2606 Add to favourites'; }
+  const fp = document.getElementById('libFavPill'); if (fp) { const allFav = libSel.size > 0 && [...libSel].every(h => libFavs.has(h.toUpperCase())); fp.textContent = allFav ? '\u2605 Unfavourite' : '\u2606 Favourite'; }
   const sb = document.getElementById('libSelBtn');
   if (sb) { sb.textContent = `Selected (${libSel.size})`; sb.style.background = libOnlySel ? 'var(--brown-700)' : ''; sb.style.color = libOnlySel ? '#fff' : ''; }
   const bar = document.getElementById('libBar');
   bar.style.display = libSel.size ? 'flex' : 'none';
-  const hint = document.getElementById('libHint'); if (hint) hint.textContent = libSel.size ? `Print / Excel will use the ${libSel.size} selected colour${libSel.size !== 1 ? 's' : ''}.` : `Print / Excel will use all ${libRows.length} colours shown. Select some to print only those.`;
+  const hint = document.getElementById('libHint'); if (hint) hint.textContent = libSel.size ? `Excel will use the ${libSel.size} selected colour${libSel.size !== 1 ? 's' : ''}.` : `Excel will use all ${libRows.length} colours shown. Tick colours to print them or add them to favourites.`;
   document.getElementById('libCount').textContent = `${libSel.size} colour${libSel.size !== 1 ? 's' : ''} selected`;
 }
 const libNameByHex = h => { const r = bdPoolSource('all').find(x => x.hex === h); return r ? r.name : h; };
