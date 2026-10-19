@@ -626,7 +626,8 @@
   .lib-nm { font-size:11.5px; font-weight:700; color:var(--brown-900); margin-top:5px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .lib-hx { font-size:10.5px; color:var(--muted); }
   .lib-open { position:absolute; top:10px; left:10px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(255,255,255,.85); color:var(--brown-700); font-size:16px; line-height:1; font-weight:700; cursor:pointer; padding:0; }
-  .lib-star { position:absolute; top:9px; left:9px; color:#FFC400; font-size:18px; line-height:1; text-shadow:0 0 2px #000, 0 0 2px #000, 0 0 3px #000; }
+  .lib-sr { position:absolute; top:10px; left:10px; background:rgba(43,29,18,.78); color:#fff; font-size:11px; font-weight:800; line-height:1; padding:3px 6px; border-radius:99px; letter-spacing:.3px; }
+  .lib-star { position:absolute; top:9px; left:50px; color:#FFC400; font-size:18px; line-height:1; text-shadow:0 0 2px #000, 0 0 2px #000, 0 0 3px #000; }
   .lib-tick { position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%; background:var(--brown-700); color:#fff; font-size:12px; display:none; align-items:center; justify-content:center; }
   .lib-card.on .lib-tick { display:flex; }
   .lib-bar { position:fixed; left:0; right:0; bottom:18px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:50; pointer-events:none; }
@@ -6997,9 +6998,9 @@ function renderLibrary() {
   const srt0 = document.getElementById('libSort').value, srt = srt0 === 'saved' ? '' : (srt0 || 'mtr'), hm = bcHistMap();
   if (srt) { const k = r => { const l = bcLab(r.hex); return srt === 'name' ? (r.name || r.hex).toLowerCase() : srt === 'hue' ? (Math.hypot(l[1], l[2]) < 10 ? 1000 - l[0] : ((Math.atan2(l[2], l[1]) * 180 / Math.PI + 360 + 20) % 360)) : srt === 'light' ? -l[0] : srt === 'dark' ? l[0] : srt === 'mtr' ? -((hm[r.hex] || { mtr: 0 }).mtr || 0) : srt === 'used' ? -((hm[r.hex] || { n: 0 }).n) : 0; };
     if (srt === 'new') libRows.reverse(); else libRows.sort((a, b) => { const x = k(a), y = k(b); return typeof x === 'string' ? x.localeCompare(y) : x - y; }); }
-  document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map(r => `
+  document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map((r, ix) => `
     <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
-      <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
+      <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-sr">#${String(ix + 1).padStart(3, '0')}</span><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
       <div class="lib-info" onclick="event.stopPropagation();bcHistOpen('${r.hex}')"><div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div>${bcDyLabel(r.hex, hm)}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   libUpdateBar(); bcNudge();
 }
