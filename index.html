@@ -1288,6 +1288,7 @@
     </div>
 
     <label class="sw-editchk no-print" id="swPhotoRow" style="display:none"><input type="checkbox" id="swPhotoChk" onchange="swPhotoToggle(this.checked)"> Include the photo(s) with numbered colours</label>
+    <div class="no-print" id="swPhotoNote" style="display:none;margin:-4px 0 10px;font-size:13px;color:var(--muted);font-weight:600"></div>
     <label class="sw-editchk no-print"><input type="checkbox" id="swHideChk" onchange="swHideHex=this.checked;renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource)"> Dyer copy &mdash; hide real hex codes (prints the hex with its last two characters moved to the middle)</label>
     <div class="no-print" id="swHideRow" style="display:none;margin:0 0 10px"><button class="add-secondary-btn" onclick="bcCodeKey()">&#128273; Code key &amp; find a code</button></div>
     <label class="sw-editchk no-print"><input type="checkbox" id="swEditChk" onchange="document.getElementById('swPages').classList.toggle('sw-editing', this.checked)"> Edit — show &#10005; remove and &#9664; &#9654; reposition markers</label>
@@ -1576,7 +1577,7 @@
 
   <div class="view" id="view-batchRef">
     <div class="screen-header no-print">
-      <button class="back-btn" onclick="showView('batchDetail');bdRefBtn()">&#10005;</button>
+      <button class="back-btn" onclick="rfClose()">&#10005;</button>
       <span class="header-icon">&#128247;</span>
       <h1>Reference photos</h1>
     </div>
@@ -1676,6 +1677,7 @@
       <button class="pc-print-btn" style="background:var(--tan-200);color:var(--brown-700);" onclick="bdPvClose()">Cancel</button>
     </div>
     <label class="sw-editchk no-print" id="bdPvPhotoRow" style="display:none;margin:0 0 10px"><input type="checkbox" id="bdPvPhotoChk" onchange="bdPvPhotoToggle(this.checked)"> Include the photo(s) with numbered colours</label>
+    <div class="no-print" id="bdPvPhotoNote" style="display:none;margin:-4px 0 10px;font-size:13px;color:var(--muted);font-weight:600"></div>
     <div id="bdPvPages"></div>
   </div>
 
@@ -3932,7 +3934,7 @@ let swHideHex = false;
 function renderPrintColoursFromSwatches(swatches, label, source) {
   const hc = document.getElementById('swHideChk'); if (hc) hc.checked = swHideHex; const hr = document.getElementById('swHideRow'); if (hr) hr.style.display = swHideHex ? 'block' : 'none';
   swSource = source || null;
-  { const pb = swSource && swSource.batchId ? bdById(swSource.batchId) : null, has = !!(pb && bdPhotosOf(pb.id).length), row = document.getElementById('swPhotoRow'); if (row) { row.style.display = has ? 'flex' : 'none'; document.getElementById('swPhotoChk').checked = !!(has && pb.incPhotos); } }
+  { const pb = swSource && swSource.batchId ? bdById(swSource.batchId) : null, has = !!(pb && bdPhotosOf(pb.id).length), row = document.getElementById('swPhotoRow'); if (row) { row.style.display = has ? 'flex' : 'none'; document.getElementById('swPhotoChk').checked = !!(has && pb.incPhotos); const nt = document.getElementById('swPhotoNote'); nt.style.display = has ? 'block' : 'none'; if (has) nt.innerHTML = rfNoteHtml(pb); } }
   swCurrentSwatches = swatches.slice();
   swCurrentLabel = label;
   const PER_PAGE = 20;
@@ -6522,7 +6524,11 @@ function bdRefBtn() { const el = document.getElementById('bdRefBtn'); if (!el) r
 /* ---- reference photo editor: place / move / remove colour numbers on the saved photos ---- */
 let rfIdx = 0, rfArm = null, rfSel = -1, rfDrag = null, rfNoClick = 0, rfImg = null;
 function rfBatch() { return bdById(bdCurrentId); }
-function rfOpen() { rfIdx = 0; rfArm = null; rfSel = -1; showView('batchRef'); rfLoad(); }
+let rfReturn = 'batchDetail';
+function rfOpen() { const a = document.querySelector('.view.active'); rfReturn = a && a.id ? a.id.replace('view-', '') : 'batchDetail'; if (rfReturn === 'batchRef') rfReturn = 'batchDetail'; rfIdx = 0; rfArm = null; rfSel = -1; showView('batchRef'); rfLoad(); }
+function rfClose() { bdRefBtn(); if (rfReturn === 'batchPreview') bdPreview(); else if (rfReturn === 'printcolours') bdPrintColours(); else showView('batchDetail'); }
+function rfStatus(b) { const marked = new Set(); bdPhotosOf(b.id).forEach(p => p.marks.forEach(m => marked.add(m.hex))); const n = b.items.filter(i => marked.has((i.hex || '').toUpperCase())).length; return { n, total: b.items.length }; }
+function rfNoteHtml(b) { const st = rfStatus(b); return st.n < st.total ? `${st.n} of ${st.total} colours are numbered on the photos. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n} colours on the photos</button>` : `All ${st.total} colours are numbered on the photos. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button>`; }
 function rfLoad() {
   const b = rfBatch(), ph = bdPhotosOf(b.id); if (rfIdx >= ph.length) rfIdx = Math.max(0, ph.length - 1);
   const cv = document.getElementById('rfCanvas');
@@ -6631,7 +6637,7 @@ async function bdPreview() {
   if (!b.items.length) { alert('Add at least one colour first.'); return; }
   const hasPh = bdPhotosOf(b.id).length > 0; if (hasPh && b.incPhotos) await bdAnnotPrep(b);
   showView('batchPreview');
-  { const row = document.getElementById('bdPvPhotoRow'); if (row) { row.style.display = hasPh ? 'flex' : 'none'; document.getElementById('bdPvPhotoChk').checked = !!b.incPhotos; } }
+  { const row = document.getElementById('bdPvPhotoRow'); if (row) { row.style.display = hasPh ? 'flex' : 'none'; document.getElementById('bdPvPhotoChk').checked = !!b.incPhotos; const nt = document.getElementById('bdPvPhotoNote'); nt.style.display = hasPh ? 'block' : 'none'; if (hasPh) nt.innerHTML = rfNoteHtml(b); } }
   const box = document.getElementById('bdPvPages');
   const w = Math.min(box.clientWidth || 360, 794), sc = w / 794;
   const tmp = document.createElement('div'); tmp.innerHTML = bdBuildSheetPages(b);
