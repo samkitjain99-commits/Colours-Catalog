@@ -1590,6 +1590,7 @@
     </div>
     <div class="bd-actions no-print" style="margin-top:6px">
       <button class="add-secondary-btn" onclick="document.getElementById('rfFile').click()">+ Add photo</button>
+      <button class="add-secondary-btn" onclick="rfSortByPhoto()" style="flex-basis:100%">&#8645; Sort numbers by photo order</button>
       <button class="add-secondary-btn" id="rfDelBtn" style="color:var(--danger)" onclick="rfDelPhoto()">&#128465; Delete this photo</button>
       <input type="file" id="rfFile" accept="image/*" multiple style="display:none" onchange="rfAddFiles(this)">
     </div>
@@ -6562,14 +6563,40 @@ function rfRender() {
   const skip = new Set((b.noPhoto || []).map(h => h.toUpperCase()));
   const un = b.items.map((it, i) => ({ it, n: i + 1 })).filter(o => !marked.has((o.it.hex || '').toUpperCase()) && !skip.has((o.it.hex || '').toUpperCase()));
   const nSkip = b.items.filter(it => skip.has((it.hex || '').toUpperCase()) && !marked.has((it.hex || '').toUpperCase())).length;
-  document.getElementById('rfUnL').textContent = un.length ? `Colours without a number on any photo (${un.length}) \u2014 tap one then tap the photo, or tap \u2715 if it is not on the photo` : (b.items.length ? 'All colours are handled' : '');
-  document.getElementById('rfChips').innerHTML = ph.length ? un.map(o => `<button class="rf-chip ${rfArm === (o.it.hex || '').toUpperCase() ? 'on' : ''}" onclick="rfArmTog('${(o.it.hex || '').toUpperCase()}')"><i style="background:${o.it.hex}"></i>#${o.n}<span class="rf-cx" title="Not on the photo" onclick="event.stopPropagation();rfSkip('${(o.it.hex || '').toUpperCase()}')">&#10005;</span></button>`).join('') + (nSkip ? `<button class="text-btn" style="flex-basis:100%;text-align:left;font-weight:700" onclick="rfUnskip()">Show the ${nSkip} colour${nSkip !== 1 ? 's' : ''} marked \u201cnot on the photo\u201d again</button>` : '') : '';
+  document.getElementById('rfUnL').textContent = un.length ? `Colours without a number on any photo (${un.length}) \u2014 tap one then tap the photo, or tap \u2715 to remove it from the batch` : (b.items.length ? 'All colours are handled' : '');
+  document.getElementById('rfChips').innerHTML = ph.length ? un.map(o => `<button class="rf-chip ${rfArm === (o.it.hex || '').toUpperCase() ? 'on' : ''}" onclick="rfArmTog('${(o.it.hex || '').toUpperCase()}')"><i style="background:${o.it.hex}"></i>#${o.n}<span class="rf-cx" title="Not on the photo" onclick="event.stopPropagation();rfSkip('${(o.it.hex || '').toUpperCase()}')">&#10005;</span></button>`).join('') + (nSkip ? `<button class="text-btn" style="flex-basis:100%;text-align:left;font-weight:700" onclick="rfRemoveSkipped()" style="color:var(--danger)">Remove the ${nSkip} colour${nSkip !== 1 ? 's' : ''} marked \u201cnot on the photo\u201d from the batch</button><button class="text-btn" style="flex-basis:100%;text-align:left;font-weight:700" onclick="rfUnskip()">Show them again</button>` : '') : '';
   const h = document.getElementById('rfHint');
   if (rfArm) { const n = b.items.findIndex(i => (i.hex || '').toUpperCase() === rfArm) + 1; h.innerHTML = `Tap the photo where colour #${n} is`; }
   else if (rfSel >= 0 && cur && cur.marks[rfSel]) { const m = cur.marks[rfSel], n = b.items.findIndex(i => (i.hex || '').toUpperCase() === m.hex) + 1; h.innerHTML = `Number ${n} selected \u2014 drag to move &nbsp; <button class="text-btn" style="color:var(--danger);font-weight:800" onclick="rfRemoveSel()">Remove it</button>`; }
   else h.textContent = 'Tap anywhere on the photo to pick that colour and add it to the batch';
 }
-function rfSkip(hex) { const b = rfBatch(); b.noPhoto = (b.noPhoto || []).concat(hex); saveBatches(); if (rfArm === hex) rfArm = null; rfRender(); }
+function rfSkip(hex) {
+  const b = rfBatch(), snap = undoCapture(), H = String(hex).toUpperCase();
+  b.items = b.items.filter(i => String(i.hex || '').toUpperCase() !== H); b.noPhoto = (b.noPhoto || []).filter(h => h.toUpperCase() !== H);
+  if (rfArm === H) rfArm = null; saveBatches(); try { bdRenderItems(); bdRefBtn(); } catch (e) {} rfRender();
+  undoOffer('Colour removed from batch', snap, () => rfRender());
+}
+function rfRemoveSkipped() {
+  const b = rfBatch(), snap = undoCapture(), skip = new Set((b.noPhoto || []).map(h => h.toUpperCase())), n = b.items.length;
+  b.items = b.items.filter(i => !skip.has(String(i.hex || '').toUpperCase())); b.noPhoto = []; saveBatches(); try { bdRenderItems(); bdRefBtn(); } catch (e) {} rfRender();
+  undoOffer((n - b.items.length) + ' colours removed from batch', snap, () => rfRender());
+}
+// order the batch's colours by their position on the photo(s): columns left to right, each top to bottom
+function rfSortByPhoto() {
+  const b = rfBatch(), ph = bdPhotosOf(b.id), snap = undoCapture(), at = new Map();
+  ph.forEach((p, pi) => {
+    const ms = p.marks.filter(m => b.items.some(i => String(i.hex || '').toUpperCase() === m.hex) && !at.has(m.hex)); if (!ms.length) return;
+    const xs = ms.map(m => m.px).sort((x, y) => x - y); let gap = 0, cut = -1;
+    for (let i = 1; i < xs.length; i++) if (xs[i] - xs[i - 1] > gap) { gap = xs[i] - xs[i - 1]; cut = (xs[i] + xs[i - 1]) / 2; }
+    const col = m => (gap > 0.1 && m.px > cut) ? 1 : 0;
+    ms.sort((a, c) => col(a) - col(c) || a.py - c.py).forEach((m, k) => at.set(m.hex, pi * 1000 + k));
+  });
+  if (!at.size) { alert('Place some numbers on the photo first.'); return; }
+  const key = i => at.has(String(i.hex || '').toUpperCase()) ? at.get(String(i.hex || '').toUpperCase()) : 1e6;
+  b.items = b.items.map((it, k) => ({ it, k })).sort((x, y) => key(x.it) - key(y.it) || x.k - y.k).map(o => o.it);
+  saveBatches(); try { bdRenderItems(); } catch (e) {} rfRender();
+  undoOffer('Colours re-numbered in photo order', snap, () => rfRender());
+}
 function rfUnskip() { const b = rfBatch(); b.noPhoto = []; saveBatches(); rfRender(); }
 function rfArmTog(hex) { rfArm = rfArm === hex ? null : hex; rfSel = -1; rfRender(); }
 function rfPt(cx, cy) { const cv = document.getElementById('rfCanvas'), r = cv.getBoundingClientRect(), k = Math.min(r.width / cv.width, r.height / cv.height), ox = r.left + (r.width - cv.width * k) / 2, oy = r.top + (r.height - cv.height * k) / 2; return { x: (cx - ox) / k, y: (cy - oy) / k, cv }; }
