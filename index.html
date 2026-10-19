@@ -1291,9 +1291,11 @@
     </div>
     <div class="pc-toolbar no-print">
       <div class="pc-count" id="swCount"></div>
-      <button class="pc-print-btn" id="swSavePdfBtn" onclick="doSavePdf('sw', 'Color Swatches')">&#11015; Save PDF</button>
-      <button class="pc-print-btn" style="background:var(--brown-500, #8b5e3c);" onclick="downloadPreviewExcel()">&#128196; Excel</button>
-      <button class="pc-print-btn" id="swSharePdfBtn" style="background:#1FA855;flex-basis:100%;" onclick="sharePdf('sw', 'Color Swatches')">&#128172; Share</button>
+      <div style="flex-basis:100%;display:flex;gap:8px">
+        <button class="pc-print-btn" id="swSavePdfBtn" style="flex:1;padding-left:6px;padding-right:6px;white-space:nowrap" onclick="doSavePdf('sw', 'Color Swatches')">&#11015; Save PDF</button>
+        <button class="pc-print-btn" id="swSharePdfBtn" style="flex:1;padding-left:6px;padding-right:6px;white-space:nowrap;background:#1FA855;" onclick="sharePdf('sw', 'Color Swatches')">&#128172; Share</button>
+        <button class="pc-print-btn" style="flex:1;padding-left:6px;padding-right:6px;white-space:nowrap;background:var(--brown-500, #8b5e3c);" onclick="downloadPreviewExcel()">&#128196; Excel</button>
+      </div>
     </div>
     <div class="gu-filter-row no-print" style="margin:0 0 12px;">
       <button class="gu-filter-btn" onclick="sortPreviewByLightness('light-dark')">&#9728; Light &rarr; Dark</button>
