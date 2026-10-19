@@ -3896,6 +3896,18 @@ function downloadSelectedGeneralExcel() {
 }
 
 function removeSwatchFromPreview(idx) {
+  const sw = swCurrentSwatches[idx], bid = swSource && swSource.batchId, b = bid ? bdById(bid) : null;
+  if (sw && b) {
+    // opened from a batch: removing here removes the colour from the batch too (undoable)
+    const snap = undoCapture(), hx = String(sw.hex).toUpperCase();
+    b.items = b.items.filter(i => String(i.hex || '').toUpperCase() !== hx);
+    try { if (typeof bdSel !== 'undefined') bdSel.clear(); } catch (e) {}
+    saveBatches(); try { bdRenderItems(); } catch (e) {} try { bdRefBtn(); } catch (e) {}
+    swCurrentSwatches.splice(idx, 1);
+    renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
+    undoOffer('Colour removed from batch', snap, () => { swCurrentSwatches.splice(idx, 0, sw); renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource); });
+    return;
+  }
   swCurrentSwatches.splice(idx, 1);
   renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
 }
@@ -6427,7 +6439,7 @@ let bpUndoFn = null;
 function bpPicked(hex, name, msg, undo) {
   const el = document.getElementById('bpPicked'); if (!el) return; bpUndoFn = undo || null;
   el.innerHTML = `<span class="pk-sw" style="background:${hex}"></span><span style="flex:1;min-width:0">${escapeHtml(msg)}<small>${hex}${name ? ' &middot; ' + escapeHtml(name) : ''}</small></span>${undo ? '<button class="pk-x" onclick="bpUndoPick()" aria-label="Reject this">&#10005;</button>' : ''}`;
-  el.style.display = 'flex'; clearTimeout(bpPkTimer); bpPkTimer = setTimeout(() => { el.style.display = 'none'; bpUndoFn = null; }, 9000);
+  el.style.display = 'flex'; clearTimeout(bpPkTimer); bpPkTimer = setTimeout(() => { el.style.display = 'none'; bpUndoFn = null; }, 4000);
 }
 function bpUndoPick() {
   const f = bpUndoFn; bpUndoFn = null; clearTimeout(bpPkTimer); const el = document.getElementById('bpPicked'); if (el) el.style.display = 'none';
@@ -6555,7 +6567,7 @@ function rfRender() {
   const h = document.getElementById('rfHint');
   if (rfArm) { const n = b.items.findIndex(i => (i.hex || '').toUpperCase() === rfArm) + 1; h.innerHTML = `Tap the photo where colour #${n} is`; }
   else if (rfSel >= 0 && cur && cur.marks[rfSel]) { const m = cur.marks[rfSel], n = b.items.findIndex(i => (i.hex || '').toUpperCase() === m.hex) + 1; h.innerHTML = `Number ${n} selected \u2014 drag to move &nbsp; <button class="text-btn" style="color:var(--danger);font-weight:800" onclick="rfRemoveSel()">Remove it</button>`; }
-  else h.textContent = '';
+  else h.textContent = 'Tap anywhere on the photo to pick that colour and add it to the batch';
 }
 function rfSkip(hex) { const b = rfBatch(); b.noPhoto = (b.noPhoto || []).concat(hex); saveBatches(); if (rfArm === hex) rfArm = null; rfRender(); }
 function rfUnskip() { const b = rfBatch(); b.noPhoto = []; saveBatches(); rfRender(); }
@@ -6577,7 +6589,21 @@ function rfTap(e) {
   const b = rfBatch(), all = bdPhotosOf(b.id), cur = all[rfIdx]; if (!cur) return;
   const q = rfPt(e.clientX, e.clientY); if (q.x < 0 || q.y < 0 || q.x > q.cv.width || q.y > q.cv.height) return;
   if (rfArm) { cur.marks = cur.marks.filter(m => m.hex !== rfArm); cur.marks.push({ hex: rfArm, px: q.x / q.cv.width, py: q.y / q.cv.height }); all.forEach((p, i) => { if (i !== rfIdx) p.marks = p.marks.filter(m => m.hex !== rfArm); }); rfArm = null; bdPhotosSet(b.id, all); rfSel = -1; rfRender(); }
-  else { rfSel = -1; rfRender(); }
+  else if (rfSel >= 0) { rfSel = -1; rfRender(); }
+  else rfPickNew(q, b, all, cur);
+}
+function rfPickNew(q, b, all, cur) {
+  // nothing selected: tap on the photo picks the colour there and adds it to this batch
+  const t = document.createElement('canvas'); t.width = rfImg.naturalWidth; t.height = rfImg.naturalHeight; const g = t.getContext('2d'); g.drawImage(rfImg, 0, 0);
+  const x = Math.min(t.width - 1, Math.max(0, Math.round(q.x))), y = Math.min(t.height - 1, Math.max(0, Math.round(q.y))), R = Math.max(2, Math.round(t.width / 160));
+  const d = g.getImageData(Math.max(0, x - R), Math.max(0, y - R), R * 2 + 1, R * 2 + 1).data; let rr = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) { rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; }
+  const nx = bpMake(bpHex(rr / n, gg / n, bb / n), 0, { manual: true }), hex = nx.hex.toUpperCase();
+  const snap = undoCapture(), photosBefore = JSON.stringify(bdPhotosAll()), had = b.items.some(i => (i.hex || '').toUpperCase() === hex);
+  if (all.some(p => p.marks.some(m => m.hex === hex))) { rfRender(); undoOffer('Already numbered on a photo', snap); return; }
+  if (!had) bdAddItems([{ hex: nx.hex, name: nx.name || nx.hex }]);
+  cur.marks.push({ hex, px: q.x / q.cv.width, py: q.y / q.cv.height }); bdPhotosSet(b.id, all); rfSel = -1; try { bdRenderItems(); bdRefBtn(); } catch (e) {} rfRender();
+  const num = b.items.findIndex(i => (i.hex || '').toUpperCase() === hex) + 1;
+  undoOffer(had ? `Numbered #${num} on the photo` : `Added to batch as #${num}`, snap, () => { try { localStorage.setItem(BP_STORE_KEY, photosBefore); } catch (e) {} rfLoad(); });
 }
 function rfRemoveSel() { const b = rfBatch(), all = bdPhotosOf(b.id), cur = all[rfIdx]; if (!cur || rfSel < 0) return; cur.marks.splice(rfSel, 1); rfSel = -1; bdPhotosSet(b.id, all); rfRender(); }
 function rfDelPhoto() { if (!confirm('Delete this reference photo from the batch?')) return; const b = rfBatch(), all = bdPhotosOf(b.id); all.splice(rfIdx, 1); bdPhotosSet(b.id, all); delete bdAnnotCache[b.id]; rfIdx = 0; rfSel = -1; rfArm = null; rfLoad(); }
@@ -6873,10 +6899,11 @@ function bcClose() { document.getElementById('bcModal').style.display = 'none'; 
 /* ---- undo ---- */
 let undoSnap = null, undoTimer = null;
 function undoCapture() { return JSON.stringify({ catalog, groups, secondaryColors, batches, favs: [...libFavs], gu: generallyUsedPalette }); }
-function undoOffer(label, snap) {
-  undoSnap = snap; const t = document.getElementById('undoToast');
+let undoAfter = null;
+function undoOffer(label, snap, after) {
+  undoSnap = snap; undoAfter = after || null; const t = document.getElementById('undoToast');
   t.innerHTML = `<span>${escapeHtml(label)}</span><button onclick="undoRun()">Undo</button>`; t.style.display = 'flex';
-  clearTimeout(undoTimer); undoTimer = setTimeout(() => { t.style.display = 'none'; undoSnap = null; }, 9000);
+  clearTimeout(undoTimer); undoTimer = setTimeout(() => { t.style.display = 'none'; undoSnap = null; }, 4000);
 }
 function undoRun() {
   if (!undoSnap) return; const d = JSON.parse(undoSnap); undoSnap = null; clearTimeout(undoTimer); document.getElementById('undoToast').style.display = 'none';
@@ -6885,6 +6912,7 @@ function undoRun() {
   selectedSet = new Set(); libSel = new Set(); bdListSel = new Set();
   try { renderCatalog(); } catch (e) {} try { renderBatches(); } catch (e) {} try { renderLibrary(); } catch (e) {} try { updateBatchGlance(); } catch (e) {}
   try { if (bdCurrentId && bdById(bdCurrentId) && document.getElementById('view-batchDetail').classList.contains('active')) bdRenderItems(); } catch (e) {}
+  try { if (undoAfter) undoAfter(); } catch (e) {} undoAfter = null;
 }
 /* ---- backup reminder ---- */
 function bcNudge() {
