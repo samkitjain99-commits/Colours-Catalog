@@ -6619,7 +6619,7 @@ function bpAdd() {
 /* ---- photos kept with a batch, so they can be printed with numbered colours ---- */
 const BP_STORE_KEY = 'colourCatalog_batchPhotos_v1';
 let bdAnnotCache = {}, bdAnnotSig = {};
-function bdSig(b) { return b.items.map(i => (i.hex || '').toUpperCase()).join(',') + '|' + JSON.stringify(bdPhotosOf(b.id).map(p => p.marks)); }
+function bdSig(b) { return (b.photoNames !== false ? 'N' : '-') + b.items.map(i => (i.hex || '').toUpperCase()).join(',') + '|' + JSON.stringify(bdPhotosOf(b.id).map(p => p.marks)); }
 window.addEventListener('load', () => setTimeout(() => { try { bdPhotosPrune(); } catch (e) {} }, 2500));
 function bpThumb(cv) { const k = Math.min(1, 800 / Math.max(cv.width, cv.height)), c = document.createElement('canvas'); c.width = Math.round(cv.width * k); c.height = Math.round(cv.height * k); c.getContext('2d').drawImage(cv, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.62); }
 function bdPhotosAll() { try { return JSON.parse(localStorage.getItem(BP_STORE_KEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -6637,7 +6637,15 @@ let rfReturn = 'batchDetail';
 function rfOpen(idx) { const a = document.querySelector('.view.active'); rfReturn = a && a.id ? a.id.replace('view-', '') : 'batchDetail'; if (rfReturn === 'batchRef') rfReturn = 'batchDetail'; rfIdx = +idx > 0 ? +idx : 0; rfArm = null; rfSel = -1; showView('batchRef'); rfLoad(); }
 function rfClose() { bdRefBtn(); if (rfReturn === 'batchPreview') bdPreview(); else if (rfReturn === 'printcolours') bdPrintColours(); else showView('batchDetail'); }
 function rfStatus(b) { const marked = new Set(); bdPhotosOf(b.id).forEach(p => p.marks.forEach(m => marked.add(m.hex))); const skip = new Set((b.noPhoto || []).map(h => h.toUpperCase())); const n = b.items.filter(i => marked.has((i.hex || '').toUpperCase())).length, sk = b.items.filter(i => !marked.has((i.hex || '').toUpperCase()) && skip.has((i.hex || '').toUpperCase())).length; return { n, sk, total: b.items.length }; }
-function rfNoteHtml(b) { const st = rfStatus(b); return st.n + st.sk < st.total ? `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ' (' + st.sk + ' marked not on the photo)' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n - st.sk} colours on the photos</button> <span style="opacity:.8">(or tap a number on a photo below to edit it, drag to move it)</span>` : `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ', ' + st.sk + ' marked not on the photo' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button> <span style="opacity:.8">(or tap a number on a photo below to edit it, drag to move it)</span>`; }
+function rfNoteHtml(b) {
+  return rfNoteCore(b) + `<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--brown-700);font-weight:700"><input type="checkbox" style="width:18px;height:18px;accent-color:var(--brown-700)" ${b.photoNames !== false ? 'checked' : ''} onchange="bdPhotoNamesToggle(this.checked)"> Show colour names next to the numbers</label>`;
+}
+function bdPhotoNamesToggle(on) {
+  const a = document.querySelector('.view.active'), id = a ? a.id : '', b = id === 'view-printcolours' && swSource && swSource.batchId ? bdById(swSource.batchId) : bdById(bdCurrentId); if (!b) return;
+  b.photoNames = !!on; saveBatches();
+  if (id === 'view-printcolours') renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource); else if (id === 'view-batchPreview') bdPreview();
+}
+function rfNoteCore(b) { const st = rfStatus(b); return st.n + st.sk < st.total ? `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ' (' + st.sk + ' marked not on the photo)' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n - st.sk} colours on the photos</button> <span style="opacity:.8">(or tap a number on a photo below to edit it, drag to move it)</span>` : `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ', ' + st.sk + ' marked not on the photo' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button> <span style="opacity:.8">(or tap a number on a photo below to edit it, drag to move it)</span>`; }
 function rfLoad() {
   const b = rfBatch(), ph = bdPhotosOf(b.id); if (rfIdx >= ph.length) rfIdx = Math.max(0, ph.length - 1);
   const cv = document.getElementById('rfCanvas');
@@ -6838,6 +6846,17 @@ function bdBake(b, sh, excl) {   // one stored photo with the batch's colour num
       const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const g = c.getContext('2d'); g.drawImage(im, 0, 0);
       const fs = Math.max(15, c.width / 26), rd = fs * 0.95; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 ' + fs + 'px sans-serif';
       sh.marks.forEach(m => { if (excl && m.hex === excl) return; const idx = b.items.findIndex(i => (i.hex || '').toUpperCase() === m.hex); if (idx < 0) return; const cx = m.px * c.width, cy = m.py * c.height; g.beginPath(); g.arc(cx, cy, rd, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = Math.max(2, c.width / 300); g.strokeStyle = '#000'; g.stroke(); g.fillStyle = '#000'; g.fillText(String(idx + 1), cx, cy + 1); });
+      if (b.photoNames !== false) {
+        const nf = Math.max(12, c.width / 36); g.font = '700 ' + nf + 'px sans-serif'; g.textAlign = 'left';
+        sh.marks.forEach(m => {
+          if (excl && m.hex === excl) return; const it = b.items.find(i => (i.hex || '').toUpperCase() === m.hex); if (!it) return; let nm = String(it.name || '').trim(); if (!nm) return; if (nm.length > 22) nm = nm.slice(0, 21) + '\u2026';
+          const cx = m.px * c.width, cy = m.py * c.height, dd = nf * 1.0, w = g.measureText(nm).width + nf * 0.9 + dd + nf * 0.3, h = nf * 1.5; let x = cx + rd + 3; if (x + w > c.width - 2) x = cx - rd - 3 - w; x = Math.max(2, x);
+          const y = Math.min(c.height - h - 2, Math.max(2, cy - h / 2)), r = h / 2;
+          g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); g.fillStyle = 'rgba(255,255,255,0.92)'; g.fill(); g.lineWidth = Math.max(1, c.width / 600); g.strokeStyle = '#000'; g.stroke();
+          g.beginPath(); g.arc(x + nf * 0.45 + dd / 2, y + h / 2, dd / 2, 0, 7); g.fillStyle = it.hex; g.fill(); g.lineWidth = Math.max(1, c.width / 600); g.strokeStyle = '#000'; g.stroke();
+          g.fillStyle = '#000'; g.textBaseline = 'middle'; g.fillText(nm, x + nf * 0.45 + dd + nf * 0.3, y + h / 2 + 1);
+        });
+      }
       res(c.toDataURL('image/jpeg', 0.85));
     }; im.onerror = () => res(null); im.src = sh.img;
   });
