@@ -4084,7 +4084,7 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
       <div class="sw-board sw-page sw-photopage">
         <div class="sw-title"><h1>REFERENCE <span>PHOTO${a.length > 1 ? ' ' + (i + 1) : ''}</span></h1></div>
         <div class="sw-sub" style="margin-bottom:8px">Numbers on the photo match the colour numbers (#) on the swatch sheet.</div>
-        <img src="${u}" onclick="bdPhotoTap(event,${i},'${pb.id}')" title="Tap a number to edit that colour" style="display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px;cursor:pointer">
+        <img src="${u}" class="ph-img" data-bid="${pb.id}" data-i="${i}" title="Tap a number to edit its colour, drag it to move" style="display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px;cursor:pointer;-webkit-user-drag:none;-webkit-touch-callout:none">
       </div>`).join(''); })();
 }
 
@@ -6637,7 +6637,7 @@ let rfReturn = 'batchDetail';
 function rfOpen(idx) { const a = document.querySelector('.view.active'); rfReturn = a && a.id ? a.id.replace('view-', '') : 'batchDetail'; if (rfReturn === 'batchRef') rfReturn = 'batchDetail'; rfIdx = +idx > 0 ? +idx : 0; rfArm = null; rfSel = -1; showView('batchRef'); rfLoad(); }
 function rfClose() { bdRefBtn(); if (rfReturn === 'batchPreview') bdPreview(); else if (rfReturn === 'printcolours') bdPrintColours(); else showView('batchDetail'); }
 function rfStatus(b) { const marked = new Set(); bdPhotosOf(b.id).forEach(p => p.marks.forEach(m => marked.add(m.hex))); const skip = new Set((b.noPhoto || []).map(h => h.toUpperCase())); const n = b.items.filter(i => marked.has((i.hex || '').toUpperCase())).length, sk = b.items.filter(i => !marked.has((i.hex || '').toUpperCase()) && skip.has((i.hex || '').toUpperCase())).length; return { n, sk, total: b.items.length }; }
-function rfNoteHtml(b) { const st = rfStatus(b); return st.n + st.sk < st.total ? `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ' (' + st.sk + ' marked not on the photo)' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n - st.sk} colours on the photos</button> <span style="opacity:.8">(or tap a number on a photo below)</span>` : `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ', ' + st.sk + ' marked not on the photo' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button> <span style="opacity:.8">(or tap a number on a photo below)</span>`; }
+function rfNoteHtml(b) { const st = rfStatus(b); return st.n + st.sk < st.total ? `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ' (' + st.sk + ' marked not on the photo)' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n - st.sk} colours on the photos</button> <span style="opacity:.8">(or tap a number on a photo below to edit it, drag to move it)</span>` : `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ', ' + st.sk + ' marked not on the photo' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button> <span style="opacity:.8">(or tap a number on a photo below to edit it, drag to move it)</span>`; }
 function rfLoad() {
   const b = rfBatch(), ph = bdPhotosOf(b.id); if (rfIdx >= ph.length) rfIdx = Math.max(0, ph.length - 1);
   const cv = document.getElementById('rfCanvas');
@@ -6680,6 +6680,43 @@ function rfEditRender(b, cur) {
     <input id="rfEcN" value="${escapeHtml(it.name || '')}" placeholder="Colour name" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--border,#d9c9ad);border-radius:10px;margin-bottom:8px" oninput="this.dataset.t=1">
     <div id="rfEcErr" style="display:none;color:#c0392b;font-weight:700;font-size:13px;margin:0 0 8px"></div><button class="add-colour-btn" style="width:100%" onclick="rfEcSave('${hx}')">Save colour</button></div>`;
 }
+// drag a number straight on a photo inside a preview
+function phHit(img, cx, cy) {
+  const bid = img.dataset.bid, i = +img.dataset.i, b = bdById(bid), ph = bdPhotosOf(bid)[i]; if (!b || !ph) return null;
+  const r = img.getBoundingClientRect(), fx = (cx - r.left) / r.width, fy = (cy - r.top) / r.height; let best = null, bd = 0.08;
+  ph.marks.forEach(m => { if (!b.items.some(it => String(it.hex || '').toUpperCase() === m.hex)) return; const d = Math.hypot(m.px - fx, (m.py - fy) * r.height / r.width); if (d < bd) { bd = d; best = m; } });
+  return best ? { b, bid, i, hex: best.hex } : null;
+}
+let phDrag = null, phNoClick = 0;
+function phStart(img, cx, cy) { const h = phHit(img, cx, cy); if (!h) return false; phDrag = Object.assign(h, { img, sx: cx, sy: cy, lx: cx, ly: cy, moved: false, badge: null }); return true; }
+function phMove(cx, cy) {
+  const d = phDrag; if (!d) return; d.lx = cx; d.ly = cy;
+  if (!d.moved) {
+    if (Math.hypot(cx - d.sx, cy - d.sy) < 6) return; d.moved = true;
+    const n = d.b.items.findIndex(it => String(it.hex || '').toUpperCase() === d.hex) + 1, bd = document.createElement('div'); bd.setAttribute('data-html2canvas-ignore', 'true');
+    bd.style.cssText = 'position:fixed;z-index:9999;width:38px;height:38px;border-radius:50%;background:#fff;border:3px solid #c0392b;color:#000;font:800 15px sans-serif;display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.4)';
+    bd.textContent = n; document.body.appendChild(bd); d.badge = bd;
+    const sh = bdPhotosOf(d.bid)[d.i]; bdBake(d.b, sh, d.hex).then(u => { if (u && phDrag === d) d.img.src = u; });
+  }
+  d.badge.style.left = (cx - 19) + 'px'; d.badge.style.top = (cy - 19) + 'px';
+}
+function phEnd() {
+  const d = phDrag; phDrag = null; if (!d) return; phNoClick = Date.now();
+  if (d.badge) d.badge.remove();
+  if (!d.moved) { bdPhotoTap({ target: d.img, clientX: d.sx, clientY: d.sy }, d.i, d.bid); return; }
+  const r = d.img.getBoundingClientRect(), all = bdPhotosOf(d.bid), m = all[d.i] && all[d.i].marks.find(x => x.hex === d.hex);
+  if (m) { m.px = Math.min(1, Math.max(0, (d.lx - r.left) / r.width)); m.py = Math.min(1, Math.max(0, (d.ly - r.top) / r.height)); bdPhotosSet(d.bid, all); }
+  const a = document.querySelector('.view.active'), id = a ? a.id : '';
+  if (id === 'view-printcolours') renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource); else if (id === 'view-batchPreview') bdPreview();
+}
+document.addEventListener('touchstart', e => { const t = e.target; if (t && t.classList && t.classList.contains('ph-img') && e.touches.length === 1 && phStart(t, e.touches[0].clientX, e.touches[0].clientY)) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', e => { if (phDrag) { e.preventDefault(); phMove(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
+document.addEventListener('touchend', () => { if (phDrag) phEnd(); });
+document.addEventListener('touchcancel', () => { if (phDrag) { if (phDrag.badge) phDrag.badge.remove(); phDrag = null; } });
+document.addEventListener('mousedown', e => { const t = e.target; if (t && t.classList && t.classList.contains('ph-img') && phStart(t, e.clientX, e.clientY)) e.preventDefault(); });
+document.addEventListener('mousemove', e => { if (phDrag) phMove(e.clientX, e.clientY); });
+document.addEventListener('mouseup', () => { if (phDrag) phEnd(); });
+document.addEventListener('click', e => { const t = e.target; if (t && t.classList && t.classList.contains('ph-img') && Date.now() - phNoClick > 450) bdPhotoTap(e, +t.dataset.i, t.dataset.bid); });
 // tap a number on a photo inside a preview: edit that colour right there
 function bdPhotoTap(e, i, bid) {
   const b = bdById(bid), ph = bdPhotosOf(bid)[i]; if (!b || !ph) return;
@@ -6795,23 +6832,25 @@ async function rfAddFiles(inp) {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
 })();
 function bdPhotosPrune() { try { const all = bdPhotosAll(), ids = new Set((batches || []).map(b => b.id)); let ch = false; Object.keys(all).forEach(k => { if (!ids.has(k)) { delete all[k]; ch = true; } }); if (ch) localStorage.setItem(BP_STORE_KEY, JSON.stringify(all)); } catch (e) {} }
-function bdAnnotPrep(b) {   // draw the batch's colour numbers (as on the dyer sheet) onto each stored photo
-  const shots = bdPhotosOf(b.id), out = [];
-  return Promise.all(shots.map(sh => new Promise(res => {
+function bdBake(b, sh, excl) {   // one stored photo with the batch's colour numbers drawn on it (optionally leaving one colour out)
+  return new Promise(res => {
     const im = new Image(); im.onload = () => {
       const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const g = c.getContext('2d'); g.drawImage(im, 0, 0);
       const fs = Math.max(15, c.width / 26), rd = fs * 0.95; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 ' + fs + 'px sans-serif';
-      sh.marks.forEach(m => { const idx = b.items.findIndex(i => (i.hex || '').toUpperCase() === m.hex); if (idx < 0) return; const cx = m.px * c.width, cy = m.py * c.height; g.beginPath(); g.arc(cx, cy, rd, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = Math.max(2, c.width / 300); g.strokeStyle = '#000'; g.stroke(); g.fillStyle = '#000'; g.fillText(String(idx + 1), cx, cy + 1); });
+      sh.marks.forEach(m => { if (excl && m.hex === excl) return; const idx = b.items.findIndex(i => (i.hex || '').toUpperCase() === m.hex); if (idx < 0) return; const cx = m.px * c.width, cy = m.py * c.height; g.beginPath(); g.arc(cx, cy, rd, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = Math.max(2, c.width / 300); g.strokeStyle = '#000'; g.stroke(); g.fillStyle = '#000'; g.fillText(String(idx + 1), cx, cy + 1); });
       res(c.toDataURL('image/jpeg', 0.85));
     }; im.onerror = () => res(null); im.src = sh.img;
-  }))).then(a => { bdAnnotCache[b.id] = a.filter(Boolean); bdAnnotSig[b.id] = bdSig(b); return bdAnnotCache[b.id]; });
+  });
+}
+function bdAnnotPrep(b) {   // draw the batch's colour numbers (as on the dyer sheet) onto each stored photo
+  return Promise.all(bdPhotosOf(b.id).map(sh => bdBake(b, sh))).then(a => { bdAnnotCache[b.id] = a.filter(Boolean); bdAnnotSig[b.id] = bdSig(b); return bdAnnotCache[b.id]; });
 }
 function bdPhotoPagesHtml(b) {
   if (!b.incPhotos) return ''; const a = bdAnnotCache[b.id] || []; if (!a.length) return '';
   return a.map((u, i) => `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative;overflow:hidden">
       <div style="font-size:22px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Reference photo${a.length > 1 ? ' ' + (i + 1) + ' of ' + a.length : ''}${b.name ? ' \u2014 ' + escapeHtml(b.name) : ''}</div>
       <div style="font-size:13px;color:#7a6a55;margin:4px 0 14px">Numbers on the photo match the # column of the dyer sheet.</div>
-      <img src="${u}" onclick="bdPhotoTap(event,${i},'${b.id}')" title="Tap a number to edit that colour" style="display:block;max-width:100%;max-height:900px;margin:0 auto;border-radius:6px;border:1px solid #d8cdb8;cursor:pointer">
+      <img src="${u}" class="ph-img" data-bid="${b.id}" data-i="${i}" title="Tap a number to edit its colour, drag it to move" style="display:block;max-width:100%;max-height:900px;margin:0 auto;border-radius:6px;border:1px solid #d8cdb8;cursor:pointer;-webkit-user-drag:none;-webkit-touch-callout:none">
     </div>`).join('');
 }
 async function bdPrintColours() {
