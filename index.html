@@ -667,17 +667,11 @@
   @media print { .sw-remove { display: none !important; } }
   #swPages .sw-remove { display: none; }
   #swPages .sw-ctl { display: none; }
-  #swPages.sw-editing .sw-ctl { display: flex; gap: 8px; margin-top: 10px; justify-content: center; }
-  #swPages.sw-editing .sw-ctl .sw-remove { display: block; position: static; width: 46px; height: 46px; line-height: 46px; font-size: 20px; border-radius: 12px; border: 1.5px solid var(--brown-700); background: #fff; color: var(--brown-700); }
-  #swPages.sw-editing .sw-ctl .sw-del { background: #fdecea; border-color: #c0392b; color: #c0392b; }
-  #swPages.sw-editing .sw-ctl .sw-remove:disabled { opacity: .25; }
-  #swPages.sw-editing .sw-page { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  #swPages.sw-editing .sw-grid { grid-template-columns: repeat(4, 144px); width: max-content; gap: 26px 8px; justify-content: start; }
-  #swPages.sw-editing .sw-ctl { gap: 5px; }
-  #swPages.sw-editing .sw-ctl .sw-remove { width: 40px; height: 40px; line-height: 40px; font-size: 17px; }
-  #swPages.sw-editing .sw-dot { width: 64px; height: 64px; cursor: pointer; outline: 2px dashed var(--brown-700); outline-offset: 3px; }
-  #swPages.sw-editing .sw-srno { font-size: 15px; background: #fff; border: 1.5px solid var(--brown-700); border-radius: 99px; padding: 2px 10px; margin-bottom: 8px; }
-  #swPages.sw-editing .sw-hex { font-size: 13px; } #swPages.sw-editing .sw-name { font-size: 12px; }
+  #swPages.sw-editing .sw-grid { grid-template-columns: repeat(4, 1fr); gap: 14px 4px; }
+  #swPages.sw-editing .sw-card { cursor: pointer; }
+  #swPages.sw-editing .sw-dot { width: 52px; height: 52px; outline: 2px dashed var(--brown-700); outline-offset: 2px; }
+  #swPages.sw-editing .sw-srno { font-size: 12px; background: #fff; border: 1.5px solid var(--brown-700); border-radius: 99px; padding: 1px 8px; margin-bottom: 6px; }
+  #swPages.sw-editing .sw-hex { font-size: 10px; } #swPages.sw-editing .sw-name { font-size: 9.5px; line-height: 1.15; }
   .sw-editchk { display:flex; align-items:center; gap:10px; margin:0 0 12px; padding:10px 12px; background:var(--tan-200); border-radius:10px; font-size:13px; font-weight:600; color:var(--brown-700); }
   .sw-editchk input { width:20px; height:20px; accent-color:var(--brown-700); }
   .gu-filter-row {
@@ -1299,7 +1293,7 @@
     <div class="no-print" id="swPhotoNote" style="display:none;margin:-4px 0 10px;font-size:13px;color:var(--muted);font-weight:600"></div>
     <label class="sw-editchk no-print"><input type="checkbox" id="swHideChk" onchange="swHideHex=this.checked;renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource)"> Dyer copy &mdash; hide real hex codes (prints the hex with its last two characters moved to the middle)</label>
     <div class="no-print" id="swHideRow" style="display:none;margin:0 0 10px"><button class="add-secondary-btn" onclick="bcCodeKey()">&#128273; Code key &amp; find a code</button></div>
-    <label class="sw-editchk no-print"><input type="checkbox" id="swEditChk" onchange="document.getElementById('swPages').classList.toggle('sw-editing', this.checked)"> Edit — tap a colour to change it; &#10005; remove, &#9664; &#9654; reposition</label>
+    <label class="sw-editchk no-print"><input type="checkbox" id="swEditChk" onchange="document.getElementById('swPages').classList.toggle('sw-editing', this.checked)"> Edit — tap any colour to change, move or remove it</label>
     <div id="swPages"></div>
   </div>
 
@@ -3908,12 +3902,14 @@ function swEditColour(idx) {
   if (!document.getElementById('swPages').classList.contains('sw-editing')) return;
   const sw = swCurrentSwatches[idx]; if (!sw) return; const hx = String(sw.hex).toUpperCase();
   bcModal(`<h3 style="margin:0 0 10px;font-family:'Playfair Display',serif;color:var(--brown-700)">Edit colour #${idx + 1}</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px"><button class="sw-remove" style="display:block;position:static;flex:1;height:44px;border-radius:12px;font-size:16px" ${idx === 0 ? 'disabled' : ''} onclick="swEcMove(${idx},-1)" title="Move earlier">&#9664; Earlier</button><button class="sw-remove sw-del" style="display:block;position:static;flex:1;height:44px;border-radius:12px;font-size:16px;background:#fdecea;border-color:#c0392b;color:#c0392b" onclick="bcClose();removeSwatchFromPreview(${idx})" title="Remove">&#10005; Remove</button><button class="sw-remove" style="display:block;position:static;flex:1;height:44px;border-radius:12px;font-size:16px" ${idx === swCurrentSwatches.length - 1 ? 'disabled' : ''} onclick="swEcMove(${idx},1)" title="Move later">Later &#9654;</button></div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><input type="color" id="swEcP" value="${hx.toLowerCase()}" style="width:64px;height:48px;border:none;padding:0;background:none" oninput="swEcSync('p')">
     <input id="swEcH" value="${hx}" maxlength="7" style="flex:1;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;text-transform:uppercase" oninput="swEcSync('h')"></div>
     <input id="swEcN" value="${escapeHtml(sw.name || '')}" placeholder="Colour name" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;margin-bottom:6px" oninput="this.dataset.t=1">
     <div style="font-size:12px;color:var(--brown-500,#8a6d4b);margin-bottom:12px">${swSource && swSource.batchId ? 'Also changes this colour in the batch and on the photo.' : 'Changes this print only.'}</div>
     <div style="display:flex;gap:8px"><button class="add-secondary-btn" style="flex:1" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="flex:1" onclick="swEcSave(${idx})">Save</button></div>`);
 }
+function swEcMove(idx, dir) { bcClose(); moveSwatchInPreview(idx, dir); swEditColour(idx + dir); }
 function swEcSync(from, pf) {
   pf = pf || 'swEc'; const p = document.getElementById(pf + 'P'), h = document.getElementById(pf + 'H'), n = document.getElementById(pf + 'N');
   if (from === 'p') h.value = p.value.toUpperCase(); else { let v = h.value.trim(); if (v[0] !== '#') v = '#' + v; if (!isValidHex(v)) return; p.value = v.toLowerCase(); }
@@ -4010,9 +4006,9 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
     const cardsHtml = pageSwatches.map((s, ci) => {
       const globalIdx = pi * PER_PAGE + ci + 1;
       return `
-      <div class="sw-card">
-        <div class="sw-srno" onclick="moveSwatchToPosition(${globalIdx - 1})" title="Tap to move to a specific position" style="cursor:pointer;">#${String(globalIdx).padStart(2, '0')}</div>
-        <div class="sw-dot" style="background:${s.hex}" onclick="swEditColour(${globalIdx - 1})"></div>
+      <div class="sw-card" onclick="swEditColour(${globalIdx - 1})">
+        <div class="sw-srno" onclick="event.stopPropagation();moveSwatchToPosition(${globalIdx - 1})" title="Tap to move to a specific position" style="cursor:pointer;">#${String(globalIdx).padStart(2, '0')}</div>
+        <div class="sw-dot" style="background:${s.hex}"></div>
         <div class="sw-ctl no-print">
           <button class="sw-remove sw-mv" onclick="moveSwatchInPreview(${globalIdx - 1}, -1)" ${globalIdx === 1 ? 'disabled' : ''} title="Move earlier">&#9664;</button>
           <button class="sw-remove sw-del" onclick="removeSwatchFromPreview(${globalIdx - 1})" title="Remove from this sheet">&#10005;</button>
