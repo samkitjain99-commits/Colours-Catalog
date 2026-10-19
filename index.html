@@ -683,6 +683,7 @@
   #swPages.sw-editing .sw-srno { font-size: 12px; background: #fff; border: 1.5px solid var(--brown-700); border-radius: 99px; padding: 1px 8px; margin-bottom: 6px; }
   #swPages.sw-editing .sw-hex { font-size: 10px; } #swPages.sw-editing .sw-name { font-size: 9.5px; line-height: 1.15; }
   .sw-editchk { display:flex; align-items:center; gap:10px; margin:0 0 12px; padding:10px 12px; background:var(--tan-200); border-radius:10px; font-size:13px; font-weight:600; color:var(--brown-700); }
+  .sw-chkrow { display:flex; gap:8px; margin:0 0 12px; } .sw-chkrow .sw-editchk { flex:1; margin:0; padding:10px 8px; gap:6px; font-size:13px; min-width:0; white-space:nowrap; } .sw-chkrow .sw-editchk input { width:18px; height:18px; flex-shrink:0; }
   .sw-editchk input { width:20px; height:20px; accent-color:var(--brown-700); }
   .gu-filter-row {
     display: flex; gap: 6px; margin: 14px 0; background: var(--tan-200);
@@ -1297,14 +1298,18 @@
     <div class="gu-filter-row no-print" style="margin:0 0 12px;">
       <button class="gu-filter-btn" onclick="sortPreviewByLightness('light-dark')">&#9728; Light &rarr; Dark</button>
       <button class="gu-filter-btn" onclick="sortPreviewByLightness('dark-light')">&#9790; Dark &rarr; Light</button>
+      <button class="gu-filter-btn" id="swPhotoSortBtn" style="display:none" onclick="swSortByPhoto()">&#128247; Photo order</button>
     </div>
 
-    <label class="sw-editchk no-print" id="swPhotoRow" style="display:none"><input type="checkbox" id="swPhotoChk" onchange="swPhotoToggle(this.checked)"> Include the photo(s) with numbered colours</label>
+    <div class="sw-chkrow no-print">
+      <label class="sw-editchk" id="swPhotoRow" style="display:none" title="Include the photo(s) with numbered colours"><input type="checkbox" id="swPhotoChk" onchange="swPhotoToggle(this.checked)"> Photos</label>
+      <label class="sw-editchk" title="Dyer copy: hide real hex codes (prints the hex with its last two characters moved to the middle)"><input type="checkbox" id="swHideChk" onchange="swHideHex=this.checked;renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource)"> Dyer copy</label>
+      <label class="sw-editchk" title="Tap a colour to select it, then change, move or remove"><input type="checkbox" id="swEditChk" onchange="swEditToggle(this.checked)"> Edit</label>
+    </div>
     <div class="no-print" id="swPhotoNote" style="display:none;margin:-4px 0 10px;font-size:13px;color:var(--muted);font-weight:600"></div>
-    <label class="sw-editchk no-print"><input type="checkbox" id="swHideChk" onchange="swHideHex=this.checked;renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource)"> Dyer copy &mdash; hide real hex codes (prints the hex with its last two characters moved to the middle)</label>
-    <div class="no-print" id="swHideRow" style="display:none;margin:0 0 10px"><button class="add-secondary-btn" onclick="bcCodeKey()">&#128273; Code key &amp; find a code</button></div>
-    <label class="sw-editchk no-print"><input type="checkbox" id="swEditChk" onchange="swEditToggle(this.checked)"> Edit — tap any colour to change, move or remove it</label>
-    <label class="sw-editchk no-print" id="swStyleRow" style="display:none">Tap a colour&nbsp;<select id="swStyleSel" onchange="swSetStyle(this.value)" style="flex:1;min-width:0;font-size:14px;padding:6px;border-radius:8px;border:1.5px solid var(--border,#d9c9ad);background:#fff"><option value="popup">opens a pop-up box</option><option value="bar">selects it &mdash; controls on a bottom bar</option></select></label>
+    <div class="no-print" id="swHideRow" style="display:none;margin:0 0 10px"><div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:6px">Dyer copy: real hex codes hidden &mdash; the hex prints with its last two characters moved to the middle.</div><button class="add-secondary-btn" onclick="bcCodeKey()">&#128273; Code key &amp; find a code</button></div>
+    <div class="no-print" id="swEditHint" style="display:none;margin:-4px 0 10px;font-size:13px;color:var(--muted);font-weight:600">Edit: tap a colour to select it, then change, move or remove it.</div>
+
     <div id="swPages"></div>
   </div>
 
@@ -3914,21 +3919,21 @@ function swEditColour(idx) {
   if (!document.getElementById('swPages').classList.contains('sw-editing')) return;
   const sw = swCurrentSwatches[idx]; if (!sw) return; const hx = String(sw.hex).toUpperCase();
   bcModal(`<h3 style="margin:0 0 10px;font-family:'Playfair Display',serif;color:var(--brown-700)">Edit colour #${idx + 1}</h3>
-    <div style="display:flex;gap:8px;margin-bottom:12px"><button class="sw-remove" style="display:block;position:static;flex:1;height:44px;border-radius:12px;font-size:16px" ${idx === 0 ? 'disabled' : ''} onclick="swEcMove(${idx},-1)" title="Move earlier">&#9664; Earlier</button><button class="sw-remove sw-del" style="display:block;position:static;flex:1;height:44px;border-radius:12px;font-size:16px;background:#fdecea;border-color:#c0392b;color:#c0392b" onclick="bcClose();removeSwatchFromPreview(${idx})" title="Remove">&#10005; Remove</button><button class="sw-remove" style="display:block;position:static;flex:1;height:44px;border-radius:12px;font-size:16px" ${idx === swCurrentSwatches.length - 1 ? 'disabled' : ''} onclick="swEcMove(${idx},1)" title="Move later">Later &#9654;</button></div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><input type="color" id="swEcP" value="${hx.toLowerCase()}" style="width:64px;height:48px;border:none;padding:0;background:none" oninput="swEcSync('p')">
     <input id="swEcH" value="${hx}" maxlength="7" style="flex:1;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;text-transform:uppercase" oninput="swEcSync('h')"></div>
     <input id="swEcN" value="${escapeHtml(sw.name || '')}" placeholder="Colour name" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;margin-bottom:6px" oninput="this.dataset.t=1">
     <div style="font-size:12px;color:var(--brown-500,#8a6d4b);margin-bottom:12px">${swSource && swSource.batchId ? 'Also changes this colour in the batch and on the photo.' : 'Changes this print only.'}</div>
+    <div id="swEcErr" style="display:none;color:#c0392b;font-weight:700;font-size:13px;margin:0 0 10px"></div>
     <div style="display:flex;gap:8px"><button class="add-secondary-btn" style="flex:1" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="flex:1" onclick="swEcSave(${idx})">Save</button></div>`);
 }
-function swStyle() { try { return localStorage.getItem('colourCatalog_swEditStyle') || 'popup'; } catch (e) { return 'popup'; } }
+function swStyle() { return 'bar'; }
 function swSetStyle(v) { try { localStorage.setItem('colourCatalog_swEditStyle', v); } catch (e) {} swSelIdx = -1; swBarUpdate(); }
 let swSelIdx = -1;
 function swEditToggle(on) {
-  document.getElementById('swPages').classList.toggle('sw-editing', on); const r = document.getElementById('swStyleRow'); if (r) r.style.display = on ? 'flex' : 'none';
+  document.getElementById('swPages').classList.toggle('sw-editing', on); const eh = document.getElementById('swEditHint'); if (eh) eh.style.display = on ? 'block' : 'none';
   const sel = document.getElementById('swStyleSel'); if (sel) sel.value = swStyle(); swSelIdx = -1; swBarUpdate();
 }
-function swCardTap(i) { if (!document.getElementById('swPages').classList.contains('sw-editing')) return; if (swStyle() === 'bar') { swSelIdx = swSelIdx === i ? -1 : i; swBarUpdate(); } else swEditColour(i); }
+function swCardTap(i) { if (!document.getElementById('swPages').classList.contains('sw-editing')) return; swSelIdx = swSelIdx === i ? -1 : i; swBarUpdate(); }
 function swBarUpdate() {
   const bar = document.getElementById('swBar'); if (!bar) return;
   const active = document.getElementById('view-printcolours').classList.contains('active'), on = active && document.getElementById('swPages').classList.contains('sw-editing') && swStyle() === 'bar', sw = swCurrentSwatches[swSelIdx];
@@ -3949,8 +3954,13 @@ function swEcSync(from, pf) {
   if (!n.dataset.t) { try { n.value = bpMake(h.value.toUpperCase(), 0, {}).name || n.value; } catch (e) {} }
 }
 // change one colour of a batch everywhere (items, photo numbers, skipped list)
+function bcEcErr(msg) {
+  try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+  const el = document.getElementById('swEcErr') || document.getElementById('rfEcErr'); if (el) { el.textContent = msg; el.style.display = 'block'; } else alert(msg);
+}
 function bdRecolour(b, old, h, name) {
-  if (h !== old && b.items.some(i => String(i.hex || '').toUpperCase() === h)) { alert('That colour is already in this batch.'); return null; }
+  const dup = h !== old ? b.items.findIndex(i => String(i.hex || '').toUpperCase() === h) : -1;
+  if (dup >= 0) { bcEcErr('This exact colour is already #' + (dup + 1) + ' in the batch. Change the hex a little to keep both.'); return null; }
   const snap = undoCapture(), photosBefore = JSON.stringify(bdPhotosAll());
   b.items.forEach(i => { if (String(i.hex || '').toUpperCase() === old) { i.hex = h; i.name = name || h; } });
   b.noPhoto = (b.noPhoto || []).map(x => x.toUpperCase() === old ? h : x);
@@ -3960,7 +3970,7 @@ function bdRecolour(b, old, h, name) {
 }
 function swEcSave(idx) {
   let h = document.getElementById('swEcH').value.trim().toUpperCase(); if (h[0] !== '#') h = '#' + h;
-  if (!isValidHex(h)) { alert('Enter a valid hex like #E8B4C0'); return; }
+  if (!isValidHex(h)) { bcEcErr('Enter a valid hex like #E8B4C0'); return; }
   const name = document.getElementById('swEcN').value.trim(), sw = swCurrentSwatches[idx], old = String(sw.hex).toUpperCase(), bid = swSource && swSource.batchId, b = bid ? bdById(bid) : null;
   if (b) {
     const r = bdRecolour(b, old, h, name); if (!r) return;
@@ -3987,6 +3997,14 @@ function removeSwatchFromPreview(idx) {
   renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
 }
 
+function swSortByPhoto() {
+  const bid = swSource && swSource.batchId; if (!bid) return;
+  rfSortByPhoto(bid, () => {
+    const b = bdById(bid), pos = new Map(); b.items.forEach((it, k) => { const h = String(it.hex || '').toUpperCase(); if (!pos.has(h)) pos.set(h, k); });
+    swCurrentSwatches = swCurrentSwatches.map((sw, k) => ({ sw, k })).sort((a, c) => (pos.has(String(a.sw.hex).toUpperCase()) ? pos.get(String(a.sw.hex).toUpperCase()) : 1e6) - (pos.has(String(c.sw.hex).toUpperCase()) ? pos.get(String(c.sw.hex).toUpperCase()) : 1e6) || a.k - c.k).map(o => o.sw);
+    swSelIdx = -1; renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
+  });
+}
 function sortPreviewByLightness(mode) {
   if (swCurrentSwatches.length < 2) return;
   const sign = mode === 'light-dark' ? -1 : 1;
@@ -4022,6 +4040,7 @@ let swHideHex = false;
 function renderPrintColoursFromSwatches(swatches, label, source) {
   const hc = document.getElementById('swHideChk'); if (hc) hc.checked = swHideHex; const hr = document.getElementById('swHideRow'); if (hr) hr.style.display = swHideHex ? 'block' : 'none';
   swSource = source || null;
+  { const pbn = document.getElementById('swPhotoSortBtn'); if (pbn) pbn.style.display = (swSource && swSource.batchId && bdPhotosOf(swSource.batchId).length) ? '' : 'none'; }
   { const sb = swSource && swSource.batchId ? bdById(swSource.batchId) : null; if (sb && sb.incPhotos && bdPhotosOf(sb.id).length && bdAnnotSig[sb.id] !== bdSig(sb)) { bdAnnotSig[sb.id] = bdSig(sb); bdAnnotPrep(sb).then(() => { if (swSource && swSource.batchId === sb.id && document.getElementById('view-printcolours').classList.contains('active')) renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource); }); } }
   { const pb = swSource && swSource.batchId ? bdById(swSource.batchId) : null, has = !!(pb && bdPhotosOf(pb.id).length), row = document.getElementById('swPhotoRow'); if (row) { row.style.display = has ? 'flex' : 'none'; document.getElementById('swPhotoChk').checked = !!(has && pb.incPhotos); const nt = document.getElementById('swPhotoNote'); nt.style.display = has ? 'block' : 'none'; if (has) nt.innerHTML = rfNoteHtml(pb); } }
   swCurrentSwatches = swatches.slice();
@@ -6659,7 +6678,7 @@ function rfEditRender(b, cur) {
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px"><input type="color" id="rfEcP" value="${hx.toLowerCase()}" style="width:56px;height:44px;border:none;padding:0;background:none" oninput="swEcSync('p','rfEc')">
     <input id="rfEcH" value="${hx}" maxlength="7" style="flex:1;min-width:0;font-size:16px;padding:10px;border:1.5px solid var(--border,#d9c9ad);border-radius:10px;text-transform:uppercase" oninput="swEcSync('h','rfEc')"></div>
     <input id="rfEcN" value="${escapeHtml(it.name || '')}" placeholder="Colour name" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--border,#d9c9ad);border-radius:10px;margin-bottom:8px" oninput="this.dataset.t=1">
-    <button class="add-colour-btn" style="width:100%" onclick="rfEcSave('${hx}')">Save colour</button></div>`;
+    <div id="rfEcErr" style="display:none;color:#c0392b;font-weight:700;font-size:13px;margin:0 0 8px"></div><button class="add-colour-btn" style="width:100%" onclick="rfEcSave('${hx}')">Save colour</button></div>`;
 }
 // tap a number on a photo inside a preview: edit that colour right there
 function bdPhotoTap(e, i, bid) {
@@ -6673,6 +6692,7 @@ function bdPhotoTap(e, i, bid) {
     <input id="swEcH" value="${hx}" maxlength="7" style="flex:1;min-width:0;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;text-transform:uppercase" oninput="swEcSync('h')"></div>
     <input id="swEcN" value="${escapeHtml(it.name || '')}" placeholder="Colour name" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;margin-bottom:6px" oninput="this.dataset.t=1">
     <div style="font-size:12px;color:var(--brown-500,#8a6d4b);margin-bottom:12px">Also changes this colour in the batch.</div>
+    <div id="swEcErr" style="display:none;color:#c0392b;font-weight:700;font-size:13px;margin:0 0 10px"></div>
     <div style="display:flex;gap:8px"><button class="add-secondary-btn" style="flex:1" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="flex:1" onclick="bdPhotoEcSave('${bid}','${hx}')">Save</button></div>
     <button class="text-btn" style="margin-top:10px;font-weight:700" onclick="bcClose();rfOpen(${i})">Move or remove numbers on this photo&hellip;</button>`);
 }
@@ -6683,14 +6703,14 @@ function bdPvRefresh(old, h, name) {
 }
 function bdPhotoEcSave(bid, old) {
   let h = document.getElementById('swEcH').value.trim().toUpperCase(); if (h[0] !== '#') h = '#' + h;
-  if (!isValidHex(h)) { alert('Enter a valid hex like #E8B4C0'); return; }
+  if (!isValidHex(h)) { bcEcErr('Enter a valid hex like #E8B4C0'); return; }
   const b = bdById(bid), name = document.getElementById('swEcN').value.trim() || h, r = bdRecolour(b, old, h, name); if (!r) return;
   bcClose(); bdPvRefresh(old, h, name);
   undoOffer('Colour changed', r.snap, () => { try { localStorage.setItem(BP_STORE_KEY, r.photosBefore); } catch (e) {} bdPvRefresh(h, old, ''); });
 }
 function rfEcSave(old) {
   let h = document.getElementById('rfEcH').value.trim().toUpperCase(); if (h[0] !== '#') h = '#' + h;
-  if (!isValidHex(h)) { alert('Enter a valid hex like #E8B4C0'); return; }
+  if (!isValidHex(h)) { bcEcErr('Enter a valid hex like #E8B4C0'); return; }
   const b = rfBatch(), r = bdRecolour(b, old, h, document.getElementById('rfEcN').value.trim()); if (!r) return;
   rfEditKey = undefined; rfSel = -1; rfRender();
   undoOffer('Colour changed', r.snap, () => { try { localStorage.setItem(BP_STORE_KEY, r.photosBefore); } catch (e) {} rfEditKey = undefined; rfLoad(); });
@@ -6707,8 +6727,8 @@ function rfRemoveSkipped() {
   undoOffer((n - b.items.length) + ' colours removed from batch', snap, () => rfRender());
 }
 // order the batch's colours by their position on the photo(s): columns left to right, each top to bottom
-function rfSortByPhoto() {
-  const b = rfBatch(), ph = bdPhotosOf(b.id), snap = undoCapture(), at = new Map();
+function rfSortByPhoto(bid, after) {
+  const b = bid ? bdById(bid) : rfBatch(), ph = bdPhotosOf(b.id), snap = undoCapture(), at = new Map();
   ph.forEach((p, pi) => {
     const ms = p.marks.filter(m => b.items.some(i => String(i.hex || '').toUpperCase() === m.hex) && !at.has(m.hex)); if (!ms.length) return;
     const xs = ms.map(m => m.px).sort((x, y) => x - y); let gap = 0, cut = -1;
@@ -6719,8 +6739,8 @@ function rfSortByPhoto() {
   if (!at.size) { alert('Place some numbers on the photo first.'); return; }
   const key = i => at.has(String(i.hex || '').toUpperCase()) ? at.get(String(i.hex || '').toUpperCase()) : 1e6;
   b.items = b.items.map((it, k) => ({ it, k })).sort((x, y) => key(x.it) - key(y.it) || x.k - y.k).map(o => o.it);
-  saveBatches(); try { bdRenderItems(); } catch (e) {} rfRender();
-  undoOffer('Colours re-numbered in photo order', snap, () => rfRender());
+  saveBatches(); try { bdRenderItems(); } catch (e) {} (after || rfRender)();
+  undoOffer('Colours re-numbered in photo order', snap, () => (after || rfRender)());
 }
 function rfUnskip() { const b = rfBatch(); b.noPhoto = []; saveBatches(); rfRender(); }
 function rfArmTog(hex) { rfArm = rfArm === hex ? null : hex; rfSel = -1; rfRender(); }
