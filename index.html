@@ -521,6 +521,7 @@
   .bp-btns button { border:1.5px solid var(--border); background:#fff; border-radius:12px; padding:11px 6px; font-family:inherit; font-size:14px; font-weight:700; color:var(--brown-700); cursor:pointer; }
   .bp-picked { position:absolute; left:8px; right:8px; bottom:8px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.96); border-radius:12px; padding:7px 10px; line-height:1.25; box-shadow:0 2px 10px rgba(0,0,0,.35); pointer-events:none; font-size:13px; font-weight:700; color:#000; }
   .bp-picked .pk-sw { flex:0 0 34px; width:34px; height:34px; border-radius:8px; border:2px solid #000; }
+  .bp-picked .pk-x { pointer-events:auto; flex:0 0 auto; width:34px; height:34px; border-radius:50%; border:2px solid var(--danger,#c0392b); background:#fff; color:var(--danger,#c0392b); font-size:17px; font-weight:800; line-height:1; cursor:pointer; padding:0; }
   .bp-picked small { display:block; font-weight:600; color:#555; font-size:11.5px; }
   body.bp-typing .bp-stick { position:static; } body.bp-typing #bpBar { display:none !important; }
   .bp-dotsbox { margin-top:8px; } .bp-dots-l { font-size:11.5px; font-weight:700; color:var(--muted); margin-bottom:4px; }
@@ -6335,7 +6336,7 @@ function bpSample(x, y) {
 function bpDragStart(cx, cy) {
   const q = bpPt(cx, cy), cv = q.cv, fs = Math.max(12, cv.width / 34), hit = fs * 1.9; let best = null, bd = 1e9;
   bpList.forEach(x => { if (x.px == null) return; const dd = Math.hypot(x.px * cv.width - q.x, x.py * cv.height - q.y); if (dd < hit && dd < bd) { bd = dd; best = x; } });
-  if (!best) return false; bpDrag = { id: best.id, moved: false, sx: cx, sy: cy }; return true;
+  if (!best) return false; bpDrag = { id: best.id, moved: false, sx: cx, sy: cy, ox: best.px, oy: best.py }; return true;
 }
 function bpDragMove(cx, cy) {
   if (!bpDrag) return; if (!bpDrag.moved && Math.hypot(cx - bpDrag.sx, cy - bpDrag.sy) < 6) return; bpDrag.moved = true;
@@ -6346,8 +6347,9 @@ function bpDragEnd() {
   if (!bpDrag) return; const d = bpDrag; bpDrag = null; if (!d.moved) return;
   bpNoClick = Date.now(); const x = bpList.find(v => v.id === d.id); if (!x) return;
   const cv = document.getElementById('bpCanvas'), hex = bpSample(x.px * cv.width, x.py * cv.height), nx = bpMake(hex, 0, {});
+  const o = { hex: x.hex, px: d.ox, py: d.oy, bg: x.bg, on: x.on, name: x.name };
   x.hex = nx.hex; x.bg = false; x.on = true; if (!x.edited) x.name = nx.name;
-  bpPicked(x.hex, x.name, `Moved Sr ${bpList.indexOf(x) + 1} \u2014 colour re-read here`); bpDraw(); bpRender();
+  bpPicked(x.hex, x.name, `Moved Sr ${bpList.indexOf(x) + 1} \u2014 colour re-read here`, () => Object.assign(x, o)); bpDraw(); bpRender();
 }
 (function () {
   const wire = () => {
@@ -6385,14 +6387,19 @@ function bpDotsRender() {
 }
 function bpAddCand(hex, px, py) {
   const nx = bpMake(hex, 0, { manual: true, px, py }), ex = bpList.find(v => v.hex === nx.hex);
-  if (ex) ex.on = true; else bpList.push(nx);
-  bpPicked(nx.hex, nx.name, ex ? `Already in list as Sr ${bpList.indexOf(ex) + 1} (ticked)` : `Added as Sr ${bpList.length}`); bpDraw(); bpRender();
+  const wasOn = ex ? ex.on : false; if (ex) ex.on = true; else bpList.push(nx);
+  bpPicked(nx.hex, nx.name, ex ? `Already in list as Sr ${bpList.indexOf(ex) + 1} (ticked)` : `Added as Sr ${bpList.length}`, () => { if (ex) ex.on = wasOn; else bpList = bpList.filter(v => v !== nx); }); bpDraw(); bpRender();
 }
 let bpPkTimer = null;
-function bpPicked(hex, name, msg) {
-  const el = document.getElementById('bpPicked'); if (!el) return;
-  el.innerHTML = `<span class="pk-sw" style="background:${hex}"></span><span>${escapeHtml(msg)}<small>${hex}${name ? ' &middot; ' + escapeHtml(name) : ''}</small></span>`;
-  el.style.display = 'flex'; clearTimeout(bpPkTimer); bpPkTimer = setTimeout(() => { el.style.display = 'none'; }, 6000);
+let bpUndoFn = null;
+function bpPicked(hex, name, msg, undo) {
+  const el = document.getElementById('bpPicked'); if (!el) return; bpUndoFn = undo || null;
+  el.innerHTML = `<span class="pk-sw" style="background:${hex}"></span><span style="flex:1;min-width:0">${escapeHtml(msg)}<small>${hex}${name ? ' &middot; ' + escapeHtml(name) : ''}</small></span>${undo ? '<button class="pk-x" onclick="bpUndoPick()" aria-label="Reject this">&#10005;</button>' : ''}`;
+  el.style.display = 'flex'; clearTimeout(bpPkTimer); bpPkTimer = setTimeout(() => { el.style.display = 'none'; bpUndoFn = null; }, 9000);
+}
+function bpUndoPick() {
+  const f = bpUndoFn; bpUndoFn = null; clearTimeout(bpPkTimer); const el = document.getElementById('bpPicked'); if (el) el.style.display = 'none';
+  if (f) { f(); bpDraw(); bpRender(); }
 }
 function bpTap(e) {
   if (Date.now() - bpNoClick < 450) return;
@@ -6404,10 +6411,10 @@ function bpTap(e) {
   const R = Math.max(2, Math.round(cv.width / 160)), d = bpCv.getContext('2d').getImageData(Math.max(0, x - R), Math.max(0, y - R), R * 2 + 1, R * 2 + 1).data;
   let rr = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) { rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; }
   const hex = bpHex(rr / n, gg / n, bb / n);
-  if (bpTarget) { const t = bpList.find(q => q.id === bpTarget); bpTarget = null; if (t) { t.hex = hex; t.px = x / cv.width; t.py = y / cv.height; t.on = true; t.bg = false; bpPicked(hex, t.name, `Updated Sr ${bpList.indexOf(t) + 1}`); } bpHint(); bpDraw(); bpRender(); return; }
+  if (bpTarget) { const t = bpList.find(q => q.id === bpTarget); bpTarget = null; if (t) { const o = { hex: t.hex, px: t.px, py: t.py, on: t.on, bg: t.bg }; t.hex = hex; t.px = x / cv.width; t.py = y / cv.height; t.on = true; t.bg = false; bpPicked(hex, t.name, `Updated Sr ${bpList.indexOf(t) + 1}`, () => Object.assign(t, o)); } bpHint(); bpDraw(); bpRender(); return; }
   const nx = bpMake(hex, 0, { manual: true, px: x / cv.width, py: y / cv.height });
-  const ex = bpList.find(v => v.hex === nx.hex); if (ex) ex.on = true; else bpList.push(nx);
-  bpPicked(nx.hex, nx.name, ex ? `Already in list as Sr ${bpList.indexOf(ex) + 1} (ticked)` : `Added as Sr ${bpList.length}`);
+  const ex = bpList.find(v => v.hex === nx.hex), wasOn = ex ? ex.on : false; if (ex) ex.on = true; else bpList.push(nx);
+  bpPicked(nx.hex, nx.name, ex ? `Already in list as Sr ${bpList.indexOf(ex) + 1} (ticked)` : `Added as Sr ${bpList.length}`, () => { if (ex) ex.on = wasOn; else bpList = bpList.filter(v => v !== nx); });
   bpDraw(); bpRender();
 }
 let bpEdit = false;
