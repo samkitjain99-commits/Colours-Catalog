@@ -3918,13 +3918,13 @@ function downloadSelectedGeneralExcel() {
 function swEditColour(idx) {
   if (!document.getElementById('swPages').classList.contains('sw-editing')) return;
   const sw = swCurrentSwatches[idx]; if (!sw) return; const hx = String(sw.hex).toUpperCase();
-  bcModal(`<h3 style="margin:0 0 10px;font-family:'Playfair Display',serif;color:var(--brown-700)">Edit colour #${idx + 1}</h3>
+  bcModal(`<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px"><h3 style="margin:0;flex:1;font-family:'Playfair Display',serif;color:var(--brown-700)">Edit colour #${idx + 1}</h3><button class="add-secondary-btn" style="padding:9px 14px" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="padding:9px 18px;width:auto" onclick="swEcSave(${idx})">Save</button></div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><input type="color" id="swEcP" value="${hx.toLowerCase()}" style="width:64px;height:48px;border:none;padding:0;background:none" oninput="swEcSync('p')">
     <input id="swEcH" value="${hx}" maxlength="7" style="flex:1;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;text-transform:uppercase" oninput="swEcSync('h')"></div>
     <input id="swEcN" value="${escapeHtml(sw.name || '')}" placeholder="Colour name" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;margin-bottom:6px" oninput="this.dataset.t=1">
     <div style="font-size:12px;color:var(--brown-500,#8a6d4b);margin-bottom:12px">${swSource && swSource.batchId ? 'Also changes this colour in the batch and on the photo.' : 'Changes this print only.'}</div>
     <div id="swEcErr" style="display:none;color:#c0392b;font-weight:700;font-size:13px;margin:0 0 10px"></div>
-    <div style="display:flex;gap:8px"><button class="add-secondary-btn" style="flex:1" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="flex:1" onclick="swEcSave(${idx})">Save</button></div>`);
+`);
 }
 function swStyle() { return 'bar'; }
 function swSetStyle(v) { try { localStorage.setItem('colourCatalog_swEditStyle', v); } catch (e) {} swSelIdx = -1; swBarUpdate(); }
@@ -6732,13 +6732,12 @@ function bdPhotoTap(e, i, bid) {
   ph.marks.forEach(m => { if (!b.items.some(it => String(it.hex || '').toUpperCase() === m.hex)) return; const d = Math.hypot((m.px - fx), (m.py - fy) * r.height / r.width); if (d < bd) { bd = d; best = m; } });
   if (!best) { if (confirm('No number here. Open the full photo editor to add or move numbers?')) rfOpen(i); return; }
   const it = b.items.find(x => String(x.hex || '').toUpperCase() === best.hex), n = b.items.indexOf(it) + 1, hx = best.hex;
-  bcModal(`<h3 style="margin:0 0 10px;font-family:'Playfair Display',serif;color:var(--brown-700)">Edit colour #${n}</h3>
+  bcModal(`<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px"><h3 style="margin:0;flex:1;font-family:'Playfair Display',serif;color:var(--brown-700)">Edit colour #${n}</h3><button class="add-secondary-btn" style="padding:9px 14px" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="padding:9px 18px;width:auto" onclick="bdPhotoEcSave('${bid}','${hx}')">Save</button></div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><input type="color" id="swEcP" value="${hx.toLowerCase()}" style="width:64px;height:48px;border:none;padding:0;background:none" oninput="swEcSync('p')">
     <input id="swEcH" value="${hx}" maxlength="7" style="flex:1;min-width:0;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;text-transform:uppercase" oninput="swEcSync('h')"></div>
     <input id="swEcN" value="${escapeHtml(it.name || '')}" placeholder="Colour name" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--tan-300,#d9c9ad);border-radius:10px;margin-bottom:6px" oninput="this.dataset.t=1">
     <div style="font-size:12px;color:var(--brown-500,#8a6d4b);margin-bottom:12px">Also changes this colour in the batch.</div>
     <div id="swEcErr" style="display:none;color:#c0392b;font-weight:700;font-size:13px;margin:0 0 10px"></div>
-    <div style="display:flex;gap:8px"><button class="add-secondary-btn" style="flex:1" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="flex:1" onclick="bdPhotoEcSave('${bid}','${hx}')">Save</button></div>
     <button class="text-btn" style="margin-top:10px;font-weight:700" onclick="bcClose();rfOpen(${i})">Move or remove numbers on this photo&hellip;</button>`);
 }
 function bdPvRefresh(old, h, name) {
@@ -7124,8 +7123,8 @@ function bcHistOpen(hex) {
     <button class="add-secondary-btn" style="width:100%;margin-top:8px" onclick="bcClose()">Close</button>`);
 }
 /* ---- generic modal ---- */
-function bcModal(html) { document.getElementById('bcModalCard').innerHTML = html; document.getElementById('bcModal').style.display = 'flex'; }
-function bcClose() { document.getElementById('bcModal').style.display = 'none'; }
+function bcModal(html) { document.getElementById('bcModalCard').innerHTML = html; document.getElementById('bcModal').style.display = 'flex'; const sb = document.getElementById('swBar'); if (sb) sb.style.display = 'none'; }
+function bcClose() { document.getElementById('bcModal').style.display = 'none'; try { swBarUpdate(); } catch (e) {} }
 /* ---- undo ---- */
 let undoSnap = null, undoTimer = null;
 function undoCapture() { return JSON.stringify({ catalog, groups, secondaryColors, batches, favs: [...libFavs], gu: generallyUsedPalette }); }
