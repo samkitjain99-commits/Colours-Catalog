@@ -530,6 +530,7 @@
   .rf-hint { margin-top:8px; font-size:13px; font-weight:700; color:var(--brown-700); min-height:18px; }
   .rf-chips { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 80px; }
   .rf-chip { display:flex; align-items:center; gap:6px; border:1.5px solid var(--border); background:#fff; border-radius:99px; padding:4px 12px 4px 4px; font-family:inherit; font-size:13px; font-weight:700; color:var(--brown-700); cursor:pointer; }
+  .rf-cx { margin-left:2px; width:22px; height:22px; border-radius:50%; background:#fff; color:var(--danger,#c0392b); border:1.5px solid var(--danger,#c0392b); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; line-height:1; }
   .rf-chip i { width:26px; height:26px; border-radius:50%; border:1.5px solid rgba(0,0,0,.25); display:block; }
   .rf-chip.on { background:var(--brown-700); color:#fff; border-color:var(--brown-700); }
   #rfCanvas { width:100%; height:auto; max-height:42vh; object-fit:contain; display:block; touch-action:manipulation; }
@@ -6527,8 +6528,8 @@ function rfBatch() { return bdById(bdCurrentId); }
 let rfReturn = 'batchDetail';
 function rfOpen() { const a = document.querySelector('.view.active'); rfReturn = a && a.id ? a.id.replace('view-', '') : 'batchDetail'; if (rfReturn === 'batchRef') rfReturn = 'batchDetail'; rfIdx = 0; rfArm = null; rfSel = -1; showView('batchRef'); rfLoad(); }
 function rfClose() { bdRefBtn(); if (rfReturn === 'batchPreview') bdPreview(); else if (rfReturn === 'printcolours') bdPrintColours(); else showView('batchDetail'); }
-function rfStatus(b) { const marked = new Set(); bdPhotosOf(b.id).forEach(p => p.marks.forEach(m => marked.add(m.hex))); const n = b.items.filter(i => marked.has((i.hex || '').toUpperCase())).length; return { n, total: b.items.length }; }
-function rfNoteHtml(b) { const st = rfStatus(b); return st.n < st.total ? `${st.n} of ${st.total} colours are numbered on the photos. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n} colours on the photos</button>` : `All ${st.total} colours are numbered on the photos. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button>`; }
+function rfStatus(b) { const marked = new Set(); bdPhotosOf(b.id).forEach(p => p.marks.forEach(m => marked.add(m.hex))); const skip = new Set((b.noPhoto || []).map(h => h.toUpperCase())); const n = b.items.filter(i => marked.has((i.hex || '').toUpperCase())).length, sk = b.items.filter(i => !marked.has((i.hex || '').toUpperCase()) && skip.has((i.hex || '').toUpperCase())).length; return { n, sk, total: b.items.length }; }
+function rfNoteHtml(b) { const st = rfStatus(b); return st.n + st.sk < st.total ? `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ' (' + st.sk + ' marked not on the photo)' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n - st.sk} colours on the photos</button>` : `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ', ' + st.sk + ' marked not on the photo' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button>`; }
 function rfLoad() {
   const b = rfBatch(), ph = bdPhotosOf(b.id); if (rfIdx >= ph.length) rfIdx = Math.max(0, ph.length - 1);
   const cv = document.getElementById('rfCanvas');
@@ -6546,14 +6547,18 @@ function rfRender() {
   }
   // colours of this batch that have no number on any photo yet
   const marked = new Set(); ph.forEach(p => p.marks.forEach(m => marked.add(m.hex)));
-  const un = b.items.map((it, i) => ({ it, n: i + 1 })).filter(o => !marked.has((o.it.hex || '').toUpperCase()));
-  document.getElementById('rfUnL').textContent = un.length ? `Colours without a number on any photo (${un.length}) \u2014 tap one, then tap the photo` : (b.items.length ? 'All colours are marked on a photo' : '');
-  document.getElementById('rfChips').innerHTML = ph.length ? un.map(o => `<button class="rf-chip ${rfArm === (o.it.hex || '').toUpperCase() ? 'on' : ''}" onclick="rfArmTog('${(o.it.hex || '').toUpperCase()}')"><i style="background:${o.it.hex}"></i>#${o.n}</button>`).join('') : '';
+  const skip = new Set((b.noPhoto || []).map(h => h.toUpperCase()));
+  const un = b.items.map((it, i) => ({ it, n: i + 1 })).filter(o => !marked.has((o.it.hex || '').toUpperCase()) && !skip.has((o.it.hex || '').toUpperCase()));
+  const nSkip = b.items.filter(it => skip.has((it.hex || '').toUpperCase()) && !marked.has((it.hex || '').toUpperCase())).length;
+  document.getElementById('rfUnL').textContent = un.length ? `Colours without a number on any photo (${un.length}) \u2014 tap one then tap the photo, or tap \u2715 if it is not on the photo` : (b.items.length ? 'All colours are handled' : '');
+  document.getElementById('rfChips').innerHTML = ph.length ? un.map(o => `<button class="rf-chip ${rfArm === (o.it.hex || '').toUpperCase() ? 'on' : ''}" onclick="rfArmTog('${(o.it.hex || '').toUpperCase()}')"><i style="background:${o.it.hex}"></i>#${o.n}<span class="rf-cx" title="Not on the photo" onclick="event.stopPropagation();rfSkip('${(o.it.hex || '').toUpperCase()}')">&#10005;</span></button>`).join('') + (nSkip ? `<button class="text-btn" style="flex-basis:100%;text-align:left;font-weight:700" onclick="rfUnskip()">Show the ${nSkip} colour${nSkip !== 1 ? 's' : ''} marked \u201cnot on the photo\u201d again</button>` : '') : '';
   const h = document.getElementById('rfHint');
   if (rfArm) { const n = b.items.findIndex(i => (i.hex || '').toUpperCase() === rfArm) + 1; h.innerHTML = `Tap the photo where colour #${n} is`; }
   else if (rfSel >= 0 && cur && cur.marks[rfSel]) { const m = cur.marks[rfSel], n = b.items.findIndex(i => (i.hex || '').toUpperCase() === m.hex) + 1; h.innerHTML = `Number ${n} selected \u2014 drag to move &nbsp; <button class="text-btn" style="color:var(--danger);font-weight:800" onclick="rfRemoveSel()">Remove it</button>`; }
   else h.textContent = '';
 }
+function rfSkip(hex) { const b = rfBatch(); b.noPhoto = (b.noPhoto || []).concat(hex); saveBatches(); if (rfArm === hex) rfArm = null; rfRender(); }
+function rfUnskip() { const b = rfBatch(); b.noPhoto = []; saveBatches(); rfRender(); }
 function rfArmTog(hex) { rfArm = rfArm === hex ? null : hex; rfSel = -1; rfRender(); }
 function rfPt(cx, cy) { const cv = document.getElementById('rfCanvas'), r = cv.getBoundingClientRect(), k = Math.min(r.width / cv.width, r.height / cv.height), ox = r.left + (r.width - cv.width * k) / 2, oy = r.top + (r.height - cv.height * k) / 2; return { x: (cx - ox) / k, y: (cy - oy) / k, cv }; }
 function rfHit(cx, cy) {
