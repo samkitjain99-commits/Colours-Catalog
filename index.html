@@ -1595,6 +1595,7 @@
       <div class="bp-stage" style="position:relative"><canvas id="rfCanvas" onclick="rfTap(event)"></canvas></div>
       <div id="rfHint" class="rf-hint"></div>
     </div>
+    <div id="rfEdit" class="no-print" style="margin:8px 0"></div>
     <div class="bd-actions no-print" style="margin-top:6px">
       <button class="add-secondary-btn" onclick="document.getElementById('rfFile').click()">+ Add photo</button>
       <button class="add-secondary-btn" onclick="rfSortByPhoto()" style="flex-basis:100%">&#8645; Sort numbers by photo order</button>
@@ -3913,24 +3914,29 @@ function swEditColour(idx) {
     <div style="font-size:12px;color:var(--brown-500,#8a6d4b);margin-bottom:12px">${swSource && swSource.batchId ? 'Also changes this colour in the batch and on the photo.' : 'Changes this print only.'}</div>
     <div style="display:flex;gap:8px"><button class="add-secondary-btn" style="flex:1" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="flex:1" onclick="swEcSave(${idx})">Save</button></div>`);
 }
-function swEcSync(from) {
-  const p = document.getElementById('swEcP'), h = document.getElementById('swEcH'), n = document.getElementById('swEcN');
+function swEcSync(from, pf) {
+  pf = pf || 'swEc'; const p = document.getElementById(pf + 'P'), h = document.getElementById(pf + 'H'), n = document.getElementById(pf + 'N');
   if (from === 'p') h.value = p.value.toUpperCase(); else { let v = h.value.trim(); if (v[0] !== '#') v = '#' + v; if (!isValidHex(v)) return; p.value = v.toLowerCase(); }
   if (!n.dataset.t) { try { n.value = bpMake(h.value.toUpperCase(), 0, {}).name || n.value; } catch (e) {} }
+}
+// change one colour of a batch everywhere (items, photo numbers, skipped list)
+function bdRecolour(b, old, h, name) {
+  if (h !== old && b.items.some(i => String(i.hex || '').toUpperCase() === h)) { alert('That colour is already in this batch.'); return null; }
+  const snap = undoCapture(), photosBefore = JSON.stringify(bdPhotosAll());
+  b.items.forEach(i => { if (String(i.hex || '').toUpperCase() === old) { i.hex = h; i.name = name || h; } });
+  b.noPhoto = (b.noPhoto || []).map(x => x.toUpperCase() === old ? h : x);
+  const all = bdPhotosOf(b.id); let ch = false; all.forEach(ph => ph.marks.forEach(m => { if (m.hex === old) { m.hex = h; ch = true; } })); if (ch) bdPhotosSet(b.id, all);
+  saveBatches(); try { bdRenderItems(); } catch (e) {}
+  return { snap, photosBefore };
 }
 function swEcSave(idx) {
   let h = document.getElementById('swEcH').value.trim().toUpperCase(); if (h[0] !== '#') h = '#' + h;
   if (!isValidHex(h)) { alert('Enter a valid hex like #E8B4C0'); return; }
   const name = document.getElementById('swEcN').value.trim(), sw = swCurrentSwatches[idx], old = String(sw.hex).toUpperCase(), bid = swSource && swSource.batchId, b = bid ? bdById(bid) : null;
   if (b) {
-    if (h !== old && b.items.some(i => String(i.hex || '').toUpperCase() === h)) { alert('That colour is already in this batch.'); return; }
-    const snap = undoCapture(), photosBefore = JSON.stringify(bdPhotosAll());
-    b.items.forEach(i => { if (String(i.hex || '').toUpperCase() === old) { i.hex = h; i.name = name || h; } });
-    b.noPhoto = (b.noPhoto || []).map(x => x.toUpperCase() === old ? h : x);
-    const all = bdPhotosOf(bid); let ch = false; all.forEach(ph => ph.marks.forEach(m => { if (m.hex === old) { m.hex = h; ch = true; } })); if (ch) bdPhotosSet(bid, all);
-    saveBatches(); try { bdRenderItems(); } catch (e) {}
+    const r = bdRecolour(b, old, h, name); if (!r) return;
     sw.hex = h; sw.name = name; bcClose(); renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
-    undoOffer('Colour changed', snap, () => { try { localStorage.setItem(BP_STORE_KEY, photosBefore); } catch (e) {} sw.hex = old; renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource); });
+    undoOffer('Colour changed', r.snap, () => { try { localStorage.setItem(BP_STORE_KEY, r.photosBefore); } catch (e) {} sw.hex = old; renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource); });
     return;
   }
   sw.hex = h; sw.name = name; bcClose(); renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource);
@@ -6604,10 +6610,32 @@ function rfRender() {
   const nSkip = b.items.filter(it => skip.has((it.hex || '').toUpperCase()) && !marked.has((it.hex || '').toUpperCase())).length;
   document.getElementById('rfUnL').textContent = un.length ? `Colours without a number on any photo (${un.length}) \u2014 tap one then tap the photo, or tap \u2715 to remove it from the batch` : (b.items.length ? 'All colours are handled' : '');
   document.getElementById('rfChips').innerHTML = ph.length ? un.map(o => `<button class="rf-chip ${rfArm === (o.it.hex || '').toUpperCase() ? 'on' : ''}" onclick="rfArmTog('${(o.it.hex || '').toUpperCase()}')"><i style="background:${o.it.hex}"></i>#${o.n}<span class="rf-cx" title="Not on the photo" onclick="event.stopPropagation();rfSkip('${(o.it.hex || '').toUpperCase()}')">&#10005;</span></button>`).join('') + (nSkip ? `<button class="text-btn" style="flex-basis:100%;text-align:left;font-weight:700" onclick="rfRemoveSkipped()" style="color:var(--danger)">Remove the ${nSkip} colour${nSkip !== 1 ? 's' : ''} marked \u201cnot on the photo\u201d from the batch</button><button class="text-btn" style="flex-basis:100%;text-align:left;font-weight:700" onclick="rfUnskip()">Show them again</button>` : '') : '';
+  rfEditRender(b, cur);
   const h = document.getElementById('rfHint');
   if (rfArm) { const n = b.items.findIndex(i => (i.hex || '').toUpperCase() === rfArm) + 1; h.innerHTML = `Tap the photo where colour #${n} is`; }
   else if (rfSel >= 0 && cur && cur.marks[rfSel]) { const m = cur.marks[rfSel], n = b.items.findIndex(i => (i.hex || '').toUpperCase() === m.hex) + 1; h.innerHTML = `Number ${n} selected \u2014 drag to move &nbsp; <button class="text-btn" style="color:var(--danger);font-weight:800" onclick="rfRemoveSel()">Remove it</button>`; }
   else h.textContent = 'Tap anywhere on the photo to pick that colour and add it to the batch';
+}
+let rfEditKey;
+function rfEditRender(b, cur) {
+  const box = document.getElementById('rfEdit'); if (!box) return;
+  const m = rfSel >= 0 && cur ? cur.marks[rfSel] : null, it = m ? b.items.find(i => String(i.hex || '').toUpperCase() === m.hex) : null;
+  const key = it ? b.id + '|' + m.hex : null; if (key === rfEditKey) return; rfEditKey = key;
+  if (!it) { box.innerHTML = ''; return; }
+  const n = b.items.indexOf(it) + 1, hx = m.hex;
+  box.innerHTML = `<div style="background:var(--cream,#f4ebdc);border:1.5px solid var(--border,#e2d5bd);border-radius:14px;padding:12px">
+    <div style="font-family:'Playfair Display',serif;font-weight:800;font-size:18px;color:var(--brown-700);margin-bottom:8px">Edit colour #${n}</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px"><input type="color" id="rfEcP" value="${hx.toLowerCase()}" style="width:56px;height:44px;border:none;padding:0;background:none" oninput="swEcSync('p','rfEc')">
+    <input id="rfEcH" value="${hx}" maxlength="7" style="flex:1;min-width:0;font-size:16px;padding:10px;border:1.5px solid var(--border,#d9c9ad);border-radius:10px;text-transform:uppercase" oninput="swEcSync('h','rfEc')"></div>
+    <input id="rfEcN" value="${escapeHtml(it.name || '')}" placeholder="Colour name" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--border,#d9c9ad);border-radius:10px;margin-bottom:8px" oninput="this.dataset.t=1">
+    <button class="add-colour-btn" style="width:100%" onclick="rfEcSave('${hx}')">Save colour</button></div>`;
+}
+function rfEcSave(old) {
+  let h = document.getElementById('rfEcH').value.trim().toUpperCase(); if (h[0] !== '#') h = '#' + h;
+  if (!isValidHex(h)) { alert('Enter a valid hex like #E8B4C0'); return; }
+  const b = rfBatch(), r = bdRecolour(b, old, h, document.getElementById('rfEcN').value.trim()); if (!r) return;
+  rfEditKey = undefined; rfSel = -1; rfRender();
+  undoOffer('Colour changed', r.snap, () => { try { localStorage.setItem(BP_STORE_KEY, r.photosBefore); } catch (e) {} rfEditKey = undefined; rfLoad(); });
 }
 function rfSkip(hex) {
   const b = rfBatch(), snap = undoCapture(), H = String(hex).toUpperCase();
