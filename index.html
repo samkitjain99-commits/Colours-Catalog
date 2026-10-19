@@ -1669,7 +1669,6 @@
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:0"><input type="checkbox" class="bd-chk" id="bdSelAll" onchange="bdSelAllToggle(this.checked)"> Select all</label>
         <button class="bd-rm" id="bdRmBtn" onclick="bdRemoveSelected()" style="display:none"></button>
       </div>
-      <label class="sw-editchk" style="margin:8px 0"><input type="checkbox" id="bdUseDsg" onchange="bdSetUseDsg(this.checked)"> Multiply by No. of designs &mdash; e.g. 21 designs &times; 20 colours &times; 13.5 mtr</label>
       <div class="bd-hdr" id="bdHdr"><span>Lace design</span><span>Pcs</span><span>Mtr/pc</span><span>Total</span><span></span></div>
       <div id="bdItems"></div>
       <div class="bd-total" id="bdTotal"></div>
@@ -4030,7 +4029,7 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
       <div class="sw-board sw-page sw-photopage">
         <div class="sw-title"><h1>REFERENCE <span>PHOTO${a.length > 1 ? ' ' + (i + 1) : ''}</span></h1></div>
         <div class="sw-sub" style="margin-bottom:8px">Numbers on the photo match the colour numbers (#) on the swatch sheet.</div>
-        <img src="${u}" style="display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px">
+        <img src="${u}" onclick="rfOpen(${i})" title="Tap to edit the numbers on this photo" style="display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:6px;cursor:pointer">
       </div>`).join(''); })();
 }
 
@@ -6579,10 +6578,10 @@ function bdRefBtn() { const el = document.getElementById('bdRefBtn'); if (!el) r
 let rfIdx = 0, rfArm = null, rfSel = -1, rfDrag = null, rfNoClick = 0, rfImg = null;
 function rfBatch() { return bdById(bdCurrentId); }
 let rfReturn = 'batchDetail';
-function rfOpen() { const a = document.querySelector('.view.active'); rfReturn = a && a.id ? a.id.replace('view-', '') : 'batchDetail'; if (rfReturn === 'batchRef') rfReturn = 'batchDetail'; rfIdx = 0; rfArm = null; rfSel = -1; showView('batchRef'); rfLoad(); }
+function rfOpen(idx) { const a = document.querySelector('.view.active'); rfReturn = a && a.id ? a.id.replace('view-', '') : 'batchDetail'; if (rfReturn === 'batchRef') rfReturn = 'batchDetail'; rfIdx = +idx > 0 ? +idx : 0; rfArm = null; rfSel = -1; showView('batchRef'); rfLoad(); }
 function rfClose() { bdRefBtn(); if (rfReturn === 'batchPreview') bdPreview(); else if (rfReturn === 'printcolours') bdPrintColours(); else showView('batchDetail'); }
 function rfStatus(b) { const marked = new Set(); bdPhotosOf(b.id).forEach(p => p.marks.forEach(m => marked.add(m.hex))); const skip = new Set((b.noPhoto || []).map(h => h.toUpperCase())); const n = b.items.filter(i => marked.has((i.hex || '').toUpperCase())).length, sk = b.items.filter(i => !marked.has((i.hex || '').toUpperCase()) && skip.has((i.hex || '').toUpperCase())).length; return { n, sk, total: b.items.length }; }
-function rfNoteHtml(b) { const st = rfStatus(b); return st.n + st.sk < st.total ? `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ' (' + st.sk + ' marked not on the photo)' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n - st.sk} colours on the photos</button>` : `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ', ' + st.sk + ' marked not on the photo' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button>`; }
+function rfNoteHtml(b) { const st = rfStatus(b); return st.n + st.sk < st.total ? `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ' (' + st.sk + ' marked not on the photo)' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Mark the other ${st.total - st.n - st.sk} colours on the photos</button> <span style="opacity:.8">(or tap a photo below)</span>` : `${st.n} of ${st.total} colours are numbered on the photos${st.sk ? ', ' + st.sk + ' marked not on the photo' : ''}. <button class="text-btn" style="font-weight:800;text-decoration:underline;color:var(--brown-700)" onclick="rfOpen()">Edit</button> <span style="opacity:.8">(or tap a photo below)</span>`; }
 function rfLoad() {
   const b = rfBatch(), ph = bdPhotosOf(b.id); if (rfIdx >= ph.length) rfIdx = Math.max(0, ph.length - 1);
   const cv = document.getElementById('rfCanvas');
@@ -6706,7 +6705,7 @@ function bdPhotoPagesHtml(b) {
   return a.map((u, i) => `<div class="pc-page" style="width:794px;height:1123px;background:#fff;padding:48px 44px;box-sizing:border-box;font-family:Inter,Arial,sans-serif;position:relative;overflow:hidden">
       <div style="font-size:22px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:#2b1d12">Reference photo${a.length > 1 ? ' ' + (i + 1) + ' of ' + a.length : ''}${b.name ? ' \u2014 ' + escapeHtml(b.name) : ''}</div>
       <div style="font-size:13px;color:#7a6a55;margin:4px 0 14px">Numbers on the photo match the # column of the dyer sheet.</div>
-      <img src="${u}" style="display:block;max-width:100%;max-height:900px;margin:0 auto;border-radius:6px;border:1px solid #d8cdb8">
+      <img src="${u}" onclick="rfOpen(${i})" title="Tap to edit the numbers on this photo" style="display:block;max-width:100%;max-height:900px;margin:0 auto;border-radius:6px;border:1px solid #d8cdb8;cursor:pointer">
     </div>`).join('');
 }
 async function bdPrintColours() {
