@@ -642,6 +642,16 @@
   .lib-dy { font-size:10px; color:var(--brown-700); font-weight:700; margin-top:1px; line-height:1.25; }
   .bc-nudge { display:none; align-items:center; gap:8px; background:#fff3cd; border:1px solid #e6cf7a; color:#5a4500; border-radius:12px; padding:9px 12px; margin:0 0 10px; font-size:13px; font-weight:600; }
   .bc-nudge button { margin-left:auto; border:0; background:#5a4500; color:#fff; border-radius:8px; padding:7px 12px; font-family:inherit; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap; }
+  #swBar { position:fixed; left:10px; right:10px; bottom:12px; z-index:9000; background:var(--brown-700,#6b4430); color:#fff; border-radius:16px; padding:8px 10px; align-items:center; gap:8px; box-shadow:0 6px 20px rgba(0,0,0,.3); }
+  #swBar .sb-dot { width:34px; height:34px; border-radius:50%; flex-shrink:0; border:2px solid #fff; }
+  #swBar .sb-t { flex:1; min-width:0; font-size:13px; font-weight:700; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #swBar .sb-t small { display:block; font-weight:500; opacity:.85; font-size:11px; }
+  #swBar button { border:0; background:#fff; color:var(--brown-700,#6b4430); border-radius:10px; width:42px; height:42px; font-size:17px; font-weight:800; cursor:pointer; flex-shrink:0; }
+  #swBar button:disabled { opacity:.35; }
+  #swBar button.sb-x { background:#fdecea; color:#c0392b; }
+  #swPages .sw-card.sw-sel { background:#f6e9d3; border-radius:12px; }
+  #swPages .sw-card.sw-sel .sw-dot { outline:3px solid #c0392b !important; }
+  #swPages.sw-editing { padding-bottom:72px; }
   #undoToast { position:fixed; left:50%; transform:translateX(-50%); bottom:84px; z-index:9999; background:#2b1d12; color:#fff; border-radius:12px; padding:10px 12px 10px 16px; display:none; align-items:center; gap:14px; font-size:14px; font-weight:600; box-shadow:0 6px 20px rgba(0,0,0,.4); max-width:92vw; }
   #undoToast button { border:0; background:#fff; color:#2b1d12; border-radius:8px; padding:7px 14px; font-family:inherit; font-weight:800; font-size:14px; cursor:pointer; }
   .bc-row { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:12px; padding:8px 10px; margin-bottom:8px; }
@@ -1293,7 +1303,8 @@
     <div class="no-print" id="swPhotoNote" style="display:none;margin:-4px 0 10px;font-size:13px;color:var(--muted);font-weight:600"></div>
     <label class="sw-editchk no-print"><input type="checkbox" id="swHideChk" onchange="swHideHex=this.checked;renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource)"> Dyer copy &mdash; hide real hex codes (prints the hex with its last two characters moved to the middle)</label>
     <div class="no-print" id="swHideRow" style="display:none;margin:0 0 10px"><button class="add-secondary-btn" onclick="bcCodeKey()">&#128273; Code key &amp; find a code</button></div>
-    <label class="sw-editchk no-print"><input type="checkbox" id="swEditChk" onchange="document.getElementById('swPages').classList.toggle('sw-editing', this.checked)"> Edit — tap any colour to change, move or remove it</label>
+    <label class="sw-editchk no-print"><input type="checkbox" id="swEditChk" onchange="swEditToggle(this.checked)"> Edit — tap any colour to change, move or remove it</label>
+    <label class="sw-editchk no-print" id="swStyleRow" style="display:none">Tap a colour&nbsp;<select id="swStyleSel" onchange="swSetStyle(this.value)" style="flex:1;min-width:0;font-size:14px;padding:6px;border-radius:8px;border:1.5px solid var(--border,#d9c9ad);background:#fff"><option value="popup">opens a pop-up box</option><option value="bar">selects it &mdash; controls on a bottom bar</option></select></label>
     <div id="swPages"></div>
   </div>
 
@@ -1514,6 +1525,7 @@
   <!-- ============ DYE BATCHES ============ -->
   <div class="bd-modal no-print" id="bcModal" style="display:none" onclick="if(event.target===this)bcClose()"><div class="bd-modal-card" id="bcModalCard"></div></div>
   <div id="undoToast"></div>
+  <div id="swBar" class="no-print" style="display:none"></div>
   <div class="view" id="view-batches">
     <div class="screen-header no-print">
       <span class="header-icon">&#129525;</span>
@@ -3909,6 +3921,27 @@ function swEditColour(idx) {
     <div style="font-size:12px;color:var(--brown-500,#8a6d4b);margin-bottom:12px">${swSource && swSource.batchId ? 'Also changes this colour in the batch and on the photo.' : 'Changes this print only.'}</div>
     <div style="display:flex;gap:8px"><button class="add-secondary-btn" style="flex:1" onclick="bcClose()">Cancel</button><button class="add-colour-btn" style="flex:1" onclick="swEcSave(${idx})">Save</button></div>`);
 }
+function swStyle() { try { return localStorage.getItem('colourCatalog_swEditStyle') || 'popup'; } catch (e) { return 'popup'; } }
+function swSetStyle(v) { try { localStorage.setItem('colourCatalog_swEditStyle', v); } catch (e) {} swSelIdx = -1; swBarUpdate(); }
+let swSelIdx = -1;
+function swEditToggle(on) {
+  document.getElementById('swPages').classList.toggle('sw-editing', on); const r = document.getElementById('swStyleRow'); if (r) r.style.display = on ? 'flex' : 'none';
+  const sel = document.getElementById('swStyleSel'); if (sel) sel.value = swStyle(); swSelIdx = -1; swBarUpdate();
+}
+function swCardTap(i) { if (!document.getElementById('swPages').classList.contains('sw-editing')) return; if (swStyle() === 'bar') { swSelIdx = swSelIdx === i ? -1 : i; swBarUpdate(); } else swEditColour(i); }
+function swBarUpdate() {
+  const bar = document.getElementById('swBar'); if (!bar) return;
+  const active = document.getElementById('view-printcolours').classList.contains('active'), on = active && document.getElementById('swPages').classList.contains('sw-editing') && swStyle() === 'bar', sw = swCurrentSwatches[swSelIdx];
+  document.querySelectorAll('#swPages .sw-card').forEach((c, k) => c.classList.toggle('sw-sel', !!(on && sw && k === swSelIdx)));
+  if (!on || !sw) { bar.style.display = 'none'; if (!active) swSelIdx = -1; return; }
+  bar.innerHTML = `<span class="sb-dot" style="background:${sw.hex}"></span><span class="sb-t">#${swSelIdx + 1} ${escapeHtml(sw.name || '')}<small>${escapeHtml(String(sw.hex).toUpperCase())}</small></span>
+    <button ${swSelIdx === 0 ? 'disabled' : ''} onclick="swBarMove(-1)" aria-label="Move earlier">&#9664;</button><button onclick="swEditColour(${swSelIdx})" aria-label="Edit colour">&#9998;</button><button class="sb-x" onclick="swBarRemove()" aria-label="Remove">&#10005;</button><button ${swSelIdx === swCurrentSwatches.length - 1 ? 'disabled' : ''} onclick="swBarMove(1)" aria-label="Move later">&#9654;</button>`;
+  bar.style.display = 'flex';
+}
+function swBarMove(dir) { const j = swSelIdx + dir; if (j < 0 || j >= swCurrentSwatches.length) return; const i = swSelIdx; swSelIdx = j; moveSwatchInPreview(i, dir); }
+function swBarRemove() { const i = swSelIdx; swSelIdx = -1; removeSwatchFromPreview(i); }
+{ const _rp = renderPrintColoursFromSwatches; renderPrintColoursFromSwatches = function () { _rp.apply(this, arguments); try { swBarUpdate(); } catch (e) {} }; }
+{ const _sv = showView; showView = function (n) { _sv.apply(this, arguments); try { swBarUpdate(); } catch (e) {} }; }
 function swEcMove(idx, dir) { bcClose(); moveSwatchInPreview(idx, dir); swEditColour(idx + dir); }
 function swEcSync(from, pf) {
   pf = pf || 'swEc'; const p = document.getElementById(pf + 'P'), h = document.getElementById(pf + 'H'), n = document.getElementById(pf + 'N');
@@ -3989,6 +4022,7 @@ let swHideHex = false;
 function renderPrintColoursFromSwatches(swatches, label, source) {
   const hc = document.getElementById('swHideChk'); if (hc) hc.checked = swHideHex; const hr = document.getElementById('swHideRow'); if (hr) hr.style.display = swHideHex ? 'block' : 'none';
   swSource = source || null;
+  { const sb = swSource && swSource.batchId ? bdById(swSource.batchId) : null; if (sb && sb.incPhotos && bdPhotosOf(sb.id).length && bdAnnotSig[sb.id] !== bdSig(sb)) { bdAnnotSig[sb.id] = bdSig(sb); bdAnnotPrep(sb).then(() => { if (swSource && swSource.batchId === sb.id && document.getElementById('view-printcolours').classList.contains('active')) renderPrintColoursFromSwatches(swCurrentSwatches, swCurrentLabel, swSource); }); } }
   { const pb = swSource && swSource.batchId ? bdById(swSource.batchId) : null, has = !!(pb && bdPhotosOf(pb.id).length), row = document.getElementById('swPhotoRow'); if (row) { row.style.display = has ? 'flex' : 'none'; document.getElementById('swPhotoChk').checked = !!(has && pb.incPhotos); const nt = document.getElementById('swPhotoNote'); nt.style.display = has ? 'block' : 'none'; if (has) nt.innerHTML = rfNoteHtml(pb); } }
   swCurrentSwatches = swatches.slice();
   swCurrentLabel = label;
@@ -4006,7 +4040,7 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
     const cardsHtml = pageSwatches.map((s, ci) => {
       const globalIdx = pi * PER_PAGE + ci + 1;
       return `
-      <div class="sw-card" onclick="swEditColour(${globalIdx - 1})">
+      <div class="sw-card" onclick="swCardTap(${globalIdx - 1})">
         <div class="sw-srno" onclick="event.stopPropagation();moveSwatchToPosition(${globalIdx - 1})" title="Tap to move to a specific position" style="cursor:pointer;">#${String(globalIdx).padStart(2, '0')}</div>
         <div class="sw-dot" style="background:${s.hex}"></div>
         <div class="sw-ctl no-print">
@@ -6565,7 +6599,8 @@ function bpAdd() {
 }
 /* ---- photos kept with a batch, so they can be printed with numbered colours ---- */
 const BP_STORE_KEY = 'colourCatalog_batchPhotos_v1';
-let bdAnnotCache = {};
+let bdAnnotCache = {}, bdAnnotSig = {};
+function bdSig(b) { return b.items.map(i => (i.hex || '').toUpperCase()).join(',') + '|' + JSON.stringify(bdPhotosOf(b.id).map(p => p.marks)); }
 window.addEventListener('load', () => setTimeout(() => { try { bdPhotosPrune(); } catch (e) {} }, 2500));
 function bpThumb(cv) { const k = Math.min(1, 800 / Math.max(cv.width, cv.height)), c = document.createElement('canvas'); c.width = Math.round(cv.width * k); c.height = Math.round(cv.height * k); c.getContext('2d').drawImage(cv, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.62); }
 function bdPhotosAll() { try { return JSON.parse(localStorage.getItem(BP_STORE_KEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -6749,7 +6784,7 @@ function bdAnnotPrep(b) {   // draw the batch's colour numbers (as on the dyer s
       sh.marks.forEach(m => { const idx = b.items.findIndex(i => (i.hex || '').toUpperCase() === m.hex); if (idx < 0) return; const cx = m.px * c.width, cy = m.py * c.height; g.beginPath(); g.arc(cx, cy, rd, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = Math.max(2, c.width / 300); g.strokeStyle = '#000'; g.stroke(); g.fillStyle = '#000'; g.fillText(String(idx + 1), cx, cy + 1); });
       res(c.toDataURL('image/jpeg', 0.85));
     }; im.onerror = () => res(null); im.src = sh.img;
-  }))).then(a => { bdAnnotCache[b.id] = a.filter(Boolean); return bdAnnotCache[b.id]; });
+  }))).then(a => { bdAnnotCache[b.id] = a.filter(Boolean); bdAnnotSig[b.id] = bdSig(b); return bdAnnotCache[b.id]; });
 }
 function bdPhotoPagesHtml(b) {
   if (!b.incPhotos) return ''; const a = bdAnnotCache[b.id] || []; if (!a.length) return '';
