@@ -1025,6 +1025,7 @@
       <button class="add-colour-btn" onclick="openAddNeutralColours()">+ Add Colour(s)</button>
     </div>
 
+    <div class="no-print" style="margin:0 0 10px"><input class="bd-in" id="homeSearch" type="search" placeholder="&#128269; Search by colour name or hex" autocomplete="off" style="width:100%;box-sizing:border-box;font-size:16px" oninput="homeQuery=this.value;renderHomeAll()"></div>
     <div class="catalog-toolbar">
       <h2>All Colours <span id="homeAllCount"></span></h2>
       <div class="toolbar-actions" id="homeToolbarActions"></div>
@@ -1678,6 +1679,7 @@
         <button class="add-secondary-btn" onclick="bdDuplicate()">Duplicate</button>
         <button class="add-secondary-btn" onclick="bdDelete()" style="color:var(--danger);">Delete</button>
       </div>
+      <button class="add-secondary-btn no-print" id="bdSaveLib" style="width:100%;margin:0 0 10px" onclick="bdSaveToLibrary()">&#128190; Save colours to Colour Library</button>
       <div class="page-sub no-print" style="margin:0 0 12px"><b>Print Colour Swatch</b> = swatches with hex and name, no quantities. <b>Dyer sheet</b> = colour, design, pcs, mtr and total mtr.</div>
       <div class="bd-selbar" id="bdSelBar" style="display:none">
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:0"><input type="checkbox" class="bd-chk" id="bdSelAll" onchange="bdSelAllToggle(this.checked)"> Select all</label>
@@ -3022,21 +3024,24 @@ function toggleHomeSort() {
   renderHomeAll();
 }
 
+let homeQuery = '';
 function renderHomeAll() {
   updateSummaryCard();
   const naturalList = combinedColorList(); // primaries then secondaries, stable insertion order
   naturalList.forEach((item, i) => { item.naturalSrNo = i + 1; });
 
-  const list = homeSortDesc ? naturalList.slice().reverse() : naturalList;
+  const hq = homeQuery.trim().toLowerCase().replace(/^#/, '');
+  const filtered = hq ? naturalList.filter(it => (it.name || '').toLowerCase().includes(hq) || String(it.hex || '').toLowerCase().replace('#', '').includes(hq) || (hq.length >= 4 && bcCodeMatch(String(it.hex || '').toUpperCase(), hq))) : naturalList;
+  const list = homeSortDesc ? filtered.slice().reverse() : filtered;
 
   const countEl = document.getElementById('homeAllCount');
-  if (countEl) countEl.textContent = list.length ? `(${list.length})` : '';
+  if (countEl) countEl.textContent = naturalList.length ? (hq ? `(${list.length} of ${naturalList.length})` : `(${list.length})`) : '';
 
   const board = document.getElementById('homeAllBoard');
   if (!board) return;
 
   if (list.length === 0) {
-    board.innerHTML = `<div class="empty-state">No colors yet.<br>Tap "+ Add Colour(s)" to get started.</div>`;
+    board.innerHTML = hq ? `<div class="empty-state">No colour matches \u201c${escapeHtml(homeQuery.trim())}\u201d.<br>Colours inside batches only appear in the Colour Library after you save them there.</div>` : `<div class="empty-state">No colors yet.<br>Tap "+ Add Colour(s)" to get started.</div>`;
     updateHomeToolbar();
     return;
   }
@@ -3948,6 +3953,7 @@ function swBarUpdate() {
 function swBarMove(dir) { const j = swSelIdx + dir; if (j < 0 || j >= swCurrentSwatches.length) return; const i = swSelIdx; swSelIdx = j; moveSwatchInPreview(i, dir); }
 function swBarRemove() { const i = swSelIdx; swSelIdx = -1; removeSwatchFromPreview(i); }
 { const _rp = renderPrintColoursFromSwatches; renderPrintColoursFromSwatches = function () { _rp.apply(this, arguments); try { swBarUpdate(); } catch (e) {} }; }
+{ const _ri = bdRenderItems; bdRenderItems = function () { _ri.apply(this, arguments); try { bdSaveLibLabel(); } catch (e) {} }; }
 { const _sv = showView; showView = function (n) { _sv.apply(this, arguments); try { swBarUpdate(); } catch (e) {} }; }
 function swEcMove(idx, dir) { bcClose(); moveSwatchInPreview(idx, dir); swEditColour(idx + dir); }
 function swEcSync(from, pf) {
@@ -5665,6 +5671,18 @@ function bdLineHtml(i, l, idx) {
 function bdLineTotalHtml(l) {
   const m = bdLineMtr(l), q = bdLinePcs(l);
   return m ? `<b>${m}</b> mtr` : (q > 0 ? `<b>${q}</b> pcs` : '');
+}
+function bdLibMissing(list) { const have = new Set(bdPoolSource('all').map(r => r.hex)); const seen = new Set(); return list.filter(i => { const h = String(i.hex || '').toUpperCase(); if (!h || have.has(h) || seen.has(h)) return false; seen.add(h); return true; }); }
+function bdSaveLibLabel() {
+  const el = document.getElementById('bdSaveLib'), b = bdById(bdCurrentId); if (!el || !b) return;
+  const pick = bdSel.size ? b.items.filter(i => bdSel.has(i.id)) : b.items, n = bdLibMissing(pick).length;
+  el.innerHTML = '&#128190; ' + (n ? `Save ${bdSel.size ? 'selected ' : ''}${n} colour${n !== 1 ? 's' : ''} to Colour Library` : 'All colours are already in the Colour Library'); el.disabled = !n; el.style.opacity = n ? '' : '.55';
+}
+function bdSaveToLibrary() {
+  const b = bdById(bdCurrentId); if (!b) return; const pick = bdSel.size ? b.items.filter(i => bdSel.has(i.id)) : b.items, add = bdLibMissing(pick); if (!add.length) return;
+  const snap = undoCapture(); add.forEach(i => getOrCreateSecondaryColor(String(i.hex).toUpperCase(), i.name || i.hex));
+  try { saveAppStateToStorage(); } catch (e) {} try { renderCatalog(); } catch (e) {} try { renderHomeAll(); } catch (e) {} try { renderLibrary(); } catch (e) {} bdSaveLibLabel();
+  undoOffer(add.length + ' colour' + (add.length !== 1 ? 's' : '') + ' saved to Colour Library', snap, () => bdSaveLibLabel());
 }
 function bdRenderItems() {
   const b = bdById(bdCurrentId); if (!b) return;
