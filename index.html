@@ -518,6 +518,10 @@
   .ba-ins select { width:auto !important; display:inline-block; margin:0 6px 8px 0 !important; padding:7px 8px !important; font-size:14px !important; }
   .ba-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:8px; } .ba-stats div { background:var(--tan-200); border-radius:10px; padding:8px 4px; text-align:center; font-size:11px; color:var(--muted); font-weight:600; } .ba-stats b { display:block; font-size:16px; color:var(--brown-900); }
   .bp-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 0; }
+  .bp-btns3 { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 52px; } .bp-btns3 button { font-size:13px !important; padding-left:4px !important; padding-right:4px !important; white-space:nowrap; }
+  .bd-pinrow { display:flex; justify-content:flex-end; margin:-4px 0 0; }
+  .bd-pin { border:1.5px solid var(--border); background:#fff; border-radius:99px; padding:6px 12px; font-family:inherit; font-size:14px; font-weight:700; color:var(--brown-700); cursor:pointer; }
+  .bd-pin b { background:var(--brown-700); color:#fff; border-radius:99px; font-size:11px; padding:1px 7px; margin-left:4px; }
   .bp-btns button { border:1.5px solid var(--border); background:#fff; border-radius:12px; padding:11px 6px; font-family:inherit; font-size:14px; font-weight:700; color:var(--brown-700); cursor:pointer; }
   .bp-picked { position:absolute; left:8px; right:8px; bottom:8px; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.96); border-radius:12px; padding:7px 10px; line-height:1.25; box-shadow:0 2px 10px rgba(0,0,0,.35); pointer-events:none; font-size:13px; font-weight:700; color:#000; }
   .bp-picked .pk-sw { flex:0 0 34px; width:34px; height:34px; border-radius:8px; border:2px solid #000; }
@@ -1638,6 +1642,7 @@
         <label>Batch details<input class="bd-in" id="bdName" placeholder="Batch name" oninput="bdField('name',this.value)"></label>
         <label>Date<input class="bd-in" type="date" id="bdSent" style="padding-left:8px;padding-right:6px" onchange="bdField('sentDate',this.value)"></label>
       </div>
+      <div class="bd-pinrow"><button class="bd-pin" id="bdRefBtn" onclick="rfOpen()" title="Reference photos" aria-label="Reference photos">&#128206;</button></div>
       <textarea id="bdNotes" style="display:none"></textarea>
     </div>
     <div class="builder no-print">
@@ -1645,13 +1650,13 @@
       <div class="bd-actions">
         <button class="add-colour-btn" onclick="bdOpenAdd()">+ Add colours</button>
       </div>
-      <div class="bp-btns no-print">
+      <div class="bp-btns bp-btns3 no-print">
         <button onclick="bpAppend=false;document.getElementById('bpFile').click()">🖼 Upload photos</button>
         <input type="file" id="bpFile" accept="image/*" multiple style="display:none" onchange="bpPick(this)">
         <button onclick="document.getElementById('bdSheetInput').click()">&#128196; Upload Excel</button>
         <input type="file" id="bdSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0], 'batch');this.value=''">
+        <button onclick="downloadColourTemplate('colourPicker')" title="Download Excel template" aria-label="Download Excel template">&#11015;&#65039;</button>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 0"><button class="text-btn" style="font-weight:700" id="bdRefBtn" onclick="rfOpen()">&#128247; Reference photos</button><button class="text-btn" style="font-weight:700;text-decoration:underline" onclick="downloadColourTemplate('colourPicker')">&#11015; Excel template</button></div>
       <div class="bd-bulk" id="bdBulk"></div>
       <div class="bd-topbtns no-print">
         <button class="save-btn" onclick="bdPrintColours()">Print Colour Swatch</button>
@@ -5665,8 +5670,8 @@ function bdRenderBulk() {
       <span></span>
       ${k === 0 ? '<button class="bd-plus" onclick="bdBulkAddRow()" title="Add another size">+</button>' : `<button class="bd-x" onclick="bdBulkDelRow(${k})">&#10005;</button>`}
     </div>`).join('')}
-    <button class="add-secondary-btn bd-bulk-go" onclick="bdBulkApply()">Apply to ${n ? 'selected (' + n + ')' : 'all (' + total + ')'}</button>
-    <button class="add-secondary-btn" style="width:100%;margin-top:6px;color:var(--danger)" onclick="bdClearOpen()">&#128465; Clear figures for ${n ? 'selected (' + n + ')' : 'all (' + total + ')'}&hellip;</button>
+    <div style="display:flex;gap:8px;margin-top:4px"><button class="add-secondary-btn bd-bulk-go" style="flex:1.3;margin-top:0;width:auto" onclick="bdBulkApply()">Apply to ${n ? 'selected (' + n + ')' : 'all (' + total + ')'}</button>
+    <button class="add-secondary-btn" style="flex:1;color:var(--danger);padding-left:6px;padding-right:6px" onclick="bdClearOpen()">&#128465; Clear ${n ? 'selected (' + n + ')' : 'all (' + total + ')'}&hellip;</button></div>
     <div class="bd-bulk-note">Blank boxes are left as they are. Size 2, 3… are added to every colour that doesn't have them yet.</div>`;
 }
 function bdNoteMark() { const b = bdById(bdCurrentId), el = document.getElementById('bdNoteBtn'); if (el) el.classList.toggle('has', !!(b && (b.notes || '').trim())); }
@@ -6569,7 +6574,7 @@ function bdPhotosAdd(id, shots) {
   try { localStorage.setItem(BP_STORE_KEY, JSON.stringify(all)); return true; } catch (e) { return false; }
 }
 function bdPhotosSet(id, arr) { const all = bdPhotosAll(); if (arr && arr.length) all[id] = arr; else delete all[id]; try { localStorage.setItem(BP_STORE_KEY, JSON.stringify(all)); return true; } catch (e) { alert('Could not save the photo on this phone (storage is full).'); return false; } }
-function bdRefBtn() { const el = document.getElementById('bdRefBtn'); if (!el) return; const n = bdPhotosOf(bdCurrentId).length; el.innerHTML = '&#128247; Reference photos' + (n ? ' (' + n + ')' : ''); }
+function bdRefBtn() { const el = document.getElementById('bdRefBtn'); if (!el) return; const n = bdPhotosOf(bdCurrentId).length; el.innerHTML = '&#128206; Photos' + (n ? '<b>' + n + '</b>' : ''); }
 /* ---- reference photo editor: place / move / remove colour numbers on the saved photos ---- */
 let rfIdx = 0, rfArm = null, rfSel = -1, rfDrag = null, rfNoClick = 0, rfImg = null;
 function rfBatch() { return bdById(bdCurrentId); }
