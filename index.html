@@ -6255,7 +6255,7 @@ function bpSwitch(i) { bpSync(); { const k = document.getElementById('bpPicked')
 function bpPhotoDel(i) { bpSync(); bpPhotos.splice(i, 1); if (!bpPhotos.length) { showView('batchDetail'); bpCv = null; bpList = []; bpMarks = []; return; } bpCur = Math.min(bpCur, bpPhotos.length - 1); const p = bpPhotos[bpCur]; bpCv = p.cv; bpList = p.list; bpMarks = p.marks; bpCands = p.cands || []; bpDraw(); bpRender(); }
 function bpSel() {   // ticked colours from ALL photos, near-identical ones counted once
   bpSync(); const out = [];
-  bpPhotos.forEach(p => p.list.forEach(x => { if (!x.on) return; const l = bpRgb2Lab(parseInt(x.hex.slice(1, 3), 16), parseInt(x.hex.slice(3, 5), 16), parseInt(x.hex.slice(5, 7), 16)); if (!out.some(o => o.hex === x.hex.toUpperCase() || bpDE(o.lab, l) <= 3)) out.push({ hex: x.hex.toUpperCase(), name: (x.name || '').trim(), lab: l }); }));
+  bpPhotos.forEach(p => p.list.forEach(x => { if (!x.on) return; const l = bpRgb2Lab(parseInt(x.hex.slice(1, 3), 16), parseInt(x.hex.slice(3, 5), 16), parseInt(x.hex.slice(5, 7), 16)); if (!out.some(o => o.hex === x.hex.toUpperCase() || bpDE(o.lab, l) <= 1.5)) out.push({ hex: x.hex.toUpperCase(), name: (x.name || '').trim(), lab: l }); }));
   return out;
 }
 function bpLoad(f) {
@@ -6456,14 +6456,23 @@ function bpMake(hex, share, extra) {
   // already a saved colour in the app? use its saved hex + name
   let best = null, bd = 1e9;
   try { bdPoolSource('all').forEach(r => { const rl = r._lab || (r._lab = bpRgb2Lab(parseInt(r.hex.slice(1, 3), 16), parseInt(r.hex.slice(3, 5), 16), parseInt(r.hex.slice(5, 7), 16))); const dd = bpDE(lab, rl); if (dd < bd) { bd = dd; best = r; } }); } catch (e) {}
-  if (best && bd <= 12) return { id: uid(), hex: best.hex.toUpperCase(), name: best.name || best.hex, on: true, share, ...extra };
-  return { id: uid(), hex, name: bpGenericName(lab), on: true, share, ...extra };
+  extra = Object.assign({}, extra); const used = extra.used; delete extra.used;
+  const bh = best ? best.hex.toUpperCase() : '';
+  if (best && bd <= 12 && !(used && used.has(bh))) return { id: uid(), hex: bh, name: best.name || best.hex, on: true, share, src: hex.toUpperCase(), ...extra };
+  // the matching saved colour is already taken (a lighter / darker variant): keep this shade's own hex
+  let nm = best && bd < 14 ? best.name : bpGenericName(lab);
+  if (best && used && used.has(bh)) { const rl = best._lab; nm = (best.name || nm) + (rl && lab[0] < rl[0] ? ' (Dark)' : ' (Light)'); }
+  return { id: uid(), hex: hex.toUpperCase(), name: nm, on: true, share, src: hex.toUpperCase(), ...extra };
 }
+function bpLabOf(h) { h = (h || '#000000'); return bpRgb2Lab(parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)); }
+function bpFindSame(hex) { const l = bpLabOf(hex); return bpList.find(v => bpDE(bpLabOf(v.src || v.hex), l) <= 3); }
+function bpUsedHexes(skip) { return new Set(bpList.filter(v => v !== skip).map(v => (v.hex || '').toUpperCase())); }
 function bpRun(noDraw) {
   if (!bpCv) return;
   const det = bpDetectAuto(bpCv, 30);
   const manual = bpList.filter(x => x.manual);
-  bpList = det.map(o => bpMake(o.hex, o.share, Object.assign({ px: o.px, py: o.py }, o.bg ? { on: false, bg: true } : {}))).concat(manual);
+  const used = new Set(manual.map(x => (x.hex || '').toUpperCase()));
+  bpList = det.map(o => { const m = bpMake(o.hex, o.share, Object.assign({ px: o.px, py: o.py, used }, o.bg ? { on: false, bg: true } : {})); used.add(m.hex.toUpperCase()); return m; }).concat(manual);
   const seen = new Set(); bpList = bpList.filter(x => !seen.has(x.hex) && seen.add(x.hex));
   try { bpCands = bpCandidates(bpCv); } catch (e) { bpCands = []; }
   if (noDraw === true) return;
@@ -6506,9 +6515,9 @@ function bpDragMove(cx, cy) {
 function bpDragEnd() {
   if (!bpDrag) return; const d = bpDrag; bpDrag = null; if (!d.moved) return;
   bpNoClick = Date.now(); const x = bpList.find(v => v.id === d.id); if (!x) return;
-  const cv = document.getElementById('bpCanvas'), hex = bpSample(x.px * cv.width, x.py * cv.height), nx = bpMake(hex, 0, {});
+  const cv = document.getElementById('bpCanvas'), hex = bpSample(x.px * cv.width, x.py * cv.height), nx = bpMake(hex, 0, { used: bpUsedHexes(x) });
   const o = { hex: x.hex, px: d.ox, py: d.oy, bg: x.bg, on: x.on, name: x.name };
-  x.hex = nx.hex; x.bg = false; x.on = true; if (!x.edited) x.name = nx.name;
+  x.hex = nx.hex; x.src = nx.src; x.bg = false; x.on = true; if (!x.edited) x.name = nx.name;
   bpPicked(x.hex, x.name, `Moved Sr ${bpList.indexOf(x) + 1} \u2014 colour re-read here`, () => Object.assign(x, o)); bpDraw(); bpRender();
 }
 (function () {
@@ -6546,7 +6555,7 @@ function bpDotsRender() {
   el.innerHTML = list.map(c => `<button class="bp-dot" style="background:${c.hex}" title="${c.hex}" onclick="bpAddCand('${c.hex}',${c.px},${c.py})"></button>`).join('');
 }
 function bpAddCand(hex, px, py) {
-  const nx = bpMake(hex, 0, { manual: true, px, py }), ex = bpList.find(v => v.hex === nx.hex);
+  const ex = bpFindSame(hex), nx = ex || bpMake(hex, 0, { manual: true, px, py, used: bpUsedHexes() });
   const wasOn = ex ? ex.on : false; if (ex) ex.on = true; else bpList.push(nx);
   bpPicked(nx.hex, nx.name, ex ? `Already in list as Sr ${bpList.indexOf(ex) + 1} (ticked)` : `Added as Sr ${bpList.length}`, () => { if (ex) ex.on = wasOn; else bpList = bpList.filter(v => v !== nx); }); bpDraw(); bpRender();
 }
@@ -6572,8 +6581,8 @@ function bpTap(e) {
   let rr = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) { rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; }
   const hex = bpHex(rr / n, gg / n, bb / n);
   if (bpTarget) { const t = bpList.find(q => q.id === bpTarget); bpTarget = null; if (t) { const o = { hex: t.hex, px: t.px, py: t.py, on: t.on, bg: t.bg }; t.hex = hex; t.px = x / cv.width; t.py = y / cv.height; t.on = true; t.bg = false; bpPicked(hex, t.name, `Updated Sr ${bpList.indexOf(t) + 1}`, () => Object.assign(t, o)); } bpHint(); bpDraw(); bpRender(); return; }
-  const nx = bpMake(hex, 0, { manual: true, px: x / cv.width, py: y / cv.height });
-  const ex = bpList.find(v => v.hex === nx.hex), wasOn = ex ? ex.on : false; if (ex) ex.on = true; else bpList.push(nx);
+  const ex = bpFindSame(hex), nx = ex || bpMake(hex, 0, { manual: true, px: x / cv.width, py: y / cv.height, used: bpUsedHexes() });
+  const wasOn = ex ? ex.on : false; if (ex) ex.on = true; else bpList.push(nx);
   bpPicked(nx.hex, nx.name, ex ? `Already in list as Sr ${bpList.indexOf(ex) + 1} (ticked)` : `Added as Sr ${bpList.length}`, () => { if (ex) ex.on = wasOn; else bpList = bpList.filter(v => v !== nx); });
   bpDraw(); bpRender();
 }
@@ -6629,7 +6638,7 @@ function bpAdd() {
   if (!sel.length) return;
   const reps = bpSel(), shots = [];
   bpPhotos.forEach(ph => {
-    const marks = []; ph.list.forEach(x => { if (!x.on || x.px == null) return; const l = bpRgb2Lab(parseInt(x.hex.slice(1, 3), 16), parseInt(x.hex.slice(3, 5), 16), parseInt(x.hex.slice(5, 7), 16)); const r = reps.find(o => o.hex === x.hex.toUpperCase() || bpDE(o.lab, l) <= 3); if (r) marks.push({ hex: r.hex, px: x.px, py: x.py }); });
+    const marks = []; ph.list.forEach(x => { if (!x.on || x.px == null) return; const l = bpRgb2Lab(parseInt(x.hex.slice(1, 3), 16), parseInt(x.hex.slice(3, 5), 16), parseInt(x.hex.slice(5, 7), 16)); const r = reps.find(o => o.hex === x.hex.toUpperCase() || bpDE(o.lab, l) <= 1.5); if (r) marks.push({ hex: r.hex, px: x.px, py: x.py }); });
     if (marks.length) shots.push({ img: bpThumb(ph.cv), marks });
   });
   const n = bdAddItems(sel); bdRenderItems(); showView('batchDetail');
@@ -6834,7 +6843,10 @@ function rfPickNew(q, b, all, cur) {
   const t = document.createElement('canvas'); t.width = rfImg.naturalWidth; t.height = rfImg.naturalHeight; const g = t.getContext('2d'); g.drawImage(rfImg, 0, 0);
   const x = Math.min(t.width - 1, Math.max(0, Math.round(q.x))), y = Math.min(t.height - 1, Math.max(0, Math.round(q.y))), R = Math.max(2, Math.round(t.width / 160));
   const d = g.getImageData(Math.max(0, x - R), Math.max(0, y - R), R * 2 + 1, R * 2 + 1).data; let rr = 0, gg = 0, bb = 0, n = 0; for (let i = 0; i < d.length; i += 4) { rr += d[i]; gg += d[i + 1]; bb += d[i + 2]; n++; }
-  const nx = bpMake(bpHex(rr / n, gg / n, bb / n), 0, { manual: true }), hex = nx.hex.toUpperCase();
+  const sHex = bpHex(rr / n, gg / n, bb / n), sLab = bpLabOf(sHex), marked = new Set(); all.forEach(p => p.marks.forEach(m => marked.add(m.hex)));
+  // a batch colour with no number yet and a close match -> number that one; otherwise this lace is a new shade (never merged into a similar one)
+  let near = null, nd = 1e9; b.items.forEach(i => { const h = (i.hex || '').toUpperCase(); if (marked.has(h)) return; const dd = bpDE(bpLabOf(h), sLab); if (dd < nd) { nd = dd; near = i; } });
+  const nx = (near && nd <= 8) ? { hex: near.hex, name: near.name } : bpMake(sHex, 0, { manual: true, used: new Set(b.items.map(i => (i.hex || '').toUpperCase())) }), hex = nx.hex.toUpperCase();
   const snap = undoCapture(), photosBefore = JSON.stringify(bdPhotosAll()), had = b.items.some(i => (i.hex || '').toUpperCase() === hex);
   if (all.some(p => p.marks.some(m => m.hex === hex))) { rfRender(); undoOffer('Already numbered on a photo', snap); return; }
   if (!had) bdAddItems([{ hex: nx.hex, name: nx.name || nx.hex }]);
