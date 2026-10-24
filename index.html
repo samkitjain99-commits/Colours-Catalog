@@ -628,6 +628,12 @@
   .lib-open { position:absolute; top:10px; left:10px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(255,255,255,.85); color:var(--brown-700); font-size:16px; line-height:1; font-weight:700; cursor:pointer; padding:0; }
   .lib-sr { position:absolute; top:10px; left:10px; background:rgba(43,29,18,.78); color:#fff; font-size:11px; font-weight:800; line-height:1; padding:3px 6px; border-radius:99px; letter-spacing:.3px; }
   .lib-star { position:absolute; top:9px; left:50px; color:#FFC400; font-size:18px; line-height:1; text-shadow:0 0 2px #000, 0 0 2px #000, 0 0 3px #000; }
+  .lib-x { position:absolute; top:10px; right:10px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(255,255,255,.92); color:var(--danger); font-size:12px; line-height:1; font-weight:800; cursor:pointer; padding:0; z-index:2; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+  .xgrid .lib-tick { right:38px; }
+  .bd-viewtog { display:flex; gap:0; margin:0 0 10px; border:1.5px solid var(--brown-700); border-radius:10px; overflow:hidden; }
+  .bd-viewtog button { flex:1; border:none; background:#fff; color:var(--brown-700); font-family:inherit; font-size:13px; font-weight:700; padding:8px 6px; cursor:pointer; }
+  .bd-viewtog button.on { background:var(--brown-700); color:#fff; }
+  .bd-thumb-pen { position:absolute; bottom:6px; right:6px; width:26px; height:26px; border-radius:50%; border:1px solid var(--border); background:#fff; color:var(--brown-700); font-size:13px; line-height:1; cursor:pointer; padding:0; }
   .lib-tick { position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%; background:var(--brown-700); color:#fff; font-size:12px; display:none; align-items:center; justify-content:center; }
   .lib-card.on .lib-tick { display:flex; }
   .lib-bar { position:fixed; left:0; right:0; bottom:18px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:50; pointer-events:none; }
@@ -1686,6 +1692,7 @@
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:0"><input type="checkbox" class="bd-chk" id="bdSelAll" onchange="bdSelAllToggle(this.checked)"> Select all</label>
         <button class="bd-rm" id="bdRmBtn" onclick="bdRemoveSelected()" style="display:none"></button>
       </div>
+      <div class="bd-viewtog no-print" id="bdViewTog"><button id="bdVL" onclick="bdSetView('list')">&#9776; List</button><button id="bdVT" onclick="bdSetView('thumb')">&#9638; Thumbnails</button></div>
       <div class="bd-hdr" id="bdHdr"><span>Lace design</span><span>Pcs</span><span>Mtr/pc</span><span>Total</span><span></span></div>
       <div id="bdItems"></div>
       <div class="bd-total" id="bdTotal"></div>
@@ -3403,6 +3410,10 @@ function removeFromGroup(colorId) {
 }
 
 let groupDetailSelectedSet = new Set();
+function removeFromGroupUndo(key) {
+  const snap = undoCapture(); removeFromGroup(key);
+  undoOffer('Removed from group (colour kept in library)', snap, () => { try { renderGroupDetail(); renderGroupFilterOptions(); } catch (e) {} });
+}
 
 function renderGroupDetail() {
   saveAppStateToStorage();
@@ -3418,7 +3429,7 @@ function renderGroupDetail() {
     return resolved ? { key, ...resolved } : null;
   }).filter(Boolean);
 
-  board.innerHTML = `<div class="lib-grid" style="padding:10px 10px 18px">` + members.map((m, i) => {
+  board.innerHTML = `<div class="lib-grid xgrid" style="padding:10px 10px 18px">` + members.map((m, i) => {
     const isP = m.type === 'primary';
     const hex = isP ? m.item.primaryHex : m.item.hex;
     const name = isP ? m.item.primaryName : m.item.name;
@@ -3427,6 +3438,7 @@ function renderGroupDetail() {
     return `
       <div class="lib-card ${groupDetailSelectedSet.has(m.key) ? 'on' : ''}" onclick="this.classList.toggle('on'); toggleGroupDetailSelect('${m.key}')">
         <div class="lib-sw" style="background:${hex}"></div><span class="lib-tick">&#10003;</span>
+        <button class="lib-x" onclick="event.stopPropagation(); removeFromGroupUndo('${m.key}')" title="Remove from this group" aria-label="Remove from this group">&#10005;</button>
         <button class="lib-open" onclick="event.stopPropagation(); ${open}" title="Open">&#8250;</button>
         <div class="lib-nm">${i + 1}. ${escapeHtml(name || hex)}</div><div class="lib-hx">${hex}</div><div class="lib-hx" style="font-size:9.5px;letter-spacing:.3px">${sub}</div>
       </div>`;
@@ -5694,13 +5706,24 @@ function bdRenderItems() {
   document.getElementById('view-batchDetail').classList.toggle('bd-usedsg', ud);
   document.getElementById('bdHdr').innerHTML = ud ? '<span>Lace design</span><span>Dsg</span><span>Pcs</span><span>Mtr/pc</span><span>Total</span><span></span>' : '<span>Lace design</span><span>Pcs</span><span>Mtr/pc</span><span>Total</span><span></span>';
   document.getElementById('bdItems').innerHTML = b.items.length ? b.items.map((i, n) => `
-    <div class="bd-item bd-selrow">
+    <div class="bd-item bd-selrow" id="bdi-${i.id}">
       <input type="checkbox" class="bd-chk" ${bdSel.has(i.id) ? 'checked' : ''} onchange="bdToggleSel('${i.id}')">
       <div class="bd-sw" style="background:${i.hex}"></div>
       <div><div class="bd-iname">${n + 1}. ${escapeHtml(i.name || i.hex)}</div><div class="bd-ihex">${i.hex}</div>${bcDyLabel(i.hex, hmI, b.id)}</div>
       <button class="bd-x" onclick="bdRemoveItem('${i.id}')">&#10005;</button>
       <div class="bd-lines">${i.lines.map((l, k) => bdLineHtml(i, l, k)).join('')}</div>
       ${i.lines.length > 1 ? `<div class="bd-ltot" id="ltot-${i.id}">${bdLineText(i)}</div>` : ''}</div>`).join('') : `<div class="empty-state">No colours yet.</div>`;
+  { const th = bdViewMode === 'thumb';
+    document.getElementById('bdHdr').style.display = th ? 'none' : '';
+    document.getElementById('bdVL').classList.toggle('on', !th); document.getElementById('bdVT').classList.toggle('on', th);
+    if (th && b.items.length) document.getElementById('bdItems').innerHTML = `<div class="lib-grid xgrid" style="padding:0 0 10px">` + b.items.map((i, n) => `
+      <div class="lib-card ${bdSel.has(i.id) ? 'on' : ''}" onclick="bdToggleSel('${i.id}')">
+        <div class="lib-sw" style="background:${i.hex}"></div><span class="lib-sr">#${String(n + 1).padStart(3, '0')}</span><span class="lib-tick">&#10003;</span>
+        <button class="lib-x" onclick="event.stopPropagation(); bdRemoveItem('${i.id}')" title="Remove from batch" aria-label="Remove from batch">&#10005;</button>
+        <div class="lib-nm">${escapeHtml(i.name || i.hex)}</div><div class="lib-hx">${i.hex}</div>
+        <div class="lib-hx" style="font-size:10px;letter-spacing:0;padding-right:28px">${bdLineText(i)}</div>
+        <button class="bd-thumb-pen" onclick="event.stopPropagation(); bdEditInList('${i.id}')" title="Edit quantities" aria-label="Edit quantities">&#9998;</button>
+      </div>`).join('') + `</div>`; }
   const t = bdQtyTotals(b);
   bdShowTotal(b);
   bdSel = new Set([...bdSel].filter(id => b.items.some(i => i.id === id)));
@@ -5798,6 +5821,9 @@ function bdBulkApply() {
   });
   saveBatches(); bdRenderItems();
 }
+let bdViewMode = (function () { try { return localStorage.getItem('colourCatalog_bdView') === 'thumb' ? 'thumb' : 'list'; } catch (e) { return 'list'; } })();
+function bdSetView(m) { bdViewMode = m === 'thumb' ? 'thumb' : 'list'; try { localStorage.setItem('colourCatalog_bdView', bdViewMode); } catch (e) {} bdRenderItems(); }
+function bdEditInList(id) { bdSetView('list'); setTimeout(() => { const el = document.getElementById('bdi-' + id); if (el) { el.scrollIntoView({ block: 'center' }); el.style.outline = '2px solid var(--brown-700)'; setTimeout(() => { el.style.outline = ''; }, 1500); } }, 50); }
 function bdToggleSel(id) { if (bdSel.has(id)) bdSel.delete(id); else bdSel.add(id); bdRenderItems(); }
 function bdSelAllToggle(on) { const b = bdById(bdCurrentId); bdSel = on ? new Set(b.items.map(i => i.id)) : new Set(); bdRenderItems(); }
 function bdRemoveSelected() {
