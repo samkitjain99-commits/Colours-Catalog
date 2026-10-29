@@ -1257,7 +1257,7 @@
   <!-- ============ PREPARE CATALOG (PRINT) VIEW ============ -->
   <div class="view" id="view-preview">
     <div class="screen-header no-print">
-      <button class="back-btn" onclick="showView('list')">&#10005;</button>
+      <button class="back-btn" onclick="showView(pcReturnView || 'list')">&#10005;</button>
       <h1>Prepare Catalog</h1>
     </div>
     <div class="pc-toolbar no-print">
@@ -1496,6 +1496,7 @@
       <button class="add-secondary-btn" id="libFavBtn" onclick="libOnlyFav=!libOnlyFav;if(libOnlyFav)libOnlySel=false;renderLibrary()">&#9733; Favourites (0)</button>
       <button class="add-secondary-btn" style="color:var(--danger)" onclick="libDelete()">&#128465; Delete</button>
     </div>
+    <button class="add-secondary-btn no-print" id="libCatBtn" style="width:100%;margin:0 0 8px" onclick="libPrepareCatalog()">&#128214; Prepare catalog</button>
     <div class="bc-chips no-print" id="libFam"></div>
     <div class="lib-tools two no-print">
       <button class="add-secondary-btn" onclick="libSelectAll(true)">Select all</button>
@@ -3745,7 +3746,7 @@ function openPreviewForSelection() {
   const label = selectedSet.size > 0 ? `${ids.length} selected color${ids.length !== 1 ? 's' : ''}` :
     (groupFilter ? `${ids.length} color${ids.length !== 1 ? 's' : ''} in this group` : `all ${ids.length} color${ids.length !== 1 ? 's' : ''}`);
   renderPrepareCatalog(ids, label);
-  showView('preview');
+  pcReturnView = 'list'; showView('preview');
 }
 
 function openPreviewForGroup() {
@@ -3757,7 +3758,7 @@ function openPreviewForGroup() {
     ? `${ids.length} selected color${ids.length !== 1 ? 's' : ''} in "${g.name}"`
     : `${ids.length} color${ids.length !== 1 ? 's' : ''} in "${g.name}"`;
   renderPrepareCatalog(ids, label);
-  showView('preview');
+  pcReturnView = 'groupDetail'; showView('preview');
 }
 
 function openPrintColoursForSelection() {
@@ -4109,8 +4110,21 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
       </div>`).join(''); })();
 }
 
+let pcReturnView = 'list', pcTemp = {};
+function libPrepareCatalog() {
+  const list = libTargets(); if (!list.length) { alert('No colours to show.'); return; }
+  pcTemp = {}; const ids = []; const seen = new Set();
+  list.forEach(c => {
+    const hex = (c.hex || '').toUpperCase(); if (seen.has(hex)) return; seen.add(hex);
+    const e = catalog.find(x => (x.primaryHex || '').toUpperCase() === hex);
+    if (e) { ids.push(e.id); return; }
+    const id = 'lib:' + hex; pcTemp[id] = { id, primaryHex: hex, primaryName: c.name || hex, secondaryIds: [] }; ids.push(id);
+  });
+  renderPrepareCatalog(ids, libSel.size ? `${ids.length} selected colour${ids.length !== 1 ? 's' : ''}` : `${ids.length} colour${ids.length !== 1 ? 's' : ''} from Colour Library`);
+  pcReturnView = 'library'; showView('preview');
+}
 function renderPrepareCatalog(ids, label) {
-  const items = ids.map(id => entryById(id)).filter(Boolean);
+  const items = ids.map(id => entryById(id) || pcTemp[id]).filter(Boolean);
   const PER_PAGE = 10;
   const pages = [];
   for (let i = 0; i < items.length; i += PER_PAGE) pages.push(items.slice(i, i + PER_PAGE));
@@ -4125,7 +4139,7 @@ function renderPrepareCatalog(ids, label) {
     const rowsHtml = pageItems.map((entry, i) => {
       const globalIdx = pi * PER_PAGE + i + 1;
       const badgeText = contrastText(entry.primaryHex);
-      const combosHtml = resolveSecondaries(entry).map(s => `
+      const combosHtml = !resolveSecondaries(entry).length ? '<div style="font-size:12px;color:#9a8a7a;align-self:center">No secondary shades linked to this colour yet.</div>' : resolveSecondaries(entry).map(s => `
         <div class="pc-combo">
           <div class="pc-dual">
             <div class="c1" style="background:${entry.primaryHex}"></div>
