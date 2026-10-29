@@ -1888,6 +1888,8 @@
         Download everything in your catalog — colors, groups and dye batches — as a single backup file.
       </p>
       <button class="save-btn" onclick="exportBackup()">Download Backup (.json)</button>
+      <button class="save-btn" id="bkWaBtn" style="background:#1FA855;margin-top:10px" onclick="shareBackupWhatsApp()">&#128172; Share on WhatsApp</button>
+      <div class="form-msg" id="bkWaMsg"></div>
     </div>
 
     <div class="builder">
@@ -1900,6 +1902,47 @@
       <div id="restoreFileName" style="font-size:12.5px; color:var(--muted); margin-bottom:12px;"></div>
       <button class="save-btn" id="restoreBtn" onclick="performRestore()" disabled>Restore from Backup</button>
       <div class="form-msg" id="restoreMsg"></div>
+    </div>
+
+    <div class="builder" id="cloudCard">
+      <div class="section-label">&#9729;&#65039; Cloud sync (Firebase)</div>
+      <p style="font-size:13px; color:var(--brown-900); margin-bottom:10px; line-height:1.5;">Keep a copy of everything in your own Firebase project, and bring it to another phone or browser by signing in with the same account.</p>
+      <details id="cloudSetup" style="margin-bottom:12px">
+        <summary style="font-size:13px;font-weight:700;color:var(--brown-700);cursor:pointer">1. One-time setup (about 5 minutes)</summary>
+        <ol style="font-size:12.5px;line-height:1.6;color:var(--brown-900);padding-left:18px;margin:8px 0">
+          <li>Go to <b>console.firebase.google.com</b> &rarr; Add project (free Spark plan is enough).</li>
+          <li>Build &rarr; <b>Authentication</b> &rarr; Get started &rarr; enable <b>Email/Password</b>.</li>
+          <li>Build &rarr; <b>Firestore Database</b> &rarr; Create database. Then open the <b>Rules</b> tab, paste the rules below and Publish.</li>
+          <li>Project settings (gear) &rarr; Your apps &rarr; add a <b>Web app</b> (&lt;/&gt;) &rarr; copy the <b>firebaseConfig</b> block and paste it below.</li>
+          <li>Authentication &rarr; Settings &rarr; Authorised domains &rarr; add <b>colours-catalog.vercel.app</b>.</li>
+        </ol>
+        <textarea class="bd-in" readonly rows="10" style="width:100%;box-sizing:border-box;font-family:monospace;font-size:11.5px" onclick="this.select()">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}</textarea>
+      </details>
+      <div class="section-label" style="margin-top:4px">2. Paste your firebaseConfig</div>
+      <textarea class="bd-in" id="fbCfg" rows="5" placeholder='{ apiKey: "…", authDomain: "…", projectId: "…", appId: "…" }' style="width:100%;box-sizing:border-box;font-family:monospace;font-size:11.5px"></textarea>
+      <button class="add-secondary-btn" style="margin:8px 0 12px;width:100%" onclick="fbSaveCfg()">Save config</button>
+      <div class="section-label">3. Sign in</div>
+      <input class="bd-in" id="fbEmail" type="email" placeholder="Email" autocomplete="email" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+      <input class="bd-in" id="fbPass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+      <div style="display:flex;gap:8px">
+        <button class="add-secondary-btn" style="flex:1;margin:0" onclick="fbSignIn()">Sign in</button>
+        <button class="add-secondary-btn" style="flex:1;margin:0" onclick="fbSignUp()">Create account</button>
+        <button class="add-secondary-btn" style="flex:1;margin:0" id="fbOutBtn" onclick="fbSignOut()">Sign out</button>
+      </div>
+      <div id="fbStatus" style="font-size:12.5px;color:var(--muted);margin:10px 0 4px"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="save-btn" style="flex:1;margin:0" id="fbUpBtn" onclick="fbUpload()">&#11014; Upload</button>
+        <button class="save-btn" style="flex:1;margin:0" id="fbDownBtn" onclick="fbDownload()">&#11015; Download</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:12px"><input type="checkbox" id="fbAuto" onchange="fbSetAuto(this.checked)"> Upload automatically a few seconds after I make changes</label>
+      <div class="form-msg" id="fbMsg"></div>
     </div>
   </div>
 
@@ -2673,7 +2716,7 @@ function switchTab(tab) {
     showView('batches');
     renderBatches();
   } else if (tab === 'backup') {
-    showView('backup');
+    showView('backup'); try { fbOpen(); } catch (e) {}
   }
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
 }
@@ -5500,8 +5543,18 @@ function saveNewSecondaryColours() {
 
 let pendingRestoreData = null;
 
+function buildBackupData() { return { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches, favourites: [...libFavs], generallyUsed: getOrInitGuPalette(), colourCodes: bcCodes(), batchPhotos: bdPhotosAll() }; }
+async function shareBackupWhatsApp() {
+  const msg = document.getElementById('bkWaMsg'); msg.style.color = 'var(--danger)'; msg.textContent = '';
+  const name = `color-catalog-backup-${new Date().toISOString().slice(0, 10)}.json`, text = JSON.stringify(buildBackupData());
+  const tries = [new File([text], name, { type: 'application/json' }), new File([text], name, { type: 'text/plain' })];
+  const f = navigator.canShare && navigator.share ? tries.find(x => { try { return navigator.canShare({ files: [x] }); } catch (e) { return false; } }) : null;
+  if (!f) { exportBackup(); msg.textContent = 'Sharing files is not supported here, so the backup was downloaded. Open WhatsApp and attach it from your downloads.'; return; }
+  try { await navigator.share({ files: [f], title: 'Colour catalog backup' }); try { localStorage.setItem('colourCatalog_lastBackup', String(Date.now())); } catch (e) {} bcNudge(); msg.style.color = 'var(--brown-700)'; msg.textContent = 'Backup shared.'; }
+  catch (e) { if (e && e.name === 'AbortError') return; exportBackup(); msg.textContent = 'Could not open the share sheet, so the backup was downloaded instead.'; }
+}
 function exportBackup() {
-  const data = { version: 2, exportedAt: new Date().toISOString(), catalog, groups, secondaryColors, batches, favourites: [...libFavs], generallyUsed: getOrInitGuPalette(), colourCodes: bcCodes(), batchPhotos: bdPhotosAll() };
+  const data = buildBackupData();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -5572,6 +5625,106 @@ function performRestore() {
   document.getElementById('restoreBtn').disabled = true;
   document.getElementById('restoreFileInput').value = '';
 }
+
+/* ---------------- Firebase cloud sync ---------------- */
+const FB_CFG_KEY = 'colourCatalog_fbConfig', FB_AUTO_KEY = 'colourCatalog_fbAuto', FB_CHUNK = 300000, FB_VER = '10.12.2';
+let fbApp = null, fbSdkP = null, fbTimer = null;
+function fbCfgGet() { try { return JSON.parse(localStorage.getItem(FB_CFG_KEY) || 'null'); } catch (e) { return null; } }
+function fbParseCfg(t) {   // accepts JSON, or the JS object copied from the Firebase console
+  const o = {}; String(t || '').replace(/["']?([A-Za-z]+)["']?\s*:\s*["']([^"']*)["']/g, (m, k, v) => { o[k] = v; return m; });
+  return o.apiKey && o.projectId ? o : null;
+}
+function fbMsg(t, ok) { const m = document.getElementById('fbMsg'); if (!m) return; m.style.color = ok ? 'var(--brown-700)' : 'var(--danger)'; m.textContent = t || ''; }
+function fbSaveCfg() {
+  const c = fbParseCfg(document.getElementById('fbCfg').value);
+  if (!c) { fbMsg('Could not find apiKey and projectId in that text. Paste the whole firebaseConfig block.'); return; }
+  try { localStorage.setItem(FB_CFG_KEY, JSON.stringify(c)); } catch (e) {}
+  if (fbApp) { try { fbApp.delete(); } catch (e) {} fbApp = null; }
+  fbMsg('Config saved.', true); fbStatusUpdate();
+}
+function fbLoadSdk() {
+  if (window.firebase && firebase.firestore && firebase.auth) return Promise.resolve();
+  if (fbSdkP) return fbSdkP;
+  const load = f => new Promise((res, rej) => { const s = document.createElement('script'); s.src = `https://www.gstatic.com/firebasejs/${FB_VER}/${f}`; s.onload = res; s.onerror = () => rej(new Error('Could not load Firebase. Check your internet connection.')); document.head.appendChild(s); });
+  fbSdkP = load('firebase-app-compat.js').then(() => load('firebase-auth-compat.js')).then(() => load('firebase-firestore-compat.js')).catch(e => { fbSdkP = null; throw e; });
+  return fbSdkP;
+}
+async function fbInit() {
+  const cfg = fbCfgGet(); if (!cfg) throw new Error('Paste and save your firebaseConfig first (step 2).');
+  await fbLoadSdk();
+  if (!fbApp) { fbApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg); fbApp.auth().onAuthStateChanged(() => fbStatusUpdate()); }
+  return fbApp;
+}
+function fbErr(e) {
+  const c = (e && e.code) || '';
+  if (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found') return 'Wrong email or password.';
+  if (c === 'auth/email-already-in-use') return 'That email already has an account. Use Sign in.';
+  if (c === 'auth/weak-password') return 'Password must be at least 6 characters.';
+  if (c === 'auth/invalid-email') return 'That email address is not valid.';
+  if (c === 'auth/operation-not-allowed') return 'Turn on Email/Password under Authentication in the Firebase console.';
+  if (c === 'auth/unauthorized-domain') return 'Add colours-catalog.vercel.app under Authentication > Settings > Authorised domains.';
+  if (c === 'permission-denied') return 'Firestore refused access. Check the rules in step 1 are published.';
+  return (e && e.message) || 'Something went wrong.';
+}
+async function fbSignIn(create) {
+  const em = document.getElementById('fbEmail').value.trim(), pw = document.getElementById('fbPass').value;
+  if (!em || !pw) { fbMsg('Enter your email and password.'); return; }
+  try { fbMsg('Signing in…', true); const a = await fbInit(); if (create) await a.auth().createUserWithEmailAndPassword(em, pw); else await a.auth().signInWithEmailAndPassword(em, pw); document.getElementById('fbPass').value = ''; fbMsg('Signed in.', true); }
+  catch (e) { fbMsg(fbErr(e)); }
+  fbStatusUpdate();
+}
+function fbSignUp() { return fbSignIn(true); }
+async function fbSignOut() { try { const a = await fbInit(); await a.auth().signOut(); fbMsg('Signed out.', true); } catch (e) { fbMsg(fbErr(e)); } fbStatusUpdate(); }
+function fbUser() { try { return fbApp && fbApp.auth().currentUser; } catch (e) { return null; } }
+async function fbStatusUpdate() {
+  const el = document.getElementById('fbStatus'); if (!el) return;
+  const cfg = fbCfgGet(), u = fbUser();
+  const last = (() => { try { return localStorage.getItem('colourCatalog_fbLastSync'); } catch (e) { return null; } })();
+  el.innerHTML = !cfg ? 'Not set up yet.' : u ? `Signed in as <b>${escapeHtml(u.email || '')}</b>.` + (last ? ` Last synced ${new Date(+last).toLocaleString('en-GB')}.` : '') : `Config saved for <b>${escapeHtml(cfg.projectId)}</b>. Not signed in.`;
+  const out = document.getElementById('fbOutBtn'); if (out) out.style.display = u ? '' : 'none';
+}
+function fbOpen() {
+  const cfg = fbCfgGet(), t = document.getElementById('fbCfg'); if (t && cfg && !t.value) t.value = JSON.stringify(cfg, null, 2);
+  const a = document.getElementById('fbAuto'); try { if (a) a.checked = localStorage.getItem(FB_AUTO_KEY) === '1'; } catch (e) {}
+  const d = document.getElementById('cloudSetup'); if (d && !cfg) d.open = true;
+  fbStatusUpdate(); if (cfg) fbInit().catch(() => {});
+}
+function fbSetAuto(on) { try { localStorage.setItem(FB_AUTO_KEY, on ? '1' : '0'); } catch (e) {} if (on) fbMsg('Auto upload is on. Changes go up a few seconds after you make them (only while this page is open and you are signed in).', true); }
+async function fbUpload(silent) {
+  try {
+    const a = await fbInit(), u = a.auth().currentUser; if (!u) throw new Error('Sign in first (step 3).');
+    if (!silent) fbMsg('Uploading…', true);
+    const db = a.firestore(), base = db.collection('users').doc(u.uid), text = JSON.stringify(buildBackupData()), n = Math.ceil(text.length / FB_CHUNK);
+    const old = await base.collection('chunks').get(), oldN = old.size;
+    for (let i = 0; i < n; i++) await base.collection('chunks').doc('c' + String(i).padStart(4, '0')).set({ i, d: text.slice(i * FB_CHUNK, (i + 1) * FB_CHUNK) });
+    const now = Date.now(); await base.set({ updatedAt: now, chunks: n, size: text.length, device: (navigator.userAgent || '').slice(0, 80) });
+    for (let i = n; i < oldN; i++) await base.collection('chunks').doc('c' + String(i).padStart(4, '0')).delete();
+    try { localStorage.setItem('colourCatalog_fbLastSync', String(now)); localStorage.setItem('colourCatalog_lastBackup', String(now)); } catch (e) {}
+    if (!silent) fbMsg(`Uploaded (${(text.length / 1024).toFixed(0)} KB).`, true); fbStatusUpdate();
+  } catch (e) { fbMsg(silent ? 'Auto upload failed: ' + fbErr(e) : fbErr(e)); }
+}
+async function fbDownload() {
+  try {
+    const a = await fbInit(), u = a.auth().currentUser; if (!u) throw new Error('Sign in first (step 3).');
+    fbMsg('Checking the cloud…', true);
+    const base = a.firestore().collection('users').doc(u.uid), meta = await base.get();
+    if (!meta.exists) { fbMsg('Nothing in the cloud yet. Upload from your main device first.'); return; }
+    const m = meta.data();
+    if (!confirm(`Replace everything on this device with the cloud copy from ${new Date(m.updatedAt).toLocaleString('en-GB')}?`)) { fbMsg(''); return; }
+    const snap = await base.collection('chunks').get(), parts = []; snap.forEach(d => parts[d.data().i] = d.data().d);
+    if (parts.length !== m.chunks || parts.some(x => x == null)) throw new Error('The cloud copy is incomplete. Upload again from your main device.');
+    const data = JSON.parse(parts.join('')); if (!data || !Array.isArray(data.catalog)) throw new Error('The cloud copy could not be read.');
+    pendingRestoreData = data; performRestore();
+    try { localStorage.setItem('colourCatalog_fbLastSync', String(m.updatedAt)); } catch (e) {}
+    fbMsg('Downloaded and restored from the cloud.', true); fbStatusUpdate();
+  } catch (e) { fbMsg(fbErr(e)); }
+}
+function fbDirty() {
+  try { if (localStorage.getItem(FB_AUTO_KEY) !== '1' || !fbUser()) return; } catch (e) { return; }
+  clearTimeout(fbTimer); fbTimer = setTimeout(() => fbUpload(true), 15000);
+}
+(function () { const a = saveAppStateToStorage, b = saveBatches; saveAppStateToStorage = function () { a.apply(this, arguments); fbDirty(); }; saveBatches = function () { b.apply(this, arguments); fbDirty(); }; })();
+window.addEventListener('load', () => { try { if (fbCfgGet() && localStorage.getItem(FB_AUTO_KEY) === '1') fbInit().catch(() => {}); } catch (e) {} });
 
 /* ---------------- Dye Batches ---------------- */
 
