@@ -6806,6 +6806,7 @@ c8d07f|Zucchini Noodles</script>
         <button class="add-secondary-btn" id="cdNext" style="flex:1;margin:0" onclick="cdGo(1)">Next &#9654;</button></div>
       <div style="display:flex;gap:8px;margin-top:8px"><button class="add-secondary-btn" style="flex:1;margin:0" onclick="cdSelPage(true)">Select this page</button><button class="add-secondary-btn" style="flex:1;margin:0" onclick="cdSelPage(false)">Clear ticks</button></div>
       <div id="cdSelInfo" style="font-size:13px;font-weight:700;margin:10px 0 6px"></div>
+      <div id="cdChips" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px"></div>
       <div style="display:flex;gap:8px"><button class="save-btn" style="flex:1;margin:0" onclick="cdAddSelected('secondary')">Add to library</button><button class="add-secondary-btn" style="flex:1;margin:0" onclick="cdAddSelected('primary')">Add as Primary</button></div>
       <div class="page-sub" style="margin-top:8px;font-size:11px">Names and hex codes from the open-source <i>color-name-list</i> project (MIT licence). Only colours you add are stored on this phone.</div>
     </div>
@@ -9208,7 +9209,13 @@ function cdRender() {
   document.getElementById('cdGrid').innerHTML = cdShown.map(c => `<button class="lib-card ${cdSel.has(c.hex) ? 'on' : ''}" onclick="cdTog(this,'${c.hex}')"><div class="lib-sw" style="background:${c.hex}"></div><span class="lib-tick">&#10003;</span><div class="lib-info"><div class="lib-nm">${escapeHtml(c.name)}</div><div class="lib-hx">${c.hex}</div></div></button>`).join('');
   cdInfo();
 }
-function cdInfo() { const e = document.getElementById('cdSelInfo'); if (e) e.textContent = cdSel.size ? `${cdSel.size} colour${cdSel.size !== 1 ? 's' : ''} ticked` : 'Tick colours to add them'; }
+function cdInfo() {
+  const e = document.getElementById('cdSelInfo'); if (e) e.textContent = cdSel.size ? `${cdSel.size} colour${cdSel.size !== 1 ? 's' : ''} ticked (tap a small colour to untick it)` : 'Tick colours to add them';
+  const c = document.getElementById('cdChips'); if (!c) return;
+  const nm = {}; cdLoad().forEach(x => { if (cdSel.has(x.hex)) nm[x.hex] = x.name; });
+  c.innerHTML = [...cdSel].map(h => `<button type="button" onclick="cdUntick('${h}')" title="${escapeHtml((nm[h] || '') + ' ' + h)}" aria-label="Untick ${escapeHtml(nm[h] || h)}" style="position:relative;width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);background:${h};padding:0;cursor:pointer"><span style="position:absolute;right:-5px;top:-5px;width:15px;height:15px;border-radius:50%;background:var(--brown-700);color:#fff;font-size:9px;line-height:15px;font-weight:800">&#10005;</span></button>`).join('');
+}
+function cdUntick(h) { cdSel.delete(h); cdRender(); }
 function cdTog(el, hex) { if (cdSel.has(hex)) cdSel.delete(hex); else cdSel.add(hex); el.classList.toggle('on', cdSel.has(hex)); cdInfo(); }
 function cdSelPage(on) { if (on) cdShown.forEach(c => cdSel.add(c.hex)); else cdSel = new Set(); cdRender(); }
 function cdGo(d) { cdPage += d; cdRender(); const g = document.getElementById('cdBox'); if (g) g.scrollIntoView({ block: 'start' }); }
