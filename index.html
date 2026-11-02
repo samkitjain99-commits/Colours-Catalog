@@ -7263,12 +7263,31 @@ function libEditOpen() {
   if (!sel.length) { alert('Select the colours you want to edit first (tap them), or use Selected to review them.'); return; }
   libEditShow(sel, null);
 }
-function libEditOne(hex) {   // tap a colour's name/hex on the card -> edit just that colour
-  const r = bdPoolSource('all').find(x => x.hex.toUpperCase() === hex.toUpperCase()); libEditShow([{ hex: hex.toUpperCase(), name: (r && r.name) || '' }], hex.toUpperCase());
+function libEditOne(hex) {   // tap a colour's name/hex on the card -> small edit sheet (same look as the view sheet), with dye history below
+  hex = hex.toUpperCase(); const r = bdPoolSource('all').find(x => x.hex.toUpperCase() === hex), nm = (r && r.name) || '';
+  bcModal(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <button class="add-secondary-btn" style="margin:0;padding:8px 14px;width:auto" onclick="bcClose()">Cancel</button>
+      <div style="flex:1;text-align:center;font-weight:800">Edit colour</div>
+      <button class="save-btn" style="margin:0;padding:8px 18px;width:auto" onclick="libEditOneSave('${hex}')">Save</button></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <input type="color" id="leoC" value="${hex.toLowerCase()}" style="width:52px;height:52px;border:none;padding:0;background:none;flex-shrink:0" oninput="document.getElementById('leoH').value=this.value.toUpperCase()">
+      <div style="flex:1;min-width:0;display:grid;gap:6px">
+        <input class="bd-in" style="margin:0" id="leoN" value="${escapeHtml(nm)}" placeholder="Name">
+        <input class="bd-in" style="margin:0" id="leoH" value="${hex}" oninput="(function(){var h=document.getElementById('leoH').value.trim();if(h&&h[0]!=='#')h='#'+h;if(isValidHex(h))document.getElementById('leoC').value=h.toLowerCase();})()">
+      </div></div>
+    <div id="leoErr" style="color:var(--danger);font-size:12.5px;min-height:16px;margin:6px 0 4px"></div>
+    ${bcHistBody(hex)}`);
+}
+function libEditOneSave(old) {
+  let h = document.getElementById('leoH').value.trim().toUpperCase(); if (h && h[0] !== '#') h = '#' + h;
+  if (!isValidHex(h)) { const e = document.getElementById('leoErr'); document.getElementById('leoH').blur(); e.textContent = 'Enter a valid 6-digit hex code.'; return; }
+  const name = document.getElementById('leoN').value.trim();
+  if (h !== old && bdPoolSource('all').some(x => x.hex.toUpperCase() === h)) { const e = document.getElementById('leoErr'); document.getElementById('leoH').blur(); e.textContent = 'That hex is already in the library.'; return; }
+  bcClose(); libEditApply([{ old, hex: h, name }]);
 }
 function libEditShow(sel, single) {
   libEditList = sel.map(c => ({ old: c.hex.toUpperCase(), hex: c.hex.toUpperCase(), name: c.name || '' }));
-  document.getElementById('libEditSub').innerHTML = `Change the name or hex code of ${sel.length} colour${sel.length !== 1 ? 's' : ''}. Changes apply everywhere the colour is saved (primary, secondary, Generally Used).` + (single ? ` <button class="text-btn" style="font-weight:700;margin:6px 0 0;display:block" onclick="bcHistOpen('${single}')">&#128202; View dye history</button>` : '');
+  document.getElementById('libEditSub').innerHTML = `Change the name or hex code of ${sel.length} colour${sel.length !== 1 ? 's' : ''}. Changes apply everywhere the colour is saved (primary, secondary, Generally Used).` ;
   document.getElementById('libEditMsg').textContent = '';
   document.getElementById('libEditRows').innerHTML = libEditList.map((c, i) => `
     <div class="bd-item" style="grid-template-columns:44px 1fr">
@@ -7292,6 +7311,9 @@ function libEditSave() {
     if (!isValidHex(h)) { msg.textContent = `Row ${i + 1}: enter a valid 6-digit hex code.`; return; }
     edits.push({ old: libEditList[i].old, hex: h, name: document.getElementById('leN' + i).value.trim() });
   }
+  libEditApply(edits);
+}
+function libEditApply(edits) {
   const gu = getOrInitGuPalette(); let touched = 0;
   const snapEdit = undoCapture();
   const useIn = batches.filter(b => (b.items || []).some(i => edits.some(e => (i.hex || '').toUpperCase() === e.old && (e.hex !== e.old || (e.name && e.name !== i.name)))));
@@ -7381,6 +7403,15 @@ function bcDyLabel(hex, hm, curBatchId) {
   return `<div class="lib-dy">${q ? 'Dyed: ' + q : 'Dyed ' + e.n + '×'}</div>`;
 }
 /* ---- where was this colour dyed ---- */
+function bcHistBody(hex) {
+  hex = (hex || '').toUpperCase();
+  const rows = [];
+  (batches || []).forEach(b => (b.items || []).forEach(i => { if ((i.hex || '').toUpperCase() === hex) rows.push({ b, t: bdItemTotals(i), dsg: (i.design || '').trim() ? [(i.design || '').trim()] : [] }); }));
+  rows.sort((x, y) => (y.b.sentDate || '') < (x.b.sentDate || '') ? -1 : (y.b.sentDate || '') > (x.b.sentDate || '') ? 1 : (parseInt(y.b.no, 10) || 0) - (parseInt(x.b.no, 10) || 0));
+  const tm = rows.reduce((a, r) => a + r.t.mtr, 0), tp = rows.reduce((a, r) => a + r.t.pcs, 0);
+  return `<div class="section-label">${rows.length ? `Dyed in ${rows.length} batch${rows.length !== 1 ? 'es' : ''} · ${+tm.toFixed(1)} mtr${tp ? ' + ' + +tp.toFixed(0) + ' pcs' : ''}` : 'Never dyed'}</div>
+    <div style="max-height:52vh;overflow:auto">${rows.map(r => `<div class="bc-row" style="cursor:pointer" onclick="bcClose();bdOpen('${r.b.id}')"><div class="mid"><b>${r.b.no ? '#' + escapeHtml(String(r.b.no)) + ' · ' : ''}${escapeHtml(r.b.name || 'Untitled batch')}</b><small>${bdFmtDate(r.b.sentDate)} · ${r.t.mtr ? +r.t.mtr.toFixed(1) + ' mtr' : ''}${r.t.mtr && r.t.pcs ? ' · ' : ''}${r.t.pcs ? +r.t.pcs.toFixed(0) + ' pcs' : ''}${r.dsg.length ? ' · ' + escapeHtml(r.dsg.join(', ')) : ''}</small></div></div>`).join('')}</div>`;
+}
 function bcHistOpen(hex) {
   hex = (hex || '').toUpperCase();
   const nm = (bdPoolSource('all').find(r => r.hex.toUpperCase() === hex) || {}).name || hex;
