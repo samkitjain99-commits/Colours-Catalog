@@ -1513,14 +1513,6 @@
       <input type="file" id="libSheetInput" accept=".xlsx,.xls,.csv,.ods,.txt" style="display:none" onchange="handleColourSheetUpload(this.files[0], 'library')">
       <button class="text-btn" style="margin-top:8px;font-weight:700" onclick="downloadColourTemplate('colourPicker')">&#11015;&#65039; Download Excel template</button>
       <div class="page-sub" style="margin-top:6px">Any sheet works: put hex codes (like #A3C9D8) in any column, optionally with a colour name next to each. Colours are saved straight into the library.</div>
-      <details id="cdBox" ontoggle="if(this.open)cdRender()" style="margin-top:12px;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;background:#fff">
-        <summary style="font-weight:800;cursor:pointer;color:var(--brown-700)">&#128218; Browse ready-made colour names (<span id="cdTotal">7,000+</span>)</summary>
-        <div style="display:flex;gap:8px;margin-top:10px"><input class="bd-in" id="cdQ" placeholder="Search a name, e.g. wine, olive, rust" oninput="cdRender()" style="flex:1;margin:0;min-width:0"><select class="bd-in" id="cdFam" onchange="cdRender()" style="width:110px;margin:0"><option value="">All shades</option></select></div>
-        <div id="cdHead" style="font-size:12.5px;color:var(--muted);margin:10px 0 6px"></div>
-        <div id="cdList" style="max-height:55vh;overflow:auto"></div>
-        <button class="save-btn" id="cdAllBtn" style="width:100%;margin-top:8px" onclick="cdAddAll()">Add all matching colours</button>
-        <div class="page-sub" style="margin-top:6px;font-size:11px">Names and hex codes from the open-source <i>color-name-list</i> project (MIT licence). Only colours you add are stored on this phone, so add what you need.</div>
-      </details>
     </div><script type="text/plain" id="colourDict">c93f38|100 Mph
 e56e24|24 Carrot
 dfc685|24 Karat
@@ -6802,6 +6794,22 @@ c8d07f|Zucchini Noodles</script>
     <button class="text-btn" style="margin-top:8px; font-weight:700;" onclick="downloadColourTemplate('colourPicker')">&#11015; Download Excel template</button>
     <div class="page-sub no-print" style="margin-top:6px;">Any sheet works: put hex codes (like #A3C9D8) in any column, optionally with a colour name next to each.</div>
 
+    <div class="builder no-print" id="cdBox" style="margin-top:14px">
+      <div class="section-label">&#128218; Ready-made colours (<span id="cdTotal">5,000</span>)</div>
+      <div class="page-sub" style="margin:0 0 8px">Browse named colours, tick the ones you want and add them to your Colour Library.</div>
+      <div style="display:flex;gap:8px"><input class="bd-in" id="cdQ" placeholder="Search a name, e.g. wine, olive, rust" oninput="cdPage=0;cdRender()" style="flex:1;margin:0;min-width:0"><select class="bd-in" id="cdFam" onchange="cdPage=0;cdRender()" style="width:110px;margin:0"><option value="">All shades</option></select></div>
+      <div id="cdHead" style="font-size:12.5px;color:var(--muted);margin:10px 0 6px"></div>
+      <div class="lib-grid xgrid" id="cdGrid" style="padding:0 0 4px"></div>
+      <div id="cdPager" style="display:flex;align-items:center;gap:8px;margin-top:6px">
+        <button class="add-secondary-btn" id="cdPrev" style="flex:1;margin:0" onclick="cdGo(-1)">&#9664; Prev</button>
+        <div id="cdPageLbl" style="flex:1.2;text-align:center;font-size:13px;font-weight:700"></div>
+        <button class="add-secondary-btn" id="cdNext" style="flex:1;margin:0" onclick="cdGo(1)">Next &#9654;</button></div>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="add-secondary-btn" style="flex:1;margin:0" onclick="cdSelPage(true)">Select this page</button><button class="add-secondary-btn" style="flex:1;margin:0" onclick="cdSelPage(false)">Clear ticks</button></div>
+      <div id="cdSelInfo" style="font-size:13px;font-weight:700;margin:10px 0 6px"></div>
+      <div style="display:flex;gap:8px"><button class="save-btn" style="flex:1;margin:0" onclick="cdAddSelected('secondary')">Add to library</button><button class="add-secondary-btn" style="flex:1;margin:0" onclick="cdAddSelected('primary')">Add as Primary</button></div>
+      <div class="page-sub" style="margin-top:8px;font-size:11px">Names and hex codes from the open-source <i>color-name-list</i> project (MIT licence). Only colours you add are stored on this phone.</div>
+    </div>
+
     <div class="frozen-bar" id="cpSaveBar" style="display:none;">
       <div class="section-label" style="margin-bottom:6px;">Apply To All Picked Colours Below</div>
       <div class="select-wrap" style="margin-bottom:10px;">
@@ -7732,7 +7740,7 @@ function switchTab(tab) {
     openSecondaryColoursBrowse();
   } else if (tab === 'colourpicker') {
     showView('colourpicker');
-    renderColourPickerStaged();
+    renderColourPickerStaged(); try { cdRender(); } catch (e) {}
   } else if (tab === 'generallyused') {
     showView('generallyused');
     renderGenerallyUsed();
@@ -9181,7 +9189,7 @@ function renderPrintColoursFromSwatches(swatches, label, source) {
 }
 
 let pcReturnView = 'list', pcTemp = {};
-let cdList = null;
+let cdList = null, cdPage = 0, cdSel = new Set(), cdShown = []; const CD_PER = 30;
 function cdLoad() { if (!cdList) cdList = document.getElementById('colourDict').textContent.trim().split('\n').map(l => { const i = l.indexOf('|'); return { hex: '#' + l.slice(0, i).toUpperCase(), name: l.slice(i + 1) }; }); return cdList; }
 function cdMatches() {
   const q = (document.getElementById('cdQ').value || '').trim().toLowerCase().replace(/^#/, ''), fam = document.getElementById('cdFam').value, have = new Set();
@@ -9191,16 +9199,29 @@ function cdMatches() {
 function cdRender() {
   const f = document.getElementById('cdFam'); if (!f.dataset.f) { f.dataset.f = 1; f.innerHTML = '<option value="">All shades</option>' + BC_FAMS.map(x => `<option>${x}</option>`).join(''); }
   document.getElementById('cdTotal').textContent = cdLoad().length.toLocaleString('en-IN');
-  const m = cdMatches(), top = m.slice(0, 40);
-  document.getElementById('cdHead').textContent = m.length ? `${m.length.toLocaleString('en-IN')} colour${m.length !== 1 ? 's' : ''} not in your library yet` + (m.length > 40 ? ' (showing 40)' : '') : 'Nothing new matches.';
-  document.getElementById('cdList').innerHTML = top.map(c => `<div class="bc-row" style="align-items:center"><div style="width:34px;height:34px;border-radius:8px;border:1px solid var(--border);flex-shrink:0;background:${c.hex}"></div><div class="mid" style="flex:1;min-width:0"><b style="font-size:13px">${escapeHtml(c.name)}</b><small>${c.hex}</small></div><button class="add-secondary-btn" style="margin:0;padding:6px 12px;width:auto" onclick="cdAdd('${c.hex}')">+ Add</button></div>`).join('');
-  const b = document.getElementById('cdAllBtn'); b.style.display = m.length ? '' : 'none'; b.textContent = `Add all ${m.length.toLocaleString('en-IN')} matching colour${m.length !== 1 ? 's' : ''}`;
+  const m = cdMatches(), pages = Math.max(1, Math.ceil(m.length / CD_PER)); if (cdPage >= pages) cdPage = pages - 1; if (cdPage < 0) cdPage = 0;
+  cdShown = m.slice(cdPage * CD_PER, (cdPage + 1) * CD_PER);
+  document.getElementById('cdHead').textContent = m.length ? `${m.length.toLocaleString('en-IN')} colour${m.length !== 1 ? 's' : ''} not in your library yet` : 'Nothing new matches.';
+  document.getElementById('cdPager').style.display = m.length > CD_PER ? 'flex' : 'none';
+  document.getElementById('cdPageLbl').textContent = `Page ${cdPage + 1} of ${pages.toLocaleString('en-IN')}`;
+  document.getElementById('cdPrev').disabled = cdPage === 0; document.getElementById('cdNext').disabled = cdPage >= pages - 1;
+  document.getElementById('cdGrid').innerHTML = cdShown.map(c => `<button class="lib-card ${cdSel.has(c.hex) ? 'on' : ''}" onclick="cdTog(this,'${c.hex}')"><div class="lib-sw" style="background:${c.hex}"></div><span class="lib-tick">&#10003;</span><div class="lib-info"><div class="lib-nm">${escapeHtml(c.name)}</div><div class="lib-hx">${c.hex}</div></div></button>`).join('');
+  cdInfo();
 }
-function cdAdd(hex) { const c = cdLoad().find(x => x.hex === hex); if (c) libAddColours([c]); cdRender(); }
-function cdAddAll() {
-  const m = cdMatches(); if (!m.length) return;
-  if (m.length > 300 && !confirm(`Add ${m.length.toLocaleString('en-IN')} colours to your library? Narrow it with search or a shade first if you only need some.`)) return;
-  libAddColours(m); cdRender();
+function cdInfo() { const e = document.getElementById('cdSelInfo'); if (e) e.textContent = cdSel.size ? `${cdSel.size} colour${cdSel.size !== 1 ? 's' : ''} ticked` : 'Tick colours to add them'; }
+function cdTog(el, hex) { if (cdSel.has(hex)) cdSel.delete(hex); else cdSel.add(hex); el.classList.toggle('on', cdSel.has(hex)); cdInfo(); }
+function cdSelPage(on) { if (on) cdShown.forEach(c => cdSel.add(c.hex)); else cdSel = new Set(); cdRender(); }
+function cdGo(d) { cdPage += d; cdRender(); const g = document.getElementById('cdBox'); if (g) g.scrollIntoView({ block: 'start' }); }
+function cdAddSelected(role) {
+  const list = cdLoad().filter(c => cdSel.has(c.hex)); if (!list.length) { alert('Tick the colours you want to add first.'); return; }
+  let n = 0;
+  if (role === 'primary') {
+    const snap = undoCapture(); const have = new Set(); try { bdPoolSource('all').forEach(r => have.add(r.hex.toUpperCase())); } catch (e) {}
+    list.forEach(c => { if (have.has(c.hex)) return; catalog.push({ id: uid(), primaryHex: c.hex, primaryName: c.name || c.hex, secondaryIds: [] }); n++; });
+    try { saveAppStateToStorage(); renderCatalog(); renderLibrary(); } catch (e) {}
+    undoOffer(`${n} primary colour${n !== 1 ? 's' : ''} added`, snap, () => { try { renderLibrary(); cdRender(); } catch (e) {} });
+  } else n = libAddColours(list);
+  cdSel = new Set(); cdRender();
 }
 function libAddToggle() { const p = document.getElementById('libAddPanel'), open = p.style.display === 'none'; p.style.display = open ? 'block' : 'none'; document.getElementById('libAddToggle').innerHTML = open ? '&#10005; Close' : '+ Add colours to library'; if (open) document.getElementById('libNewHex').focus(); }
 function libSyncPicker() { let v = document.getElementById('libNewHex').value.trim(); if (v && v[0] !== '#') v = '#' + v; if (isValidHex(v)) document.getElementById('libNewPicker').value = v.toLowerCase(); }
