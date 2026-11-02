@@ -7245,7 +7245,7 @@ function renderLibrary() {
   document.getElementById('libGrid').innerHTML = libRows.length ? libRows.map((r, ix) => `
     <button class="lib-card ${libSel.has(r.hex) ? 'on' : ''}" onclick="libToggle('${r.hex}')">
       <div class="lib-sw" style="background:${r.hex}"></div><span class="lib-sr">#${String(ix + 1).padStart(3, '0')}</span><span class="lib-tick">&#10003;</span>${libFavs.has(r.hex) ? '<span class="lib-star">&#9733;</span>' : ''}
-      <div class="lib-info" onclick="event.stopPropagation();bcHistOpen('${r.hex}')"><div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div>${bcDyLabel(r.hex, hm)}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
+      <div class="lib-info" onclick="event.stopPropagation();libEditOne('${r.hex}')"><div class="lib-nm">${escapeHtml(r.name || r.hex)}</div><div class="lib-hx">${r.hex}</div>${bcDyLabel(r.hex, hm)}</div></button>`).join('') : `<div class="empty-state" style="grid-column:1/-1">No colours match.</div>`;
   libUpdateBar(); bcNudge();
 }
 function libTargets() { const r = libSel.size ? libRows.filter(x => libSel.has(x.hex)).concat(bdPoolSource('all').filter(x => libSel.has(x.hex) && !libRows.some(y => y.hex === x.hex))) : libRows; return r.map(c => ({ hex: c.hex, name: c.name || '' })); }
@@ -7261,8 +7261,14 @@ let libEditList = [];
 function libEditOpen() {
   const sel = libSel.size ? libTargets() : [];
   if (!sel.length) { alert('Select the colours you want to edit first (tap them), or use Selected to review them.'); return; }
+  libEditShow(sel, null);
+}
+function libEditOne(hex) {   // tap a colour's name/hex on the card -> edit just that colour
+  const r = bdPoolSource('all').find(x => x.hex.toUpperCase() === hex.toUpperCase()); libEditShow([{ hex: hex.toUpperCase(), name: (r && r.name) || '' }], hex.toUpperCase());
+}
+function libEditShow(sel, single) {
   libEditList = sel.map(c => ({ old: c.hex.toUpperCase(), hex: c.hex.toUpperCase(), name: c.name || '' }));
-  document.getElementById('libEditSub').textContent = `Change the name or hex code of ${sel.length} colour${sel.length !== 1 ? 's' : ''}. Changes apply everywhere the colour is saved (primary, secondary, Generally Used).`;
+  document.getElementById('libEditSub').innerHTML = `Change the name or hex code of ${sel.length} colour${sel.length !== 1 ? 's' : ''}. Changes apply everywhere the colour is saved (primary, secondary, Generally Used).` + (single ? ` <button class="text-btn" style="font-weight:700;margin:6px 0 0;display:block" onclick="bcHistOpen('${single}')">&#128202; View dye history</button>` : '');
   document.getElementById('libEditMsg').textContent = '';
   document.getElementById('libEditRows').innerHTML = libEditList.map((c, i) => `
     <div class="bd-item" style="grid-template-columns:44px 1fr">
